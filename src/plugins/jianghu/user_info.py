@@ -1,4 +1,4 @@
-import imp
+from datetime import datetime, timedelta
 from random import randint
 from src.utils.db import db
 import os
@@ -9,6 +9,7 @@ def init_user_info(user_id):
     init_data = {
         "_id": user_id,
         "名称": "无名",
+        "凶煞": datetime.now() + timedelta(days=-1),
         "体质": 20,
         "身法": 5,
         "力道": 5,

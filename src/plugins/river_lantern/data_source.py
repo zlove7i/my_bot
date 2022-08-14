@@ -2,7 +2,6 @@ import random
 import datetime
 
 from httpx import AsyncClient
-from idna import check_initial_combiner
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
 from src.utils.cooldown_time import search_record, search_once
 from src.utils.db import db
