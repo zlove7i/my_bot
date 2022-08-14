@@ -159,8 +159,9 @@ async def 下架商品(操作人id, 商品id):
 
 async def 购买商品(购买人id, 名称):
     user_info = UserInfo(购买人id)
-    if user_info.基础属性["善恶值"] < -2000:
-        return "善恶值过低, 无法购买物品"
+    凶煞 = user_info.基础属性["凶煞"]
+    if 凶煞 > datetime.now():
+        return f"凶煞状态无法购买物品，凶煞状态结束时间：{凶煞.strftime('%Y-%m-%d %H:%M:%S')}"
     limit = 1
     if 名称.isdigit():
         商品id = int(名称)

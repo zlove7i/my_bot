@@ -2,6 +2,8 @@
 import asyncio
 import random
 from datetime import datetime, timedelta
+from src.plugins.jianghu.user_info import UserInfo
+from pymongo import UpdateOne
 
 from nonebot import get_bot
 from nonebot.adapters.onebot.v11 import Bot, MessageSegment
@@ -123,6 +125,18 @@ async def reset_sign_nums():
                                  "energy": 100,
                                  "discard_equipment_num": 0
                              }}, True)
+    project = {"_id": 1}
+    users = []
+    for i in db.jianghu.find({"重伤状态": True}, projection=project):
+        user = UserInfo(i["_id"])
+        users.append(UpdateOne({"_id": i["_id"]}, {
+            "$set": {
+                "重伤状态": False,
+                "当前气血": user.当前状态["气血上限"],
+                "当前内力": user.当前状态["内力上限"]
+            }
+        }, True))
+    db.jianghu.bulk_write(users)
 
 
 def del_user_team(user_id, user_name, team_id):
