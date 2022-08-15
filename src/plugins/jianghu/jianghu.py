@@ -1,7 +1,7 @@
 import random
 
 from numpy import arctan
-from datetime import datetime
+from datetime import datetime, timedelta
 from src.plugins.jianghu.user_info import UserInfo
 from src.plugins.jianghu.skill import Skill
 from src.utils.db import db
@@ -58,7 +58,7 @@ class PK(Skill):
         if 被抢方id:
             db.user_info.update_one({"_id": 被抢方id}, {"$inc": {"gold": -银两数量}})
 
-    async def 偷袭死斗结算(self, 胜方: UserInfo, 败方: UserInfo):
+    async def 偷袭死斗结算(self, 胜方: UserInfo, 败方: UserInfo, 攻方善恶值: int):
         gold = 0
         msg = ""
         胜方id = 胜方.基础属性["_id"]
@@ -72,6 +72,9 @@ class PK(Skill):
             gold = con.get("gold", 0)
         if gold > 10:
             抢走金额 = random.randint(1, int(gold * 抢夺系数))
+            抢夺上限 = int(-攻方善恶值 * 500)
+            抢夺上限 = 抢夺上限 if 抢夺上限 > 50000 else 50000
+            抢走金额 = 抢走金额 if 抢走金额 < 抢夺上限 else 抢夺上限
             await self.抢走银两(胜方id, 败方id, 抢走金额)
             msg = f"【{胜方名称}】抢走了【{败方名称}】 {抢走金额} 两银子"
         db.jianghu.update_one({"_id": 败方id}, {"$set": {
@@ -134,6 +137,11 @@ class PK(Skill):
         }}, True)
         return f"损失 {抢走金额} 两银子"
 
+    async def 更新凶煞状态(self, 击杀者id: int):
+        now_time = datetime.now() + timedelta(hours=1)
+        db.jianghu.update_one(
+            {"_id": 击杀者id}, {"$set": {"凶煞": now_time}}, True)
+
     async def 战斗结算(self, action, 攻方: UserInfo, 守方: UserInfo, msg=""):
         攻方_id = 攻方.基础属性["_id"]
         守方_id = 守方.基础属性["_id"]
@@ -178,25 +186,30 @@ class PK(Skill):
                 "内力上限": 守方.当前状态['内力上限'],
                 "内力百分比": 守方.当前内力/守方.当前状态['内力上限']*100,
                 "减内百分比": (self.守方初始内力 - 守方.当前内力)/守方.当前状态['内力上限']*100
-            }
+            },
+            "结算": ""
         }
         if not 胜方:
             data["攻方"]["平"] = True
             data["守方"]["平"] = True
         if action in ("偷袭", "死斗"):
             善恶值 = 0
+            攻方善恶值 = 攻方.基础属性['善恶值']
             if action == "死斗":
                 善恶值 = -2
             if 胜方 == "攻":
                 善恶值 -= 1
-                data["结算"] = await self.偷袭死斗结算(攻方, 守方)
+                # 如果守方在凶煞时间内，攻方不进入凶煞状态
+                if 守方.基础属性['凶煞'] < datetime.now():
+                    await self.更新凶煞状态(攻方_id)
+                data["结算"] = await self.偷袭死斗结算(攻方, 守方, 攻方善恶值)
                 data["攻方"]["胜负"] = True
                 data["守方"]["胜负"] = False
             elif 胜方 == "守":
-                data["结算"] = await self.偷袭死斗结算(守方, 攻方)
+                data["结算"] = await self.偷袭死斗结算(守方, 攻方, 攻方善恶值)
                 data["攻方"]["胜负"] = False
                 data["守方"]["胜负"] = True
-            if 善恶值:
+            if 善恶值 and 守方.基础属性['凶煞'] > datetime.now():
                 await self.善恶值变化(攻方_id, 善恶值)
                 data["善恶值"] = f"{攻方.基础属性['名称']} 善恶值 {善恶值}"
         if action == "切磋":
@@ -236,8 +249,6 @@ class PK(Skill):
                 data["攻方"]["平"] = True
                 data["守方"]["平"] = True
             if 攻方.本次伤害:
-                if not data.get("结算"):
-                    data["结算"] = ""
                 data["结算"] += f"{攻方.基础属性['名称']} 对 {守方.基础属性['名称']} 造成了 {-攻方.本次伤害} 伤害，贡献值 +{贡献值}, 精力-4"
                 db.user_info.update_one({"_id": 攻方.user_id},
                                       {"$inc": {"contribution": 贡献值}}, True)

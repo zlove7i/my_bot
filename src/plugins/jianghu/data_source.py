@@ -158,6 +158,10 @@ async def practice_qihai(user_id, res):
     '''修炼气海'''
     if not res:
         return "输入错误"
+    user_info = UserInfo(user_id)
+    凶煞 = user_info.基础属性["凶煞"]
+    if 凶煞 > datetime.now():
+        return f"凶煞状态无法修炼气海，凶煞状态结束时间：{凶煞.strftime('%Y-%m-%d %H:%M:%S')}"
     花费银两 = int(res[0])
     if 花费银两 < 10:
         return "最少十两银子"
@@ -171,7 +175,6 @@ async def practice_qihai(user_id, res):
         return "你的银两不够！"
     if energy < 3:
         return "你的精力不足3点！"
-    UserInfo(user_id)
     增加气海 = random.randint(花费银两//10, 花费银两//5)
 
     db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -花费银两, "energy": -3}})
@@ -233,6 +236,9 @@ async def give_gold(user_id, user_name, at_qq, gold):
     if at_user_info.名称 == "无名":
         return "对方未改名, 无法赠送银两"
     user_info = UserInfo(user_id)
+    凶煞 = user_info.基础属性["凶煞"]
+    if 凶煞 > datetime.now():
+        return f"凶煞状态无法赠送银两，凶煞状态结束时间：{凶煞.strftime('%Y-%m-%d %H:%M:%S')}"
     善恶值 = user_info.基础属性["善恶值"]
     手续费比例 = -善恶值 / 4000
     if 手续费比例 >= 1:
@@ -259,8 +265,9 @@ async def give_gold(user_id, user_name, at_qq, gold):
 
 async def purchase_goods(user_id, res):
     user_info = UserInfo(user_id)
-    if user_info.基础属性["善恶值"] < -2000:
-        return "善恶值过低, 无法购买物品"
+    凶煞 = user_info.基础属性["凶煞"]
+    if 凶煞 > datetime.now():
+        return f"凶煞状态无法购买物品，凶煞状态结束时间：{凶煞.strftime('%Y-%m-%d %H:%M:%S')}"
     if len(res) > 2:
         return "输入错误"
     数量 = 1
@@ -1137,6 +1144,9 @@ async def pk(动作, user_id, 目标):
             return "不能通过名称进行切磋"
         消耗精力 *= 2
     if 消耗精力:
+        善恶值 = db.jianghu.find_one({"_id": user_id}).get("善恶值", 0)
+        if 善恶值 < 0:
+            消耗精力 += -(善恶值 // 200)
         精力 = db.user_info.find_one({"_id": user_id}).get("energy", 0)
         if 精力 < 消耗精力:
             精力 = 0
@@ -1284,16 +1294,29 @@ async def give(user_id, at_qq, 物品列表):
 
 
 async def healing(user_id, target_id):
+    if not target_id.isdigit():
+        if target_id == "无名":
+            return "此人过于神秘, 无法进攻"
+        江湖info = db.jianghu.find_one({"名称": target_id})
+        if not 江湖info:
+            return "找不到正确的目标"
+        target_id = 江湖info["_id"]
     user = UserInfo(target_id)
+    凶煞 = user.基础属性["凶煞"]
+    if user_id != target_id and 凶煞 < datetime.now():
+        return "无法帮此目标疗伤"
     if not user.基础属性["重伤状态"]:
         return "未重伤，不需要疗伤"
     gold = 0
     con = db.user_info.find_one({"_id": user_id})
     if con:
         gold = con.get("gold", 0)
-    if gold < 100:
-        return "疗伤需要一百两银子，你的银两不够！"
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -100}}, True)
+    善恶值 = user.基础属性["善恶值"]
+    复活需要银两 = 1000 - (善恶值 * 10)
+    复活需要银两 = 复活需要银两 if 复活需要银两 > 500 else 500
+    if gold < 复活需要银两:
+        return f"疗伤需要{复活需要银两}两银子，你的银两不够！"
+    db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -复活需要银两}}, True)
     db.jianghu.update_one({"_id": target_id}, {
         "$set": {
             "重伤状态": False,
@@ -1301,7 +1324,7 @@ async def healing(user_id, target_id):
             "当前内力": user.当前状态["内力上限"]
         }
     }, True)
-    return "花费一百两银子，疗伤成功！"
+    return f"花费{复活需要银两}两银子，疗伤成功！"
 
 
 async def gad_guys_ranking(bot: Bot, user_id):
@@ -1354,6 +1377,21 @@ async def gear_ranking(bot: Bot, user_id):
         重伤 = "x" if user_info.基础属性.get("重伤状态") else ""
         名称 = user_info.基础属性["名称"]
         msg += f"{n+1} {i['_id']} {i['总装分']} {重伤}{名称}\n"
+    return msg
+
+
+async def xiongsha_ranking(bot: Bot):
+    '''凶煞榜'''
+    filter = {'凶煞': {"$gte": datetime.now()}}
+    sort = list({'凶煞': 1}.items())
+    limit = 10
+    msg = "凶煞榜\n"
+    result = db.jianghu.find(filter=filter, sort=sort, limit=limit)
+    for n, i in enumerate(result):
+        重伤 = "x" if i.get("重伤状态") else ""
+        msg += f"{n+1} {重伤}{i['名称']} {i['凶煞']}\n"
+    if msg == "凶煞榜\n":
+        return "盛世太平，没有凶煞"
     return msg
 
 

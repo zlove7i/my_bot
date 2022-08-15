@@ -8,8 +8,6 @@ from nonebot.adapters.onebot.v11.permission import GROUP
 from src.plugins.jianghu.shop import shop
 from src.plugins.jianghu.auction_house import 上架商品, 下架商品, 查找商品, 购买商品, 我的商品
 from src.utils.log import logger
-from src.utils.scheduler import scheduler
-from src.utils.config import config
 
 from . import data_source as source
 
@@ -31,6 +29,7 @@ gad_guys_ranking = on_regex(r"^恶人排行$", permission=GROUP, priority=5, blo
 good_guys_ranking = on_regex(r"^善人排行$", permission=GROUP, priority=5, block=True)
 gold_ranking = on_regex(r"^银两排行$", permission=GROUP, priority=5, block=True)
 gear_ranking = on_regex(r"^神兵排行$", permission=GROUP, priority=5, block=True)
+xiongsha_ranking = on_regex(r"^(凶煞榜|凶煞排行|通缉榜)$", permission=GROUP, priority=5, block=True)
 viwe_shop = on_regex(r"^商店$", permission=GROUP, priority=5, block=True)
 ranking = on_regex(r"^我的背包$", permission=GROUP, priority=5, block=True)
 my_gear = on_regex(r"^我的装备.*$", permission=GROUP, priority=5, block=True)
@@ -100,9 +99,7 @@ sell_equipment = on_regex(r"^出售装备 .+?$",
 world_boss = on_regex(r"^世界首领( .{2}){0,1}$", permission=GROUP, priority=5, block=True)
 claim_rewards = on_regex(r"^领取首领奖励$", permission=GROUP, priority=5, block=True)
 
-healing = on_regex(r"^疗伤$", permission=GROUP, priority=5, block=True)
-
-healing = on_regex(r"^疗伤$", permission=GROUP, priority=5, block=True)
+healing = on_regex(r"^疗伤( *(\[CQ:at,qq=\d+\]|.{1,8}) *){0,1}$", permission=GROUP, priority=5, block=True)
 
 put_on_shelves = on_regex(r"^上架(商品|物品) .+$",
                           permission=GROUP,
@@ -350,6 +347,12 @@ async def _(bot: Bot, event: GroupMessageEvent):
     user_id = event.user_id
     msg = await source.gear_ranking(bot, user_id)
     await gear_ranking.finish(msg)
+
+@xiongsha_ranking.handle()
+async def _(bot: Bot, event: GroupMessageEvent):
+    """凶煞榜"""
+    msg = await source.xiongsha_ranking(bot)
+    await xiongsha_ranking.finish(msg)
 
 
 @viwe_shop.handle()
@@ -688,7 +691,7 @@ async def _(event: GroupMessageEvent):
 async def _(event: GroupMessageEvent):
     """疗伤"""
     user_id = event.user_id
-    at_member_obj = re.compile(r"^疗伤 *\[CQ:at,qq=(\d*)\] *$")
+    at_member_obj = re.compile(r"^疗伤 *[\[CQ:at,qq=]*(\d+|.{1,8})\]{0,1} *$")
     at_member_list = at_member_obj.findall(event.raw_message)
     target_id = user_id
     if at_member_list:
