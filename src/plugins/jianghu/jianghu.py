@@ -72,7 +72,7 @@ class PK(Skill):
             gold = con.get("gold", 0)
         if gold > 10:
             抢走金额 = random.randint(1, int(gold * 抢夺系数))
-            抢夺上限 = int((-攻方善恶值 / 50) * 1000)
+            抢夺上限 = int(-攻方善恶值 * 500)
             抢夺上限 = 抢夺上限 if 抢夺上限 > 50000 else 50000
             抢走金额 = 抢走金额 if 抢走金额 < 抢夺上限 else 抢夺上限
             await self.抢走银两(胜方id, 败方id, 抢走金额)
