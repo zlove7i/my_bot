@@ -158,6 +158,10 @@ async def practice_qihai(user_id, res):
     '''修炼气海'''
     if not res:
         return "输入错误"
+    user_info = UserInfo(user_id)
+    凶煞 = user_info.基础属性["凶煞"]
+    if 凶煞 > datetime.now():
+        return f"凶煞状态无法修炼气海，凶煞状态结束时间：{凶煞.strftime('%Y-%m-%d %H:%M:%S')}"
     花费银两 = int(res[0])
     if 花费银两 < 10:
         return "最少十两银子"
@@ -171,7 +175,6 @@ async def practice_qihai(user_id, res):
         return "你的银两不够！"
     if energy < 3:
         return "你的精力不足3点！"
-    UserInfo(user_id)
     增加气海 = random.randint(花费银两//10, 花费银两//5)
 
     db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -花费银两, "energy": -3}})
@@ -1291,6 +1294,13 @@ async def give(user_id, at_qq, 物品列表):
 
 
 async def healing(user_id, target_id):
+    if not target_id.isdigit():
+        if target_id == "无名":
+            return "此人过于神秘, 无法进攻"
+        江湖info = db.jianghu.find_one({"名称": target_id})
+        if not 江湖info:
+            return "找不到正确的目标"
+        target_id = 江湖info["_id"]
     user = UserInfo(target_id)
     凶煞 = user.基础属性["凶煞"]
     if user_id != target_id and 凶煞 < datetime.now():
