@@ -1301,6 +1301,7 @@ async def healing(user_id, target_id):
         if not 江湖info:
             return "找不到正确的目标"
         target_id = 江湖info["_id"]
+    target_id = int(target_id)
     user = UserInfo(target_id)
     凶煞 = user.基础属性["凶煞"]
     if user_id != target_id and 凶煞 < datetime.now():
