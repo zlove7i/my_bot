@@ -1142,11 +1142,11 @@ async def pk(动作, user_id, 目标):
     if 跨群:
         if 动作 == "切磋":
             return "不能通过名称进行切磋"
-        消耗精力 *= 2
+        消耗精力 += 1
     if 消耗精力:
         善恶值 = db.jianghu.find_one({"_id": user_id}).get("善恶值", 0)
         if 善恶值 < 0:
-            消耗精力 += -(善恶值 // 200)
+            消耗精力 += -(善恶值 // 300)
         精力 = db.user_info.find_one({"_id": user_id}).get("energy", 0)
         if 精力 < 消耗精力:
             精力 = 0
