@@ -250,7 +250,7 @@ async def give_gold(user_id, user_name, at_qq, gold):
     db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -gold}}, True)
     db.user_info.update_one({"_id": at_qq}, {"$inc": {"gold": gold}}, True)
     logger.debug(f"赠送银两 | <e>{user_id} -> {at_qq}</e> | <g>成功！</g>")
-    msg = f"成功赠送{赠送银两}两银子！"
+    msg = f"成功赠送{gold}两银子！"
     return msg
 
 
