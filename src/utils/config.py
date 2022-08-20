@@ -23,7 +23,7 @@ class Config():
     def __init__(self):
         '''初始化'''
         root_path = os.path.realpath(__file__+"/../../../")
-        config_file = os.path.join(root_path, "config.yml")
+        config_file = os.path.join(root_path, "conf/config.yml")
         with open(config_file, 'r', encoding='utf-8') as f:
             cfg = f.read()
             self._config: dict = yaml.load(cfg, Loader=yaml.FullLoader)
@@ -40,7 +40,7 @@ class Config():
             os.makedirs(datadir)
 
         # log文件夹
-        logs: str = os.path.join(root_path, "logs")
+        logs: str = os.path.join(root_path, "log")
         logsdir = os.path.join(root_path, logs)
         if not os.path.isdir(logsdir):
             os.makedirs(logsdir)

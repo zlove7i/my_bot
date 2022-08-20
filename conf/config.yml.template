@@ -1,0 +1,65 @@
+# 项目配置文件
+node_info:
+  # 主节点hostname, 如果只有一个节点该字段千万不要填写, 多个节点必须填写, 后续考虑自动生成
+  main_host: ~
+  domain: 127.0.0.1
+
+# 数据站设置
+jx3api:
+  # ws链接地址
+  ws_path: wss://socket.nicemoe.cn
+  # ws的token授权，关联ws服务器推送消息类型
+  ws_token: ~
+  # 主站地址
+  jx3_url:  https://www.jx3api.com
+  # 主站token，不填将不能访问带ticket的接口
+  jx3_token: ~
+
+# 剑三沙盘的用户信息
+jx3sand:
+  account: ~
+  password: ~
+
+# 邮件通知配置
+mail:
+  sender: 二猫子的猛男助理
+  mail_list:
+      # smtp服务器地址
+    - host: smtp.qiye.aliyun.com
+      # 端口号
+      pord: 465
+      # 邮箱地址
+      mail: ~
+      # 用户名
+      user: ~
+      # 密码，可能是授权码
+      passwd: ~
+
+
+# 百度违规词检测
+baidusdkcore:
+  # https://console.bce.baidu.com/ai/?_&fromai=1#/ai/antiporn/overview/index
+  client_id: ~
+  client_secret: ~
+
+# mongodb
+mongodb:
+  mongdb_list:
+    -127.0.0.1:27017
+  mongodb_username: admin
+  mongodb_password: ~
+
+# 默认设置
+default:
+  # 插件debug日志是否显示在控制台
+  logger_debug: true
+
+bot_conf:
+  # 机器人管理群(无视机器人加群限制)
+  manage_group: []
+
+# 腾讯云自然语言处理, 就是机器人搭话的功能
+nlp:
+  # https://console.cloud.tencent.com/cam/capi
+  secretId: ~
+  secretKey: ~
