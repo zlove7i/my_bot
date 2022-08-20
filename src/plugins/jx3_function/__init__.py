@@ -293,7 +293,7 @@ async def _(event: GroupMessageEvent):
     if text_len < 3:
         await user_manage.finish("正确的命令格式：“角色管理 角色名称 心法 服务器(选填)”")
     user_name = text_list[1]
-    if not content_check(user_name)[0]:
+    if not content_check(user_name):
         await user_manage.finish("这个名字能过审?我不信！你快改一下吧")
     profession = JX3PROFESSION.get_profession(text_list[2])
     if not profession:
@@ -377,7 +377,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
     team_announcements = text.split(" ")[-1]
     if len(team_announcements) >= 50:
         await create_team.finish("团队公告不能超过50字")
-    if not content_check(team_announcements)[0]:
+    if not content_check(team_announcements):
         await create_team.finish("团队公告内容不太健康，改一下吧")
 
     # 获取成员配置
@@ -567,7 +567,7 @@ async def _(event: GroupMessageEvent):
         team_announcements = team_announcements[-1]
         if len(team_announcements) >= 50:
             msg += "团队公告不能超过50字"
-        elif not content_check(team_announcements)[0]:
+        elif not content_check(team_announcements):
             msg += "团队公告内容不太健康，改一下吧"
         else:
             team_info["team_announcements"] = team_announcements
@@ -818,7 +818,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
         user_name = text_list[1]
     elif len(text_list) == 4:
         user_name = text_list[1]
-        if not content_check(user_name)[0]:
+        if not content_check(user_name):
             await register.finish("这个名字能过审?我不信！你快改一下吧")
         profession = JX3PROFESSION.get_profession(text_list[2])
         if not profession:

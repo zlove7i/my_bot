@@ -1,4 +1,3 @@
-from datetime import datetime
 from email.utils import formataddr
 from email.mime.text import MIMEText
 from email.header import Header
@@ -35,18 +34,17 @@ class MailClient(object):
 
     def __init__(self):
         '''初始化'''
-        self._host = config.mail['host']
-        self._pord = config.mail['pord']
-        self._domain = config.mail['domain']
-        self._user = config.mail['user']
-        self._pass = config.mail['pass']
-        self._sender = config.mail['sender']
-        self._receiver = config.mail['receiver']
+        self.sender = config.mail['sender']
+        self.mail_list = config.mail['mail_list']
 
     async def send_mail(self, receivers: list, mail_title: str,
                         mail_content: str) -> None:
-        n = random.randint(1, 15)
-        self._mail = f"{self._user}{n}@{self._domain}"
+        mail_data = random.choice(self.mail_list)
+        mail = mail_data.get('mail')
+        user = mail_data.get('user')
+        passwd = mail_data.get('passwd')
+        pord = mail_data.get('pord')
+        host = mail_data.get('host')
         message = MIMEText(mail_content)
         receiver_list = []
         for receiver in receivers:
@@ -58,14 +56,14 @@ class MailClient(object):
                     receiver = f"{receiver}@qq.com"
             receiver_list.append(receiver)
         message["Subject"] = mail_title
-        message['From'] = formataddr((Header(self._sender, 'utf-8').encode(), self._mail))
-        msg = f"{self._sender}[{self._mail}] -> {receiver_list}: {mail_content}"
+        message['From'] = formataddr((Header(self.sender, 'utf-8').encode(), mail))
+        msg = f"{self.sender}[{mail}] -> {receiver_list}: {mail_content}"
         logger.info(msg)
 
         try:
-            async with SMTP(hostname=self._host, port=self._pord, use_tls=True) as smtp:
-                await smtp.login(self._mail, self._pass)
-                await smtp.send_message(message, self._mail, receiver_list)
+            async with SMTP(hostname=host, port=pord, use_tls=True) as smtp:
+                await smtp.login(user, passwd)
+                await smtp.send_message(message, mail, receiver_list)
         except SMTPException as e:
             log = f"发送邮件失败，原因：{str(e)}"
             logger.error(log)
@@ -77,19 +75,6 @@ class MailClient(object):
                                {"$set": {
                                    "online_status": False
                                }}, True)
-        # bot_name = db.bot_info.find_one({"_id": robot_id})["bot_name"]
-        # mail_title = f"机器人[{bot_name}]({robot_id})掉线"
-        # time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        # mail_content = f"你的机器人：[{bot_name}]({robot_id}) 在 {time_now} 掉线了！"
-        # await self.send_mail(self._receiver, mail_title, mail_content)
-
-    async def bot_online(self, robot_id: int):
-        bot_name = db.bot_info.find_one({"_id": robot_id})["bot_name"]
-        mail_title = f"机器人[{bot_name}]({robot_id})上线"
-        time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        mail_content = f"你的机器人：[{bot_name}]({robot_id}) 在 {time_now} 上线了！"
-        await self.send_mail(self._receiver, mail_title, mail_content)
-
 
 mail_client = MailClient()
 '''发送邮件客户端'''

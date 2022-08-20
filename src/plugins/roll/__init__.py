@@ -41,7 +41,7 @@ def get_content(event: GroupMessageEvent) -> str:
     content_len = len(text_list[-1])
     if content_len > 512:
         return False, "你别写写么多啊！"
-    if not content_check(text_list[-1])[0]:
+    if not content_check(text_list[-1]):
         return False, "写的内容不太文雅啊，重写一下吧！"
     return True, text_list[1:]
 

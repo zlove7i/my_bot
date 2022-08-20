@@ -1,7 +1,7 @@
 from typing import Union
 import os
 import yaml
-
+import socket
 
 class Config():
     '''配置文件类'''
@@ -28,17 +28,19 @@ class Config():
             cfg = f.read()
             self._config: dict = yaml.load(cfg, Loader=yaml.FullLoader)
 
-        # 创建目录
-        path: dict = self._config.get('path')
+        hostname = socket.gethostname()
+        self._config['hostname'] = hostname
+        main_host = self._config["node_info"].get("main_host")
+        self._config['is_main_host'] = not main_host or main_host == hostname
 
         # data文件夹
-        data: str = path.get('data')
+        data: str = os.path.join(root_path, "data")
         datadir = os.path.join(root_path, data)
         if not os.path.isdir(datadir):
             os.makedirs(datadir)
 
         # log文件夹
-        logs: str = path.get('logs')
+        logs: str = os.path.join(root_path, "logs")
         logsdir = os.path.join(root_path, logs)
         if not os.path.isdir(logsdir):
             os.makedirs(logsdir)
