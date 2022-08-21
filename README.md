@@ -84,4 +84,12 @@ nlp:
 
 ```
 
-docker run --name="my_bot" -v /etc/my_bot/conf:/my_bot/conf -p 8899:8899 -itd ermaozi/my_bot
+docker run --name="my_bot" --hostname=$(hostname) -v /etc/my_bot:/my_bot/conf -p 8899:8899 -itd ermaozi/my_bot
+
+如果启动没问题再加上自动重启
+
+docker update --restart=always my_bot
+
+自动更新
+
+docker run -d --name watchtower --restart always -v /var/run/docker.sock:/var/run/docker.sock containrrr/watchtower --cleanup -i 300 my_bot
