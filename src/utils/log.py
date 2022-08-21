@@ -82,7 +82,7 @@ if _defaults.LOGURU_AUTOINIT and sys.stderr:
 # 添加到日志文件
 
 root_path = os.path.realpath(__file__+"/../../../")
-log_path = os.path.join(root_path, "logs")
+log_path = os.path.join(root_path, "log")
 
 logger.add(
     os.path.join(log_path, "{time:YYYY-MM-DD}", "debug.log"),

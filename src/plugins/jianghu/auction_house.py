@@ -10,13 +10,14 @@ from src.plugins.jianghu.user_info import UserInfo
 from nonebot.adapters.onebot.v11 import MessageSegment
 from src.utils.browser import browser
 from src.plugins.jianghu.shop import shop
+from src.plugins.jianghu.gold import 减少银两, 增加银两
 
 
 async def 上架商品(寄售人id, 商品名称, 价格, 备注=""):
     if int(价格) < 1:
         return "价格不能少于1两银子"
-    if int(价格) > 10000000:
-        return "价格不能多于10000000两银子"
+    if int(价格) > 100000000:
+        return "价格不能多于100000000两银子"
     if len(备注) > 30:
         return "备注不能多于30个字"
     # 判断有无
@@ -180,6 +181,7 @@ async def 购买商品(购买人id, 名称):
     总花费 = 0
     商品名称 = ""
     mail_msg = {}
+    msg = ""
     for 商品 in 查找商品:
         商品id = 商品["_id"]
         商品价格 = 商品["价格"]
@@ -187,11 +189,8 @@ async def 购买商品(购买人id, 名称):
         商品名称 = 商品["名称"]
         寄售人 = 商品["寄售人"]
         user_info = db.user_info.find_one({"_id": 购买人id})
-        拥有银两 = 0
-        if user_info:
-            拥有银两 = user_info.get("gold", 0)
-        if 商品价格 > 拥有银两:
-            msg += f"\n购买商品[{商品id}]({商品名称})失败，需要银两{商品价格}，你只有{拥有银两}"
+        if not await 减少银两(购买人id, 商品价格):
+            msg += f"\n购买商品[{商品id}]({商品名称})失败，需要银两{商品价格}"
             break
         # 获得商品
         if 商品类型 in ("材料", "图纸"):
@@ -215,10 +214,9 @@ async def 购买商品(购买人id, 名称):
         获得银两 = 商品价格 - 手续费
         数量 += 1
         总花费 += 商品价格
-        db.user_info.update_one({"_id": 购买人id}, {"$inc": {"gold": -商品价格}})
-        db.user_info.update_one({"_id": 寄售人}, {"$inc": {"gold": 获得银两}})
+        await 增加银两(寄售人, 获得银两)
         if 寄售人 not in mail_msg:
-            mail_msg[寄售人] = {"数量": 0, "商品价格": 0, "手续费":0, "获得银两": 0}
+            mail_msg[寄售人] = {"数量": 0, "商品价格": 0, "手续费": 0, "获得银两": 0}
         mail_msg[寄售人]["数量"] += 1
         mail_msg[寄售人]["商品价格"] += 商品价格
         mail_msg[寄售人]["手续费"] += 手续费
