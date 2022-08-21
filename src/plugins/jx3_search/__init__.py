@@ -205,7 +205,7 @@ async def get_profession(
 async def _(event: GroupMessageEvent, server: str = Depends(get_server_1)):
     '''日常查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 日常查询 | 请求：{server}"
+        f"群{event.group_id} | {event.user_id} | 日常查询 | 请求：{server}"
     )
     params = {"server": server, "next": 0}
     msg, data = await source.get_data_from_api(app=JX3APP.日常任务,
@@ -235,7 +235,7 @@ async def _(event: GroupMessageEvent, server: str = Depends(get_server_1)):
 async def _(event: GroupMessageEvent, server: str = Depends(get_server_1)):
     '''沙盘查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 沙盘查询 | 请求：{server}"
+        f"群{event.group_id} | {event.user_id} | 沙盘查询 | 请求：{server}"
     )
 
     msg = await source.get_sand(server)
@@ -246,7 +246,7 @@ async def _(event: GroupMessageEvent, server: str = Depends(get_server_1)):
 async def _(event: GroupMessageEvent, server: str = Depends(get_server_1)):
     '''开服查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 开服查询 | 请求：{server}"
+        f"群{event.group_id} | {event.user_id} | 开服查询 | 请求：{server}"
     )
     params = {"server": server}
     msg, data = await source.get_data_from_api(app=JX3APP.开服检查,
@@ -293,7 +293,7 @@ async def _(event: GroupMessageEvent, server: str = Depends(get_server_1)):
 async def _(event: GroupMessageEvent, name: str = Depends(get_profession)):
     '''小药查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 小药查询 | 请求：{name}"
+        f"群{event.group_id} | {event.user_id} | 小药查询 | 请求：{name}"
     )
     params = {"name": name}
     msg, data = await source.get_data_from_api(app=JX3APP.推荐小药,
@@ -317,7 +317,7 @@ async def _(event: GroupMessageEvent, name: str = Depends(get_profession)):
 async def _(event: GroupMessageEvent, name: str = Depends(get_profession)):
     '''配装查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 配装查询 | 请求：{name}"
+        f"群{event.group_id} | {event.user_id} | 配装查询 | 请求：{name}"
     )
     params = {"name": name}
     msg, data = await source.get_data_from_api(app=JX3APP.推荐装备,
@@ -336,7 +336,7 @@ async def _(event: GroupMessageEvent, name: str = Depends(get_profession)):
 async def _(event: GroupMessageEvent, name: str = Depends(get_profession)):
     '''宏查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 宏查询 | 请求：{name}")
+        f"群{event.group_id} | {event.user_id} | 宏查询 | 请求：{name}")
     params = {"name": name}
     msg, data = await source.get_data_from_api(app=JX3APP.查宏命令,
                                                group_id=event.group_id,
@@ -356,7 +356,7 @@ async def _(event: GroupMessageEvent, name: str = Depends(get_profession)):
 async def _(event: GroupMessageEvent, name: str = Depends(get_profession)):
     '''阵眼查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 阵眼查询 | 请求：{name}"
+        f"群{event.group_id} | {event.user_id} | 阵眼查询 | 请求：{name}"
     )
     params = {"name": name}
     msg, data = await source.get_data_from_api(app=JX3APP.阵眼效果,
@@ -377,7 +377,7 @@ async def _(event: GroupMessageEvent, name: str = Depends(get_profession)):
 async def _(event: GroupMessageEvent, name: str = Depends(get_name)):
     '''前置查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 前置查询 | 请求：{name}"
+        f"群{event.group_id} | {event.user_id} | 前置查询 | 请求：{name}"
     )
     params = {"name": name}
     msg, data = await source.get_data_from_api(app=JX3APP.奇遇前置,
@@ -396,7 +396,7 @@ async def _(event: GroupMessageEvent, name: str = Depends(get_name)):
 async def _(event: GroupMessageEvent, name: str = Depends(get_ex_name)):
     '''攻略查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 攻略查询 | 请求：{name}"
+        f"群{event.group_id} | {event.user_id} | 攻略查询 | 请求：{name}"
     )
     params = {"name": name}
     msg, data = await source.get_data_from_api(app=JX3APP.奇遇攻略,
@@ -413,7 +413,7 @@ async def _(event: GroupMessageEvent, name: str = Depends(get_ex_name)):
 @update_query.handle()
 async def _(event: GroupMessageEvent):
     '''更新公告'''
-    logger.info(f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 更新公告查询")
+    logger.info(f"群{event.group_id} | {event.user_id} | 更新公告查询")
     url = "https://jx3.xoyo.com/launcher/update/latest.html"
     img = await browser.get_image_from_url(url=url, width=130)
     msg = MessageSegment.image(img)
@@ -426,7 +426,7 @@ async def _(event: GroupMessageEvent):
 async def _(event: GroupMessageEvent):
     '''骚话'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 骚话 | 请求骚话")
+        f"群{event.group_id} | {event.user_id} | 骚话 | 请求骚话")
     if datetime.now().weekday() == 3:
         await saohua_query.finish(await source.get_kfc())
     msg, data = await source.get_data_from_api(app=JX3APP.随机骚话,
@@ -448,7 +448,7 @@ async def _(event: GroupMessageEvent):
 async def _(event: GroupMessageEvent, name: str = Depends(get_name)):
     '''物价查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 物价查询 | 请求：{name}"
+        f"群{event.group_id} | {event.user_id} | 物价查询 | 请求：{name}"
     )
     params = {"name": name}
     msg, data = await source.get_data_from_api(app=JX3APP.物品价格,
@@ -477,7 +477,7 @@ async def _(event: GroupMessageEvent,
             name: str = Depends(get_name)):
     '''角色奇遇查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 角色奇遇查询 | 请求：server:{server},name:{name}"
+        f"群{event.group_id} | {event.user_id} | 角色奇遇查询 | 请求：server:{server},name:{name}"
     )
     params = {"server": server, "name": name}
     # 判断有没有token
@@ -504,7 +504,7 @@ async def _(event: GroupMessageEvent,
             name: str = Depends(get_name)):
     '''奇遇统计查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 奇遇统计查询 | 请求：server:{server},serendipity:{name}"
+        f"群{event.group_id} | {event.user_id} | 奇遇统计查询 | 请求：server:{server},serendipity:{name}"
     )
     params = {"server": server, "serendipity": name}
     msg, data = await source.get_data_from_api(app=JX3APP.奇遇统计,
@@ -527,7 +527,7 @@ async def _(event: GroupMessageEvent,
 async def _(event: GroupMessageEvent, server: str = Depends(get_server_1)):
     '''奇遇汇总查询'''
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 奇遇汇总查询 | 请求：{server}"
+        f"群{event.group_id} | {event.user_id} | 奇遇汇总查询 | 请求：{server}"
     )
     params = {
         "server": server
@@ -554,7 +554,7 @@ async def _(
 ):
     """战绩查询"""
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 战绩查询 | 请求：server:{server},name:{name}"
+        f"群{event.group_id} | {event.user_id} | 战绩查询 | 请求：server:{server},name:{name}"
     )
     params = {
         "server": server,
@@ -582,7 +582,7 @@ async def _(
 ):
     """装备属性查询"""
     logger.info(
-        f"<y>群{event.group_id}</y> | <g>{event.user_id}</g> | 装备属性查询 | 请求：server:{server},name:{name}"
+        f"群{event.group_id} | {event.user_id} | 装备属性查询 | 请求：server:{server},name:{name}"
     )
     params = {
         "server": server,

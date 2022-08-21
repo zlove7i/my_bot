@@ -252,7 +252,7 @@ async def purchase_goods(user_id, res):
     if not await 减少银两(user_id, 总价):
         return "你的银两不够！"
     db.knapsack.update_one({"_id": user_id}, {"$inc": {商品: 数量}}, True)
-    logger.debug(f"购买商品 | {商品} * {数量} | <e>{user_id}</e> | <r>总价: {总价}</r>")
+    logger.debug(f"购买商品 | {商品} * {数量} | {user_id} | 总价: {总价}")
     return "购买成功!"
 
 
@@ -275,7 +275,7 @@ async def use_goods(user_id, res):
     if not con:
         con = {}
     if con.get(物品, 0) < 数量:
-        logger.debug(f"使用物品 | {物品} | <e>{user_id}</e> | <r>物品数量不足</r>")
+        logger.debug(f"使用物品 | {物品} | {user_id} | 物品数量不足")
         return "你的物品数量不足！"
     user_info = UserInfo(user_id)
     result, msg = await 使用物品(user_info, 数量)
@@ -1281,7 +1281,7 @@ async def healing(user_id, target_id):
 
 async def gad_guys_ranking(bot: Bot, user_id):
     '''恶人排行'''
-    logger.debug(f"恶人排行 | <e>{user_id}</e>")
+    logger.debug(f"恶人排行 | {user_id}")
     filter = {'善恶值': {"$ne": None}}
     sort = list({'善恶值': 1}.items())
     limit = 10
@@ -1296,7 +1296,7 @@ async def gad_guys_ranking(bot: Bot, user_id):
 
 async def good_guys_ranking(bot: Bot, user_id):
     '''善人排行'''
-    logger.debug(f"善人排行 | <e>{user_id}</e>")
+    logger.debug(f"善人排行 | {user_id}")
     filter = {}
     sort = list({'善恶值': -1}.items())
     limit = 10
@@ -1310,7 +1310,7 @@ async def good_guys_ranking(bot: Bot, user_id):
 
 async def gear_ranking(bot: Bot, user_id):
     '''神兵排行'''
-    logger.debug(f"神兵排行 | <e>{user_id}</e>")
+    logger.debug(f"神兵排行 | {user_id}")
     project = {
         "总装分": {"$sum": ['$装备分数', '$镶嵌分数']},
         "持有人": 1
@@ -1350,7 +1350,7 @@ async def xiongsha_ranking(bot: Bot):
 async def gold_ranking(bot: Bot, user_id):
     '''银两排行'''
 
-    logger.debug(f"银两排行 | <e>{user_id}</e>")
+    logger.debug(f"银两排行 | {user_id}")
     filter = {}
     sort = list({'gold': -1}.items())
     limit = 10

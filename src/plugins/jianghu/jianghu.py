@@ -264,7 +264,7 @@ class PK(Skill):
                 user = db.user_info.find_one({"_id": 攻方.user_id})
                 精力 = user['energy']
                 data["结算"] += f"<br>当前贡献：{int(user['contribution'])}<br>当前精力: {精力}"
-                logger.info(f"<y>{攻方.名称}</y> | <g>世界首领</g> | 伤害：{攻方.本次伤害} | 首领气血：{守方.当前气血}/{守方.当前状态['气血上限']} | 精力：{精力}")
+                logger.info(f"{攻方.名称} | 世界首领 | 伤害：{攻方.本次伤害} | 首领气血：{守方.当前气血}/{守方.当前状态['气血上限']} | 精力：{精力}")
 
         if action == "秘境首领":
             data["守方"]["类型"] = "首领"

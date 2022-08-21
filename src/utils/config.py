@@ -33,12 +33,6 @@ class Config():
         main_host = self._config["node_info"].get("main_host")
         self._config['is_main_host'] = not main_host or main_host == hostname
 
-        # log文件夹
-        logs: str = os.path.join(root_path, "log")
-        logsdir = os.path.join(root_path, logs)
-        if not os.path.isdir(logsdir):
-            os.makedirs(logsdir)
-
 
 config = Config()
 '''项目配置文件'''

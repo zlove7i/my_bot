@@ -22,7 +22,7 @@ async def _(event: GroupMessageEvent):
     group_id = event.group_id
     user_name = event.sender.nickname
     logger.debug(
-        f"<y>群({group_id})</y> | <g>{user_id}</g> | 请求签到"
+        f"群({group_id}) | {user_id} | 请求签到"
     )
     msg = await source.get_sign_in(user_id, user_name, group_id)
     await sign.finish(msg)

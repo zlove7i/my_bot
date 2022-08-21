@@ -47,7 +47,7 @@ async def sent_river_lantern(
     if _con:
         gold = _con.get("gold", 0)
     if gold < 5:
-        logger.debug(f"<y>{user_id}</y> | <r>河灯金币不足</r>")
+        logger.debug(f"{user_id} | 河灯金币不足")
         ret_msg = '投放河灯需要五两银子，你没那么多银两！'
         return ret_msg
 
@@ -96,7 +96,7 @@ async def sent_river_lantern(
         if 善恶值 < 0:
             db.jianghu.update_one({"_id": user_id}, {"$inc": {"善恶值": 1}})
             msg += f"这是今天放的第{river_lantern+1}个河灯，善恶值+1，当前善恶值：{善恶值+1}。"
-    logger.debug(f"<y>{user_id}</y> | <g>投放成功！</g> | {content}")
+    logger.debug(f"{user_id} | 投放成功！ | {content}")
 
     return msg
 
@@ -125,7 +125,7 @@ async def get_river_lantern(group_id, user_id) -> Message:
     })
     con_list = list(_con)
     if not con_list:
-        logger.debug("<r>无河灯</r>")
+        logger.debug("无河灯")
         return "现在找不到河灯。"
 
     user_con = db.user_info.find_one({"_id": user_id})
@@ -148,7 +148,7 @@ async def get_river_lantern(group_id, user_id) -> Message:
         }}, True)
         msg = MessageSegment.at(user_id)
         msg += f"捡到的河灯里没有花笺，但是发现了{add_gold}两银子！"
-        logger.debug(f"| <g>{user_id}</g> | 河灯银两 +{add_gold}")
+        logger.debug(f"| {user_id} | 河灯银两 +{add_gold}")
         return msg
 
     con = random.choice(con_list)
@@ -156,13 +156,13 @@ async def get_river_lantern(group_id, user_id) -> Message:
     content = con.get("content")
     user_name = con.get("user_name")
     if not content:
-        logger.debug("<y>空河灯</y>")
+        logger.debug("空河灯")
         return "你捡到了一个空的河灯。要不你来放一个？"
     db.river_lantern.update_one({"_id": lantern_id},
                                 {"$inc": {
                                     "views_num": 1
                                 }})
-    logger.debug(f"<g>河灯</g> | {content}")
+    logger.debug(f"河灯 | {content}")
     if isinstance(lantern_id, int):
         msg = f"花笺{lantern_id}：\n    {content}"
     else:
@@ -198,7 +198,7 @@ async def my_river_lantern(user_id: int, user_name: str):
             i.get("views_num", 0)
         })
 
-    logger.debug(f"<g>{user_id}</g> | 查看河灯")
+    logger.debug(f"{user_id} | 查看河灯")
     pagename = "river_lantern.html"
     img = await browser.template_to_image(user_name=user_name,
                                           user_id=user_id,

@@ -219,7 +219,7 @@ async def _(bot: Bot, event: FriendRequestEvent):
     bot_id = int(bot.self_id)
     user_id = int(event.user_id)
     bot_info = db.bot_info.find_one({"_id": bot_id})
-    logger.info(f"<y>bot({bot_id})</y> | <y>加好友({user_id})</y>")
+    logger.info(f"bot({bot_id}) | 加好友({user_id})")
     if bot_info.get("master"):
         approve = True
     else:
@@ -243,7 +243,7 @@ async def _(bot: Bot, event: GroupRequestEvent):
 
     if not approve:
         logger.info(
-            f"<y>bot({bot_id})</y> | <r>拒绝加群群({group_id})</r> | {reason}")
+            f"bot({bot_id}) | 拒绝加群群({group_id}) | {reason}")
     try:
         await bot.set_group_add_request(flag=event.flag,
                                         sub_type=event.sub_type,
@@ -312,17 +312,17 @@ async def _(bot: Bot, event: GroupIncreaseNoticeEvent):
                     msg += MessageSegment.at(group_user_id)
                     msg += "是什么情况？我退了！！\n你在把它踢了之前，不要再拉我了！"
                     logger.warning(
-                        f"<y>bot({self_id})</y> | <r>重复加群({group_id})</r>")
+                        f"bot({self_id}) | 重复加群({group_id})")
                     await source.del_bot_to_group(bot, group_id, msg)
                     await someone_in_group.finish()
-        logger.info(f"<y>bot({self_id})</y> | <g>加群({group_id})</g>")
+        logger.info(f"bot({self_id}) | 加群({group_id})")
         # 注册群
         await source.add_bot_to_group(group_id, int(self_id))
         msg = '老子来了，发送“菜单”看看吧！'
         await someone_in_group.finish(msg)
 
     flag = await source.get_notice_status(group_id, "welcome_status")
-    logger.info(f"<y>成员({user_id})</y> | <g>加群({group_id})</g>")
+    logger.info(f"成员({user_id}) | 加群({group_id})")
     if flag:
         msg = await source.message_decoder(bot, event, "进群通知")
         if msg:
@@ -346,11 +346,11 @@ async def _(bot: Bot, event: GroupDecreaseNoticeEvent):
     if user_id == self_id:
         # 删除群中的bot_id
         await source.del_bot_to_group(bot, group_id, exit_group=False)
-        logger.info(f"<y>bot({self_id})</y> | <r>退群({group_id})</r>")
+        logger.info(f"bot({self_id}) | 退群({group_id})")
         await notice.finish()
     # 有人退群，发送退群消息
     flag = await source.get_notice_status(group_id, "someoneleft_status")
-    logger.info(f"<y>成员({user_id})</y> | <r>退群({group_id})</r>")
+    logger.info(f"成员({user_id}) | 退群({group_id})")
     if flag:
         msg = await source.message_decoder(bot, event, "离群通知")
         if msg:
@@ -374,7 +374,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
         # 删除群中的bot_id
         msg = MessageSegment.at(user_id)
         msg += "居然也在群里？我还以为我是唯一，没想到我什么都不是！\n我走了，你别来烦我！"
-        logger.warning(f"<y>bot({self_id})</y> | <r>检测到重复加群({group_id})</r>")
+        logger.warning(f"bot({self_id}) | 检测到重复加群({group_id})")
         await source.del_bot_to_group(bot, group_id, msg)
     await check_repeat_bot.finish()
 
@@ -389,6 +389,6 @@ async def _(bot: Bot,
     msg = "我老大喊我回去吃饭了，不过我觉得可能没那么简单。你们还是问问我老大是啥情况吧！各位再会！"
     ret_msg = await source.del_bot_to_group(bot, group_id, msg)
     logger.info(
-        f"<y>bot({bot_id})</y> | <r>指令退群({group_id})</r> | <g>管理员({event.user_id})</g>"
+        f"bot({bot_id}) | 指令退群({group_id}) | 管理员({event.user_id})"
     )
     await exit_group.finish(ret_msg)

@@ -87,7 +87,7 @@ async def get_data_from_api(app: JX3APP, group_id: int, params: dict, ticket: bo
             params["ticket"] = ticket
             if not ticket:
                 logger.debug(
-                    f"<y>群{group_id}</y> | {app.name} | 查询失败，未找到ticket"
+                    f"群{group_id} | {app.name} | 查询失败，未找到ticket"
                 )
                 return "未找到合适的ticket，请联系管理员", {}
             try:
