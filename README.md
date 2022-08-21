@@ -11,7 +11,7 @@ docker run  --name="mongo"  -p27017:27017 -p28017:28017 -v /docker-data/mongo:/d
 ## 安装my_bot
 
 sudo mkdir -p /etc/my_bot/
-sudo vi /etc/my_bot/conf/config.yml
+sudo vi /etc/my_bot/config.yml
 
 ``` yaml
 
