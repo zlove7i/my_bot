@@ -1,3 +1,5 @@
+import os
+
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator, Optional
@@ -5,7 +7,6 @@ from typing import AsyncIterator, Optional
 import jinja2
 from playwright.async_api import Browser, Error, Page, async_playwright
 
-from .config import config
 from .log import logger
 
 
@@ -90,7 +91,8 @@ class MyBrowser():
 
     async def init(self) -> Browser:
         '''初始化playwright'''
-        template_path = config.path['templates']
+        root_path = os.path.realpath(__file__+"/../../../")
+        template_path = os.path.join(root_path, "template")
         path = Path(template_path).absolute()
         self._base_url = f"file://{path}/"
         self._playwright = await async_playwright().start()

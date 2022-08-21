@@ -60,6 +60,8 @@ class DB():
         self.tickets = self.db.tickets
         # 表情包
         self.memes = self.db.memes
+        # 违禁词
+        self.forbidden_word = self.db.forbidden_word
 
         # 计数器
         self.counters = self.db.counters

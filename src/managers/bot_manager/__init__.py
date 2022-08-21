@@ -16,6 +16,7 @@ from src.utils.db import db
 from src.utils.log import logger
 from src.utils.scheduler import scheduler
 
+
 activation = on_regex(pattern=r"^激活$",
                       priority=5,
                       block=True)
@@ -234,11 +235,12 @@ async def start_resurrection_world_boss():
                 }
             }, True)
 
+
 @scheduler.scheduled_job("cron", hour=4, minute=0)
 async def _():
     '''每天4点开始偷偷的干活'''
 
-    if config.node_info.get("node") == config.node_info.get("main"):
+    if config.is_main_host:
         await archive_river_lantern()
         await pull_off_shelves()
 
@@ -260,7 +262,7 @@ async def _():
 @scheduler.scheduled_job("cron", hour="10,15,20,23", minute=1)
 async def _():
     '''10,15,20, 23刷新世界boss'''
-    if config.node_info.get("node") == config.node_info.get("main"):
+    if config.is_main_host:
         logger.info("正在复活世界首领")
         await start_resurrection_world_boss()
         logger.info("世界首领已复活")
@@ -269,7 +271,7 @@ async def _():
 @scheduler.scheduled_job("cron", hour=8, minute=0)
 async def _():
     '''每天八点重置签到人数'''
-    if config.node_info.get("node") == config.node_info.get("main"):
+    if config.is_main_host:
         logger.info("正在重置签到人数")
         await reset_sign_nums()
         logger.info("签到人数已重置")
@@ -277,5 +279,5 @@ async def _():
 
 @scheduler.scheduled_job("cron", hour="*")
 async def _():
-    if config.node_info.get("node") == config.node_info.get("main"):
+    if config.is_main_host:
         await recovery_qihai()

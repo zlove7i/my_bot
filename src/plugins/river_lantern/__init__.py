@@ -60,7 +60,7 @@ def get_content(event: GroupMessageEvent) -> str:
         return False, "",  "正确格式是：“放河灯 你想说的话”"
     if len(河灯内容) > 512:
         return False, "", "花笺最多只能写五百一十二个字，再多就写不下了！"
-    if not content_check(河灯内容)[0]:
+    if not content_check(河灯内容):
         return False, "", "你的花笺内容太不健康了，我可不敢给你放出去！"
     return True, 类型, 返回
 
@@ -72,7 +72,7 @@ async def _(event: GroupMessageEvent, res=Depends(get_content)):
     user_name = event.sender.nickname
     group_id = event.group_id
     result, 类型, content = res
-    check_name, _ = content_check(user_name)
+    check_name = content_check(user_name)
     if not check_name:
         await sent_river_lantern.finish("你的昵称违规了，小心被人举报啊！")
     if not result:

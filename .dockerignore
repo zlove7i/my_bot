@@ -1,0 +1,12 @@
+**/__pycache__/
+venv/
+workspace.code-workspace
+config.yml
+.git/
+.github/
+.dockerignore
+.gitignore
+Dockerfile
+log/
+conf/
+README.md
