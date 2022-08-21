@@ -166,7 +166,7 @@ async def _(event: GroupMessageEvent):
     user_id = event.user_id
     group_id = event.group_id
     user_name = event.sender.nickname
-    logger.info(f"<y>群{group_id}</y> | <g>{user_id}</g> | 查看个人信息")
+    logger.info(f"群{group_id} | {user_id} | 查看个人信息")
     msg = await source.get_my_info(user_id, user_name)
     await my_info.finish(msg)
 
@@ -176,7 +176,7 @@ async def _(event: GroupMessageEvent, res=Depends(get_content)):
     '''改名'''
     user_id = event.user_id
     group_id = event.group_id
-    logger.info(f"<y>群{group_id}</y> | <g>{user_id}</g> | 查看个人信息")
+    logger.info(f"群{group_id} | {user_id} | 查看个人信息")
     msg = await source.set_name(user_id, res)
     await set_name.finish(msg)
 
@@ -221,7 +221,7 @@ async def _(event: GroupMessageEvent, res=Depends(get_content)):
     number = 1
     if len(res) == 1:
         number = int(res[0])
-    logger.info(f"<y>群{group_id}</y> | <g>{user_id}</g> | 挖宝")
+    logger.info(f"群{group_id} | {user_id} | 挖宝")
     msg = await source.dig_for_treasure(user_id, number)
     await dig_for_treasure.finish(msg)
 
@@ -233,7 +233,7 @@ async def _(event: GroupMessageEvent, res=Depends(get_content)):
     if user_id == 80000000:
         await put_on_shelves.finish("这条路是孤独的，只能前行，退无可退。")
     group_id = event.group_id
-    logger.info(f"<y>群{group_id}</y> | <g>{user_id}</g> | 上架物品")
+    logger.info(f"群{group_id} | {user_id} | 上架物品")
     msg = await 上架商品(user_id, *res)
     await put_on_shelves.finish(msg)
 
@@ -245,7 +245,7 @@ async def _(event: GroupMessageEvent, res=Depends(get_content)):
     if user_id == 80000000:
         await pull_off_shelves.finish("这条路是孤独的，只能前行，退无可退。")
     group_id = event.group_id
-    logger.info(f"<y>群{group_id}</y> | <g>{user_id}</g> | 下架物品")
+    logger.info(f"群{group_id} | {user_id} | 下架物品")
     if len(res) != 1 or not res[0].isdigit():
         await pull_off_shelves.finish("格式错误")
     编号 = int(res[0])
@@ -258,7 +258,7 @@ async def _(event: GroupMessageEvent):
     '''查找物品'''
     user_id = event.user_id
     group_id = event.group_id
-    logger.info(f"<y>群{group_id}</y> | <g>{user_id}</g> | 查找物品")
+    logger.info(f"群{group_id} | {user_id} | 查找物品")
     msg = await 查找商品(event.get_plaintext())
     if not msg:
         await find_commodity.finish("找不到任何商品，有可能是的的查找姿势不对。")
@@ -270,7 +270,7 @@ async def _(event: GroupMessageEvent):
     '''我的商品'''
     user_id = event.user_id
     group_id = event.group_id
-    logger.info(f"<y>群{group_id}</y> | <g>{user_id}</g> | 我的商品")
+    logger.info(f"群{group_id} | {user_id} | 我的商品")
     msg = await 我的商品(user_id, event.get_plaintext())
     if not msg:
         await my_commodity.finish("找不到任何商品，有可能是的的查找姿势不对。")
@@ -284,7 +284,7 @@ async def _(event: GroupMessageEvent, res=Depends(get_content)):
     if user_id == 80000000:
         await buy_commodity.finish("这条路是孤独的，只能前行，退无可退。")
     group_id = event.group_id
-    logger.info(f"<y>群{group_id}</y> | <g>{user_id}</g> | 购买物品")
+    logger.info(f"群{group_id} | {user_id} | 购买物品")
     if len(res) != 1:
         await buy_commodity.finish("格式错误")
     msg = await 购买商品(user_id, res[0])

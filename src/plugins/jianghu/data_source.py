@@ -20,6 +20,7 @@ from src.plugins.jianghu.jianghu import PK
 from src.plugins.jianghu.world_boss import world_boss
 from src.utils.cooldown_time import search_record, search_once
 from src.plugins.jianghu.dungeon import 挑战秘境, 查看秘境, 秘境进度
+from src.plugins.jianghu.gold import 减少银两, 增加银两, 赠送银两
 
 
 client = AsyncClient()
@@ -129,13 +130,8 @@ async def set_name(user_id, res):
         return "狡诈恶徒不得改名!"
     if usr.名称 != "无名":
         msg = "，花费一百两银子。"
-        gold = 0
-        con = db.user_info.find_one({"_id": user_id})
-        if con:
-            gold = con.get("gold", 0)
-        if gold < 100:
+        if not await 减少银两(user_id, 100, "改名"):
             return "改名需要花费一百两银子，你的银两不够！"
-        db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -100}})
     else:
         msg = "，首次改名不需要花费银两。"
     db.jianghu.update_one({"_id": user_id}, {"$set": {"名称": name}}, True)
@@ -166,18 +162,16 @@ async def practice_qihai(user_id, res):
     if 花费银两 < 10:
         return "最少十两银子"
     con = db.user_info.find_one({"_id": user_id})
-    gold = 0
     energy = 0
     if con:
-        gold = con.get("gold", 0)
         energy = con.get("energy", 0)
-    if gold < 花费银两:
+    if not await 减少银两(user_id, 花费银两, "修炼气海"):
         return "你的银两不够！"
     if energy < 3:
         return "你的精力不足3点！"
     增加气海 = random.randint(花费银两//10, 花费银两//5)
 
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -花费银两, "energy": -3}})
+    db.user_info.update_one({"_id": user_id}, {"$inc": {"energy": -3}})
     db.jianghu.update_one({"_id": user_id}, {"$inc": {"气海上限": 增加气海}})
 
     return f"花费{花费银两}两银子与3点精力，成功增加{增加气海}上限"
@@ -188,11 +182,7 @@ async def recovery_qihai(user_id, res):
     if not res:
         return "输入错误"
     花费银两 = int(res[0])
-    con = db.user_info.find_one({"_id": user_id})
-    gold = 0
-    if con:
-        gold = con.get("gold", 0)
-    if gold < 花费银两:
+    if not await 减少银两(user_id, 花费银两, "恢复气海"):
         return "你的银两不够！"
     usr = UserInfo(user_id)
     损失气海 = usr.基础属性["气海上限"] - usr.当前气海
@@ -200,7 +190,6 @@ async def recovery_qihai(user_id, res):
     if 花费银两 < 需要花费:
         需要花费 = 花费银两
 
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -需要花费}})
     db.jianghu.update_one({"_id": user_id}, {"$inc": {"当前气海": 需要花费*100}})
 
     return f"花费{需要花费}两银子，恢复气海{需要花费*100}"
@@ -224,34 +213,23 @@ async def dig_for_treasure(user_id, number):
         获得物品[i] += 1
     db.knapsack.update_one({"_id": user_id}, {"$inc": 获得物品}, True)
     db.user_info.update_one({"_id": user_id}, {"$inc": {"energy": -消耗精力}})
-    msg = f"精力-{消耗精力}, 获得: {'、'.join([f'{k}*{v}' for k, v in 获得物品.items()])}"
-    return msg
+    return f"精力-{消耗精力}, 获得: {'、'.join([f'{k}*{v}' for k, v in 获得物品.items()])}"
 
 
-async def give_gold(user_id, user_name, at_qq, gold):
+async def give_gold(user_id, user_name, at_qq, 银两):
     '''赠送银两'''
-
-    logger.debug(f"赠送银两 | <e>{user_id} -> {at_qq}</e> | {gold}")
     at_user_info = UserInfo(at_qq)
     if at_user_info.名称 == "无名":
         return "对方未改名, 无法赠送银两"
     user_info = UserInfo(user_id)
     if user_info.基础属性["重伤状态"]:
-        return f"重伤状态无法赠送银两"
+        return "重伤状态无法赠送银两"
     凶煞 = user_info.基础属性["凶煞"]
     if 凶煞 > datetime.now():
         return f"凶煞状态无法赠送银两，凶煞状态结束时间：{凶煞.strftime('%Y-%m-%d %H:%M:%S')}"
-    con = db.user_info.find_one({"_id": user_id})
-    if not con:
-        con = {}
-    if con.get("gold", 0) < gold:
-        logger.debug(f"赠送银两 | <e>{user_id} -> {at_qq}</e> | <r>银两不足</r>")
-        return f"{user_name}，你的银两不足！"
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -gold}}, True)
-    db.user_info.update_one({"_id": at_qq}, {"$inc": {"gold": gold}}, True)
-    logger.debug(f"赠送银两 | <e>{user_id} -> {at_qq}</e> | <g>成功！</g>")
-    msg = f"成功赠送{gold}两银子！"
-    return msg
+    if not await 赠送银两(user_id, at_qq, 银两):
+        return "你的银两不够！"
+    return f"成功赠送{银两}两银子！"
 
 
 async def purchase_goods(user_id, res):
@@ -271,13 +249,8 @@ async def purchase_goods(user_id, res):
     if 数量 < 1:
         return "数量不可以小于1"
     总价 = 价格 * 数量
-    con = db.user_info.find_one({"_id": user_id})
-    if not con:
-        con = {}
-    if con.get("gold", 0) < 总价:
-        logger.debug(f"购买商品 | {商品} | <e>{user_id}</e> | <r>银两不足</r>")
-        return "你的银两不足！"
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -总价}}, True)
+    if not await 减少银两(user_id, 总价, f"购买{商品} * {数量}"):
+        return "你的银两不够！"
     db.knapsack.update_one({"_id": user_id}, {"$inc": {商品: 数量}}, True)
     return "购买成功!"
 
@@ -294,17 +267,17 @@ async def use_goods(user_id, res):
     if len(res) == 2:
         数量 = int(res[1])
     if 数量 < 1:
-        return f"使用数量必须大于等于1个"
+        return "使用数量必须大于等于1个"
     if 数量 > 使用数量限制:
         return f"该物品一次只能用{使用数量限制}个"
     con = db.knapsack.find_one({"_id": user_id})
     if not con:
         con = {}
     if con.get(物品, 0) < 数量:
-        logger.debug(f"使用物品 | {物品} | <e>{user_id}</e> | <r>物品数量不足</r>")
+        logger.debug(f"使用物品 | {物品} | {user_id} | 物品数量不足")
         return "你的物品数量不足！"
     user_info = UserInfo(user_id)
-    result, msg = 使用物品(user_info, 数量)
+    result, msg = await 使用物品(user_info, 数量)
     if result:
         db.knapsack.update_one({"_id": user_id}, {"$inc": {物品: -数量}}, True)
     return msg
@@ -369,8 +342,7 @@ async def sell_equipment(user_id, 装备名称: str):
             return "该装备正在使用，无法出售"
         获得银两 += 装备价格(con)
         db.equip.delete_one({"_id": 装备名称})
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": 获得银两}}, True)
-
+    await 增加银两(user_id, 获得银两, "出售装备")
     return f"出售成功，获得银两：{获得银两}"
 
 
@@ -895,7 +867,7 @@ async def claim_rewards(user_id):
         图纸[获得图纸名称] += 1
         奖励[获得图纸名称] += 1
     db.knapsack.update_one({"_id": user_id}, {"$set": {"图纸": 图纸, "材料": 材料}})
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": 获得银两}})
+    await 增加银两(user_id, 获得银两, "世界首领奖励")
     if 奖励:
         msg = "、".join([f"{k}*{v}" for k, v in 奖励.items()])
     return f"消耗{contribution}贡献值, 获得银两{获得银两}" + msg
@@ -1043,12 +1015,9 @@ async def forgotten_skill(user_id, res):
 async def comprehension_skill(user_id):
     """领悟武学"""
     银两 = 300
-    拥有银两 = 0
-    con = db.user_info.find_one({"_id": user_id})
-    if con:
-        拥有银两 = con.get("gold", 0)
-    if 拥有银两 < 银两:
-        return "你的银两不足"
+
+    if not await 减少银两(user_id, 银两, "领悟武学"):
+        return f"你的银两不足，需要{银两}两银子"
 
     user_info = UserInfo(user_id)
     已领悟武学 = user_info.基础属性.get("已领悟武学", [])
@@ -1066,10 +1035,9 @@ async def comprehension_skill(user_id):
         return msg
     await search_once(user_id, app_name)
 
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -银两}}, True)
     武学 = random.choice(全部武学)
     if 武学 in 已领悟武学:
-        return "领悟失败"
+        return f"花费{银两}两银子，领悟失败"
 
     已领悟武学.append(武学)
     db.jianghu.update_one({"_id": user_id}, {"$set": {"已领悟武学": 已领悟武学}}, True)
@@ -1085,15 +1053,10 @@ async def impart_skill(user_id, at_qq, 武学):
     被传授方武学 = at_info.基础属性.get("已领悟武学", [])
     if 武学 in 被传授方武学:
         return "对方已经学会了该武学，不用花冤枉钱了。"
-    拥有银两 = 0
-    con = db.user_info.find_one({"_id": user_id})
-    if con:
-        拥有银两 = con.get("gold", 0)
     需要花费银两 = 3000
-    if 拥有银两 < 需要花费银两:
+    if not await 减少银两(user_id, 需要花费银两, "传授武学"):
         return f"传授武学需要{需要花费银两}两银子，你的银两不足"
     被传授方武学.append(武学)
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -需要花费银两}}, True)
     db.jianghu.update_one({"_id": at_qq}, {"$set": {"已领悟武学": 被传授方武学}}, True)
     return f"花费{需要花费银两}两银子，成功传授武学：{武学}"
 
@@ -1299,16 +1262,12 @@ async def healing(user_id, target_id):
         return "无法帮此目标疗伤"
     if not user.基础属性["重伤状态"]:
         return "未重伤，不需要疗伤"
-    gold = 0
-    con = db.user_info.find_one({"_id": user_id})
-    if con:
-        gold = con.get("gold", 0)
+
     善恶值 = user.基础属性["善恶值"]
     复活需要银两 = 1000 - (善恶值 * 10)
     复活需要银两 = 复活需要银两 if 复活需要银两 > 500 else 500
-    if gold < 复活需要银两:
+    if not await 减少银两(user_id, 复活需要银两, "疗伤"):
         return f"疗伤需要{复活需要银两}两银子，你的银两不够！"
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -复活需要银两}}, True)
     db.jianghu.update_one({"_id": target_id}, {
         "$set": {
             "重伤状态": False,
@@ -1321,7 +1280,7 @@ async def healing(user_id, target_id):
 
 async def gad_guys_ranking(bot: Bot, user_id):
     '''恶人排行'''
-    logger.debug(f"恶人排行 | <e>{user_id}</e>")
+    logger.debug(f"恶人排行 | {user_id}")
     filter = {'善恶值': {"$ne": None}}
     sort = list({'善恶值': 1}.items())
     limit = 10
@@ -1336,7 +1295,7 @@ async def gad_guys_ranking(bot: Bot, user_id):
 
 async def good_guys_ranking(bot: Bot, user_id):
     '''善人排行'''
-    logger.debug(f"善人排行 | <e>{user_id}</e>")
+    logger.debug(f"善人排行 | {user_id}")
     filter = {}
     sort = list({'善恶值': -1}.items())
     limit = 10
@@ -1350,7 +1309,7 @@ async def good_guys_ranking(bot: Bot, user_id):
 
 async def gear_ranking(bot: Bot, user_id):
     '''神兵排行'''
-    logger.debug(f"神兵排行 | <e>{user_id}</e>")
+    logger.debug(f"神兵排行 | {user_id}")
     project = {
         "总装分": {"$sum": ['$装备分数', '$镶嵌分数']},
         "持有人": 1
@@ -1390,7 +1349,7 @@ async def xiongsha_ranking(bot: Bot):
 async def gold_ranking(bot: Bot, user_id):
     '''银两排行'''
 
-    logger.debug(f"银两排行 | <e>{user_id}</e>")
+    logger.debug(f"银两排行 | {user_id}")
     filter = {}
     sort = list({'gold': -1}.items())
     limit = 10

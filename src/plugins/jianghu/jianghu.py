@@ -7,6 +7,7 @@ from src.plugins.jianghu.skill import Skill
 from src.utils.db import db
 import re
 from src.utils.log import logger
+from src.plugins.jianghu.gold import 减少银两, 增加银两, 查询银两
 
 
 class PK(Skill):
@@ -54,12 +55,11 @@ class PK(Skill):
 
     async def 抢走银两(self, 抢劫方id: int, 被抢方id: int, 银两数量: int):
         if 抢劫方id:
-            db.user_info.update_one({"_id": 抢劫方id}, {"$inc": {"gold": 银两数量}})
+            await 增加银两(抢劫方id, 银两数量, "抢到银两")
         if 被抢方id:
-            db.user_info.update_one({"_id": 被抢方id}, {"$inc": {"gold": -银两数量}})
+            await 减少银两(被抢方id, 银两数量, "被抢银两")
 
     async def 偷袭死斗结算(self, 胜方: UserInfo, 败方: UserInfo, 攻方善恶值: int):
-        gold = 0
         msg = ""
         胜方id = 胜方.基础属性["_id"]
         败方id = 败方.基础属性["_id"]
@@ -67,11 +67,9 @@ class PK(Skill):
         败方名称 = 败方.基础属性['名称']
         总善恶 = 胜方.基础属性['善恶值'] + 败方.基础属性['善恶值']
         抢夺系数 = arctan(-总善恶 / 1000) / 10 + 0.16
-
-        if con := db.user_info.find_one({"_id": 败方id}):
-            gold = con.get("gold", 0)
-        if gold > 10:
-            抢走金额 = random.randint(1, int(gold * 抢夺系数))
+        银两 = await 查询银两(败方id)
+        if 银两 > 10:
+            抢走金额 = random.randint(1, int(银两 * 抢夺系数))
             抢夺上限 = int(-攻方善恶值 * 500)
             抢夺上限 = 抢夺上限 if 抢夺上限 > 50000 else 50000
             抢走金额 = 抢走金额 if 抢走金额 < 抢夺上限 else 抢夺上限
@@ -126,11 +124,10 @@ class PK(Skill):
         return msg
 
     async def 世界首领重伤惩罚(self, 重伤者: int):
-        gold = 0
-        if con := db.user_info.find_one({"_id": 重伤者}):
-            gold = con.get("gold", 0)
-        if gold > 10:
-            抢走金额 = random.randint(1, int(gold * 0.1))
+
+        银两 = await 查询银两(重伤者)
+        if 银两 > 10:
+            抢走金额 = random.randint(1, int(银两 * 0.1))
             await self.抢走银两(0, 重伤者, 抢走金额)
         db.jianghu.update_one({"_id": 重伤者}, {"$set": {
             "重伤状态": True,
@@ -267,7 +264,7 @@ class PK(Skill):
                 user = db.user_info.find_one({"_id": 攻方.user_id})
                 精力 = user['energy']
                 data["结算"] += f"<br>当前贡献：{int(user['contribution'])}<br>当前精力: {精力}"
-                logger.info(f"<y>{攻方.名称}</y> | <g>世界首领</g> | 伤害：{攻方.本次伤害} | 首领气血：{守方.当前气血}/{守方.当前状态['气血上限']} | 精力：{精力}")
+                logger.info(f"{攻方.名称} | 世界首领 | 伤害：{攻方.本次伤害} | 首领气血：{守方.当前气血}/{守方.当前状态['气血上限']} | 精力：{精力}")
 
         if action == "秘境首领":
             data["守方"]["类型"] = "首领"

@@ -167,7 +167,7 @@ class TicketManager(object):
                 return True
             return False
         except Exception as e:
-            logger.error(f"<r>查询ticket失败</r> | <g>{str(e)}</g>")
+            logger.error(f"查询ticket失败 | {str(e)}")
             return False
 
     async def get_ticket(self) -> Optional[str]:
@@ -244,7 +244,7 @@ class Jx3Searcher(object):
         flag, cd_time = await search_record(group_id, app.name, app.value.cd)
         if not flag:
             logger.debug(
-                f"<y>群{group_id}</y> | <g>{app.name}</g> | 冷却中：{cd_time}")
+                f"群{group_id} | {app.name} | 冷却中：{cd_time}")
             msg = f"[{app.name}]冷却中（{cd_time}）"
             return msg, {}
 
@@ -257,12 +257,12 @@ class Jx3Searcher(object):
             req_json: dict = req.json()
             msg: str = req_json['msg']
             data = req_json['data']
-            logger.debug(f"<y>群{group_id}</y> | <g>{app.name}</g> | 返回：{data}")
+            logger.debug(f"群{group_id} | {app.name} | 返回：{data}")
             return msg, data
         except Exception as e:
             error = str(e)
             logger.error(
-                f"<y>群{group_id}</y> | <g>{app.name}</g> | 失败：{error}")
+                f"群{group_id} | {app.name} | 失败：{error}")
             return error, {}
 
 

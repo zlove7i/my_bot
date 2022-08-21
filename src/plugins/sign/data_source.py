@@ -27,7 +27,7 @@ async def get_sign_in(user_id: int, user_name: str, group_id: int) -> Message:
     gold = 0
     if _con := db.user_info.find_one({'_id': user_id}):
         if _con.get("is_sign"):
-            logger.debug(f"<y>群({group_id})</y> | <g>{user_id}</g> | <y>重复签到</y>")
+            logger.debug(f"群({group_id}) | {user_id} | 重复签到")
             msg = MessageSegment.text('每天只能签到一次，签到次数会在 8:00 重置')
             return msg
         gold = _con.get("gold", 0)
@@ -56,7 +56,7 @@ async def get_sign_in(user_id: int, user_name: str, group_id: int) -> Message:
     }}, True)
     db.bot_conf.update_one({'_id': 1}, {'$inc': {"sign_num": 1}}, True)
     sign_num = db.bot_conf.find_one({'_id': 1}).get("sign_num", 0)
-    logger.debug(f"<y>群({group_id})</y> | <g>{user_id}</g> | <g>签到成功</g>")
+    logger.debug(f"群({group_id}) | {user_id} | 签到成功")
     pagename = "sign.html"
     img = await browser.template_to_image(user_name=user_name,
                                           user_id=user_id,

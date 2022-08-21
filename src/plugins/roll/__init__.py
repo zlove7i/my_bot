@@ -51,7 +51,7 @@ async def _(event: GroupMessageEvent):
     '''吃什么'''
     user_id = event.user_id
     group_id = event.group_id
-    logger.debug(f"<y>群{group_id}</y> | <g>{user_id}</g> | <e>吃什么</e>")
+    logger.debug(f"群{group_id} | {user_id} | 吃什么")
     msg = "给你挑了这三个吃的："
     for i in random.choices(food_list, k=3):
         msg += f"\n  - {i}"
@@ -64,9 +64,9 @@ async def _(event: GroupMessageEvent, res=Depends(get_content)):
     user_id = event.user_id
     group_id = event.group_id
     result, content = res
-    logger.debug(f"<y>群{group_id}</y> | <g>{user_id}</g> | <e>掷筹</e> | {content}")
+    logger.debug(f"群{group_id} | {user_id} | 掷筹 | {content}")
     if not result:
         await roll.finish(content)
     msg = f"掷筹结果：【{random.choice(content)}】"
-    logger.debug(f"<y>群{group_id}</y> | <g>{user_id}</g> | <e>结果</e> | {msg}")
+    logger.debug(f"群{group_id} | {user_id} | 结果 | {msg}")
     await roll.finish(msg)

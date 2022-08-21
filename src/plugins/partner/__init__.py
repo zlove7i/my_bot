@@ -74,7 +74,7 @@ async def _(event: GroupMessageEvent):
             group_id, cooldown_time)
         await find_partner_cooldown_time.finish(msg)
     except TypeError as e:
-        logger.warning(f"<y>群{group_id}</y> | 分配情缘冷却 | {str(e)}")
+        logger.warning(f"群{group_id} | 分配情缘冷却 | {str(e)}")
         await find_partner_cooldown_time.finish("输入错误！")
 
 
@@ -91,7 +91,7 @@ async def _(event: GroupMessageEvent):
             group_id, do_not_disturb_switch)
         await find_partner_do_not_disturb.finish(msg)
     except TypeError as e:
-        logger.error(f"<y>群{group_id}</y> | 分配情缘冷却 | {str(e)}")
+        logger.error(f"群{group_id} | 分配情缘冷却 | {str(e)}")
         await find_partner_do_not_disturb.finish("输入错误！")
 
 
@@ -103,7 +103,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
     end_str = event.raw_message[-2:]
     if end_str not in ["情缘", "亲友", "富婆"]:
         return
-    logger.info(f"<y>群{group_id}</y> | <g>{user_id}</g> | 分配{end_str}")
+    logger.info(f"群{group_id} | {user_id} | 分配{end_str}")
     group_member_list = await bot.get_group_member_list(group_id=group_id)
     msg = await source.get_find_partner_to_group(user_id, group_id, end_str,
                                                  group_member_list)

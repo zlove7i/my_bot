@@ -282,7 +282,7 @@ async def tianjianhongfu(bot: Bot, group_id, user_id, nickname):
         }}, True)
         msg = f"{nickname}天降鸿福，银两 +{add_gold}"
         logger.debug(
-            f"<y>群{group_id}</y> | <g>{nickname}</g> | 天降鸿福 +{add_gold}")
+            f"群{group_id} | {nickname} | 天降鸿福 +{add_gold}")
         await bot.send_group_msg(group_id=group_id, message=msg)
         return True
     return False
@@ -303,10 +303,10 @@ async def play_picture(bot: Bot, event: GroupMessageEvent, group_id):
             if not content:
                 return
             msg = await chat(content)
-            logger.debug(f"<y>群({group_id})</y> | 搭话 | {msg}")
+            logger.debug(f"群({group_id}) | 搭话 | {msg}")
         else:
             memes = db.memes.aggregate([{"$sample": {"size": 1}}])
-            logger.debug(f"<y>群({group_id})</y> | 斗图")
+            logger.debug(f"群({group_id}) | 斗图")
             for meme in memes:
                 url = meme.get("url")
                 async with AsyncClient() as client:

@@ -117,11 +117,11 @@ class Jx3WebSocket(object):
             pass
 
         except ConnectionClosedOK:
-            logger.debug("<g>jx3api > ws链接已主动关闭！</g>")
+            logger.debug("jx3api > ws链接已主动关闭！")
 
         except Exception as e:
             logger.error(
-                f"<r>jx3api > ws链接被关闭：{str(e)}</r>")
+                f"jx3api > ws链接被关闭：{str(e)}")
             await self._raise_closed(str(e))
 
     async def _raise_closed(self, reason: str):
@@ -144,7 +144,7 @@ class Jx3WebSocket(object):
                 await handle_event(one_bot, event)
         else:
             logger.error(
-                f"<r>未知的ws消息：{data}</r>")
+                f"未知的ws消息：{data}")
 
     async def init(self) -> bool:
         '''初始化'''
@@ -154,12 +154,12 @@ class Jx3WebSocket(object):
         if ws_token is None:
             ws_token = ""
         headers = {"token": ws_token}
-        logger.debug(f"<g>ws_server</g> | 正在链接jx3api的ws服务器：{ws_path}")
+        logger.debug(f"ws_server | 正在链接jx3api的ws服务器：{ws_path}")
         self.is_connecting = True
         for i in range(1, 101):
             try:
                 logger.debug(
-                    f"<g>ws_server</g> | 正在开始第 {i} 次尝试"
+                    f"ws_server | 正在开始第 {i} 次尝试"
                 )
                 self._ws = await websockets.connect(uri=ws_path,
                                                     extra_headers=headers,
@@ -169,12 +169,12 @@ class Jx3WebSocket(object):
                 self.is_connecting = False
                 asyncio.create_task(self._task())
                 logger.debug(
-                    "<g>ws_server</g> | ws连接成功！"
+                    "ws_server | ws连接成功！"
                 )
                 return True
             except Exception as e:
                 logger.error(
-                    f"<r>链接到ws服务器时发生错误：{str(e)}</r>")
+                    f"链接到ws服务器时发生错误：{str(e)}")
                 asyncio.sleep(1)
         self.is_connecting = False
         return False

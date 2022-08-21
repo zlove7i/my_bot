@@ -22,7 +22,7 @@ async def _(event: GroupMessageEvent):
     user_id = event.user_id
     group_id = event.group_id
     user_name = event.sender.nickname
-    logger.info(f"<y>群{group_id}</y> | <g>{user_name}({user_id})</g> | 投喂")
+    logger.info(f"群{group_id} | {user_name}({user_id}) | 投喂")
     pagename = "tipping.html"
     img = await browser.template_to_image(pagename=pagename)
     await tipping.finish(MessageSegment.image(img))

@@ -68,7 +68,7 @@ class MailClient(object):
             log = f"发送邮件失败，原因：{str(e)}"
             logger.error(log)
         except Exception as e:
-            logger.error(f"<r>发送邮件失败，可能是你的配置有问题：{str(e)}</r>")
+            logger.error(f"发送邮件失败，可能是你的配置有问题：{str(e)}")
 
     async def bot_offline(self, robot_id: int):
         db.bot_info.update_one({"_id": robot_id},

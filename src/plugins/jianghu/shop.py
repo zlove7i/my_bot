@@ -1,9 +1,10 @@
 import random
 from src.utils.db import db
 from src.plugins.jianghu.user_info import UserInfo
+from src.plugins.jianghu.gold import 增加银两
 
 
-def 材料盒(自己: UserInfo, 数量: int):
+async def 材料盒(自己: UserInfo, 数量: int):
     user_id = 自己.基础属性["_id"]
     已有数量 = 0
     con = db.knapsack.find_one({"_id": user_id})
@@ -28,7 +29,7 @@ def 材料盒(自己: UserInfo, 数量: int):
     return True, msg
 
 
-def 图纸盒(自己: UserInfo, 数量: int):
+async def 图纸盒(自己: UserInfo, 数量: int):
     user_id = 自己.基础属性["_id"]
     con = db.knapsack.find_one({"_id": user_id})
     图纸 = {}
@@ -52,7 +53,7 @@ def 图纸盒(自己: UserInfo, 数量: int):
     return True, msg
 
 
-def 活血丹(自己: UserInfo, 数量: int):
+async def 活血丹(自己: UserInfo, 数量: int):
     if 自己.基础属性["重伤状态"]:
         return "重伤状态下无法使用"
     for _ in range(数量):
@@ -66,7 +67,7 @@ def 活血丹(自己: UserInfo, 数量: int):
     return True, f"使用活血丹成功，当前气血为{自己.当前气血}"
 
 
-def 大活血丹(自己: UserInfo, 数量: int):
+async def 大活血丹(自己: UserInfo, 数量: int):
     if 自己.基础属性["重伤状态"]:
         return "重伤状态下无法使用"
 
@@ -78,7 +79,7 @@ def 大活血丹(自己: UserInfo, 数量: int):
     return True, f"使用大活血丹成功，当前气血为{自己.当前气血}"
 
 
-def 疏络丹(自己: UserInfo, 数量: int):
+async def 疏络丹(自己: UserInfo, 数量: int):
     if 自己.基础属性["重伤状态"]:
         return "重伤状态下无法使用"
     for _ in range(数量):
@@ -92,7 +93,7 @@ def 疏络丹(自己: UserInfo, 数量: int):
     return True, f"使用疏络丹成功，当前内力为{自己.当前内力}"
 
 
-def 大疏络丹(自己: UserInfo, 数量: int):
+async def 大疏络丹(自己: UserInfo, 数量: int):
     if 自己.基础属性["重伤状态"]:
         return "重伤状态下无法使用"
 
@@ -104,25 +105,25 @@ def 大疏络丹(自己: UserInfo, 数量: int):
     return True, f"使用大疏络丹成功，当前内力为{自己.当前内力}"
 
 
-def 大洗髓丹(自己: UserInfo, 数量: int):
+async def 大洗髓丹(自己: UserInfo, 数量: int):
     pass
 
 
-def _开宝箱(自己: UserInfo,
-         宝箱名称,
-         数量,
-         装备概率,
-         银两概率,
-         银两下限,
-         银两上限,
-         材料概率,
-         材料等级,
-         材料数量下限,
-         材料数量上限,
-         图纸概率,
-         图纸等级下限,
-         图纸等级上限,
-         其他物品=[]):
+async def _开宝箱(自己: UserInfo,
+                 宝箱名称,
+                 数量,
+                 装备概率,
+                 银两概率,
+                 银两下限,
+                 银两上限,
+                 材料概率,
+                 材料等级,
+                 材料数量下限,
+                 材料数量上限,
+                 图纸概率,
+                 图纸等级下限,
+                 图纸等级上限,
+                 其他物品=[]):
     msg = ""
     user_id = 自己.基础属性["_id"]
     获得银两 = 0
@@ -166,7 +167,7 @@ def _开宝箱(自己: UserInfo,
                 获得物品[物品名称] += 物品数量
     if 获得银两:
         msg += f"\n{获得银两}两银子"
-        db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": 获得银两}})
+        await 增加银两(user_id, 获得银两, f"使用{宝箱名称}")
     if 获得材料 or 获得图纸:
         背包 = db.knapsack.find_one({"_id": user_id})
         图纸 = 背包.get("图纸", {})
@@ -199,7 +200,7 @@ def _开宝箱(自己: UserInfo,
     return True, msg
 
 
-def 青铜宝箱(自己: UserInfo, 数量: int):
+async def 青铜宝箱(自己: UserInfo, 数量: int):
     data = {
         "自己": 自己,
         "宝箱名称": "青铜宝箱",
@@ -216,10 +217,10 @@ def 青铜宝箱(自己: UserInfo, 数量: int):
         "图纸等级下限": 200,
         "图纸等级上限": 260
     }
-    return _开宝箱(**data)
+    return await _开宝箱(**data)
 
 
-def 精铁宝箱(自己: UserInfo, 数量: int):
+async def 精铁宝箱(自己: UserInfo, 数量: int):
     data = {
         "自己": 自己,
         "宝箱名称": "精铁宝箱",
@@ -237,10 +238,10 @@ def 精铁宝箱(自己: UserInfo, 数量: int):
         "图纸等级上限": 280,
         "其他物品": [{"名称": "精力丹", "概率": 10, "数量": (1, 2)}]
     }
-    return _开宝箱(**data)
+    return await _开宝箱(**data)
 
 
-def 素银宝箱(自己: UserInfo, 数量: int):
+async def 素银宝箱(自己: UserInfo, 数量: int):
     data = {
         "自己": 自己,
         "宝箱名称": "素银宝箱",
@@ -261,10 +262,10 @@ def 素银宝箱(自己: UserInfo, 数量: int):
             {"名称": "功德录", "概率": 5, "数量": (1, 3)},
         ]
     }
-    return _开宝箱(**data)
+    return await _开宝箱(**data)
 
 
-def 鎏金宝箱(自己: UserInfo, 数量: int):
+async def 鎏金宝箱(自己: UserInfo, 数量: int):
     data = {
         "自己": 自己,
         "宝箱名称": "鎏金宝箱",
@@ -285,10 +286,10 @@ def 鎏金宝箱(自己: UserInfo, 数量: int):
             {"名称": "功德录", "概率": 10, "数量": (3, 5)},
         ]
     }
-    return _开宝箱(**data)
+    return await _开宝箱(**data)
 
 
-def 福禄宝箱(自己: UserInfo, 数量: int):
+async def 福禄宝箱(自己: UserInfo, 数量: int):
     data = {
         "自己": 自己,
         "宝箱名称": "福禄宝箱",
@@ -308,10 +309,10 @@ def 福禄宝箱(自己: UserInfo, 数量: int):
             {"名称": "老君手书", "概率": 1, "数量": (1, 1)},
         ]
     }
-    return _开宝箱(**data)
+    return await _开宝箱(**data)
 
 
-def 精力丹(自己: UserInfo, 数量: int):
+async def 精力丹(自己: UserInfo, 数量: int):
     db.user_info.update_one({"_id": 自己.基础属性["_id"]},
                             {"$inc": {
                                 "energy": 数量 * 10,
@@ -319,7 +320,7 @@ def 精力丹(自己: UserInfo, 数量: int):
     return True, f"使用精力丹成功，恢复精力{数量 * 10}点"
 
 
-def 功德录(自己: UserInfo, 数量: int):
+async def 功德录(自己: UserInfo, 数量: int):
     增加善恶 = 数量 * 5
     if 自己.基础属性["善恶值"] >= 95:
         return False, f"你的善恶值不需要用!"
@@ -330,27 +331,29 @@ def 功德录(自己: UserInfo, 数量: int):
     return True, f"使用功德录成功，善恶值+{增加善恶}"
 
 
-def 洗髓丹体质(自己: UserInfo, 数量: int):
+async def 洗髓丹体质(自己: UserInfo, 数量: int):
     pass
 
 
-def 洗髓丹力道(自己: UserInfo, 数量: int):
+async def 洗髓丹力道(自己: UserInfo, 数量: int):
     pass
 
 
-def 洗髓丹元气(自己: UserInfo):
+async def 洗髓丹元气(自己: UserInfo):
     pass
 
 
-def 洗髓丹根骨(自己: UserInfo):
+async def 洗髓丹根骨(自己: UserInfo):
     pass
 
 
-def 洗髓丹身法(自己: UserInfo):
+async def 洗髓丹身法(自己: UserInfo):
     pass
 
-def 人傻钱多(自己: UserInfo):
+
+async def 人傻钱多(自己: UserInfo):
     return True, "这个东西价值一个亿，真有钱啊，一个亿。整整一亿银两。真有钱。"
+
 
 shop = {
     "人傻钱多": {
