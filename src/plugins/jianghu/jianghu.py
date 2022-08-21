@@ -55,9 +55,9 @@ class PK(Skill):
 
     async def 抢走银两(self, 抢劫方id: int, 被抢方id: int, 银两数量: int):
         if 抢劫方id:
-            await 增加银两(抢劫方id, 银两数量)
+            await 增加银两(抢劫方id, 银两数量, "抢到银两")
         if 被抢方id:
-            await 减少银两(被抢方id, 银两数量)
+            await 减少银两(被抢方id, 银两数量, "被抢银两")
 
     async def 偷袭死斗结算(self, 胜方: UserInfo, 败方: UserInfo, 攻方善恶值: int):
         msg = ""

@@ -167,7 +167,7 @@ async def _开宝箱(自己: UserInfo,
                 获得物品[物品名称] += 物品数量
     if 获得银两:
         msg += f"\n{获得银两}两银子"
-        await 增加银两(user_id, 获得银两)
+        await 增加银两(user_id, 获得银两, f"使用{宝箱名称}")
     if 获得材料 or 获得图纸:
         背包 = db.knapsack.find_one({"_id": user_id})
         图纸 = 背包.get("图纸", {})

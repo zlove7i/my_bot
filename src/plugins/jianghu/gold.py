@@ -30,8 +30,8 @@ async def 增加银两(user_id, 金额, 备注: str = ""):
 
 async def 赠送银两(user_id, 赠送者, 金额):
     logger.info(f'赠送银两 {user_id} -> {赠送者} {金额}')
-    if await 减少银两(赠送者, 金额):
-        await 增加银两(user_id, 金额)
+    if await 减少银两(赠送者, 金额, "赠送"):
+        await 增加银两(user_id, 金额, "赠送")
         logger.info(f'赠送银两 {user_id} -> {赠送者} {金额} 成功')
         return True
     logger.info(f'赠送银两 {user_id} -> {赠送者} {金额} 失败')

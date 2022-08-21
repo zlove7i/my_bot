@@ -130,7 +130,7 @@ async def set_name(user_id, res):
         return "狡诈恶徒不得改名!"
     if usr.名称 != "无名":
         msg = "，花费一百两银子。"
-        if not await 减少银两(user_id, 100):
+        if not await 减少银两(user_id, 100, "改名"):
             return "改名需要花费一百两银子，你的银两不够！"
     else:
         msg = "，首次改名不需要花费银两。"
@@ -165,7 +165,7 @@ async def practice_qihai(user_id, res):
     energy = 0
     if con:
         energy = con.get("energy", 0)
-    if not await 减少银两(user_id, 花费银两):
+    if not await 减少银两(user_id, 花费银两, "修炼气海"):
         return "你的银两不够！"
     if energy < 3:
         return "你的精力不足3点！"
@@ -182,7 +182,7 @@ async def recovery_qihai(user_id, res):
     if not res:
         return "输入错误"
     花费银两 = int(res[0])
-    if not await 减少银两(user_id, 花费银两):
+    if not await 减少银两(user_id, 花费银两, "恢复气海"):
         return "你的银两不够！"
     usr = UserInfo(user_id)
     损失气海 = usr.基础属性["气海上限"] - usr.当前气海
@@ -249,10 +249,9 @@ async def purchase_goods(user_id, res):
     if 数量 < 1:
         return "数量不可以小于1"
     总价 = 价格 * 数量
-    if not await 减少银两(user_id, 总价):
+    if not await 减少银两(user_id, 总价, f"购买{商品} * {数量}"):
         return "你的银两不够！"
     db.knapsack.update_one({"_id": user_id}, {"$inc": {商品: 数量}}, True)
-    logger.debug(f"购买商品 | {商品} * {数量} | {user_id} | 总价: {总价}")
     return "购买成功!"
 
 
@@ -343,7 +342,7 @@ async def sell_equipment(user_id, 装备名称: str):
             return "该装备正在使用，无法出售"
         获得银两 += 装备价格(con)
         db.equip.delete_one({"_id": 装备名称})
-    await 增加银两(user_id, 获得银两)
+    await 增加银两(user_id, 获得银两, "出售装备")
     return f"出售成功，获得银两：{获得银两}"
 
 
@@ -868,7 +867,7 @@ async def claim_rewards(user_id):
         图纸[获得图纸名称] += 1
         奖励[获得图纸名称] += 1
     db.knapsack.update_one({"_id": user_id}, {"$set": {"图纸": 图纸, "材料": 材料}})
-    await 增加银两(user_id, 获得银两)
+    await 增加银两(user_id, 获得银两, "世界首领奖励")
     if 奖励:
         msg = "、".join([f"{k}*{v}" for k, v in 奖励.items()])
     return f"消耗{contribution}贡献值, 获得银两{获得银两}" + msg
@@ -1017,7 +1016,7 @@ async def comprehension_skill(user_id):
     """领悟武学"""
     银两 = 300
 
-    if not await 减少银两(user_id, 银两):
+    if not await 减少银两(user_id, 银两, "领悟武学"):
         return f"你的银两不足，需要{银两}两银子"
 
     user_info = UserInfo(user_id)
@@ -1055,7 +1054,7 @@ async def impart_skill(user_id, at_qq, 武学):
     if 武学 in 被传授方武学:
         return "对方已经学会了该武学，不用花冤枉钱了。"
     需要花费银两 = 3000
-    if not await 减少银两(user_id, 需要花费银两):
+    if not await 减少银两(user_id, 需要花费银两, "传授武学"):
         return f"传授武学需要{需要花费银两}两银子，你的银两不足"
     被传授方武学.append(武学)
     db.jianghu.update_one({"_id": at_qq}, {"$set": {"已领悟武学": 被传授方武学}}, True)
@@ -1267,7 +1266,7 @@ async def healing(user_id, target_id):
     善恶值 = user.基础属性["善恶值"]
     复活需要银两 = 1000 - (善恶值 * 10)
     复活需要银两 = 复活需要银两 if 复活需要银两 > 500 else 500
-    if not await 减少银两(user_id, 复活需要银两):
+    if not await 减少银两(user_id, 复活需要银两, "疗伤"):
         return f"疗伤需要{复活需要银两}两银子，你的银两不够！"
     db.jianghu.update_one({"_id": target_id}, {
         "$set": {
