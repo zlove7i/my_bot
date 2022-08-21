@@ -24,7 +24,7 @@ jobs:
       # 构建与发布
       - name: Build and push
         if: ${{ github.branch }} == "main"
-        id: docker_build
+        id: docker_build_latest
         uses: docker/build-push-action@v2
         with:
           context: ./
