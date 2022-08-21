@@ -16,9 +16,8 @@ RUN apt update &&\
     python3 -m pip install -r requirements.txt &&\
     cp /my_bot/msyh.ttc /usr/share/fonts/ &&\
     python3 -m playwright install &&\
-    apt-get install -y tzdata libnss3-dev libxss1 libasound2 libxrandr2 libatk1.0-0 libgtk-3-0 libgbm-dev libxshmfence1 &&\
+    apt-get install -y libnss3-dev libxss1 libasound2 libxrandr2 libatk1.0-0 libgtk-3-0 libgbm-dev libxshmfence1 &&\
     ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime &&\
     echo ${TZ} > /etc/timezone &&\
-    dpkg-reconfigure --frontend noninteractive tzdata &&\
     rm -rf /var/lib/apt/lists/*
 CMD python3 bot.py
