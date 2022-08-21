@@ -156,7 +156,7 @@ async def handle_data_notice(group_id: int, notice_type: Literal["离群通知",
                              message: str):
     '''处理通知内容'''
     content = message.split(" ", 1)[-1]
-    result, _ = content_check(content)
+    result = content_check(content)
     if not result:
         return False
     db.group_conf.update_one({"_id": group_id},

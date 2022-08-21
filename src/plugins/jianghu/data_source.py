@@ -236,15 +236,11 @@ async def give_gold(user_id, user_name, at_qq, gold):
     if at_user_info.名称 == "无名":
         return "对方未改名, 无法赠送银两"
     user_info = UserInfo(user_id)
+    if user_info.基础属性["重伤状态"]:
+        return f"重伤状态无法赠送银两"
     凶煞 = user_info.基础属性["凶煞"]
     if 凶煞 > datetime.now():
         return f"凶煞状态无法赠送银两，凶煞状态结束时间：{凶煞.strftime('%Y-%m-%d %H:%M:%S')}"
-    善恶值 = user_info.基础属性["善恶值"]
-    手续费比例 = -善恶值 / 4000
-    if 手续费比例 >= 1:
-        手续费比例 = 0.9
-    if 手续费比例 < 0:
-        手续费比例 = 0
     con = db.user_info.find_one({"_id": user_id})
     if not con:
         con = {}
@@ -252,14 +248,9 @@ async def give_gold(user_id, user_name, at_qq, gold):
         logger.debug(f"赠送银两 | <e>{user_id} -> {at_qq}</e> | <r>银两不足</r>")
         return f"{user_name}，你的银两不足！"
     db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -gold}}, True)
-    手续费 = int(gold * 手续费比例)
-    赠送银两 = gold - 手续费
-    db.user_info.update_one({"_id": at_qq}, {"$inc": {"gold": 赠送银两}}, True)
+    db.user_info.update_one({"_id": at_qq}, {"$inc": {"gold": gold}}, True)
     logger.debug(f"赠送银两 | <e>{user_id} -> {at_qq}</e> | <g>成功！</g>")
-    if 手续费 > 0:
-        msg = f"成功赠送{赠送银两}两银子！(善恶值: {善恶值}, 赠送银两扣除手续费{手续费})"
-    else:
-        msg = f"成功赠送{赠送银两}两银子！"
+    msg = f"成功赠送{gold}两银子！"
     return msg
 
 
@@ -1142,11 +1133,11 @@ async def pk(动作, user_id, 目标):
     if 跨群:
         if 动作 == "切磋":
             return "不能通过名称进行切磋"
-        消耗精力 *= 2
+        消耗精力 += 1
     if 消耗精力:
         善恶值 = db.jianghu.find_one({"_id": user_id}).get("善恶值", 0)
         if 善恶值 < 0:
-            消耗精力 += -(善恶值 // 200)
+            消耗精力 += -(善恶值 // 300)
         精力 = db.user_info.find_one({"_id": user_id}).get("energy", 0)
         if 精力 < 消耗精力:
             精力 = 0
@@ -1301,6 +1292,7 @@ async def healing(user_id, target_id):
         if not 江湖info:
             return "找不到正确的目标"
         target_id = 江湖info["_id"]
+    target_id = int(target_id)
     user = UserInfo(target_id)
     凶煞 = user.基础属性["凶煞"]
     if user_id != target_id and 凶煞 < datetime.now():
@@ -1389,7 +1381,7 @@ async def xiongsha_ranking(bot: Bot):
     result = db.jianghu.find(filter=filter, sort=sort, limit=limit)
     for n, i in enumerate(result):
         重伤 = "x" if i.get("重伤状态") else ""
-        msg += f"{n+1} {重伤}{i['名称']} {i['凶煞']}\n"
+        msg += f"{n+1} {i['凶煞'].strftime('%m-%d %H:%M:%S')} {重伤}{i['名称']} {i['善恶值']}\n"
     if msg == "凶煞榜\n":
         return "盛世太平，没有凶煞"
     return msg

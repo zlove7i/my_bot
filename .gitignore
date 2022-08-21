@@ -111,7 +111,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -146,7 +145,6 @@ dmypy.json
 data/
 /log
 docker-compose.yml
-Dockerfile
 pyproject.toml
 workspace.code-workspace
 pyclean.bat

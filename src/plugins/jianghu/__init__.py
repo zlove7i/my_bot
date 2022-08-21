@@ -693,8 +693,8 @@ async def _(event: GroupMessageEvent):
     user_id = event.user_id
     at_member_obj = re.compile(r"^疗伤 *[\[CQ:at,qq=]*(\d+|.{1,8})\]{0,1} *$")
     at_member_list = at_member_obj.findall(event.raw_message)
-    target_id = user_id
+    target_id = str(user_id)
     if at_member_list:
-        target_id = int(at_member_list[0])
+        target_id = at_member_list[0]
     msg = await source.healing(user_id, target_id)
     await healing.finish(msg)
