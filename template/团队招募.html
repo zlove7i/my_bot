@@ -26,7 +26,7 @@
                                 <th scope="col">&nbsp;&nbsp;活动<span style="color:rgb(136, 57, 43);">名</span>称</th>
                                 <th scope="col" style="text-align:center">等级</th>
                                 <th scope="col">团长</th>
-                                <th scope="col" style="text-align:center">人数</th>
+                                <th scope="col" style="text-align:right">人数</th>
                                 <th scope="col">招募信息</th>
                                 <th scope="col" style="text-align:center">创建时间</th>
                             </tr>
@@ -37,7 +37,7 @@
                                 <td scope="col">&nbsp;&nbsp;{{ one.activity }}</td>
                                 <td scope="col" style="text-align:center">{{ one.level }}</td>
                                 <td scope="col">{{ one.leader }}</td>
-                                <td scope="col" style="text-align:center">{{ one.number }}</td>
+                                <td scope="col" style="text-align:right">{{ one.number }} / {{ one.maxNumber }}</td>
                                 <td scope="col">{{ one.content }}</td>
                                 <td scope="col" style="text-align:center">{{ one.createTime }}</td>
                             </tr>
