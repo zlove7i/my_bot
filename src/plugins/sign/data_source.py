@@ -32,7 +32,10 @@ async def get_sign_in(user_id: int, user_name: str, group_id: int) -> Message:
             return msg
         gold = _con.get("gold", 0)
     suangua_data = suangua()
-    prize_pool = db.bot_conf.find_one({'_id': 1}).get("prize_pool", 0)
+    prize_pools = db.bot_conf.find_one({'_id': 1})
+    if not prize_pools:
+        prize_pools = {}
+    prize_pool = prize_pools.get("prize_pool", 0)
     if prize_pool < 100000:
         prize_pool = 100000
     get_gold_num = random.randint(10, prize_pool // 1000)
