@@ -73,6 +73,7 @@ class JX3APP(Enum):
     战绩统计 = APP("/next/schools", 10)
     角色信息 = APP("/role/roleInfo", 0)
     装备属性 = APP("/role/attribute", 10)
+    团队招募 = APP("/next/recruit", 10)
     烟花记录 = APP("/role/firework", 10)
 
     加密计算 = APP("/token/calculate", 0)

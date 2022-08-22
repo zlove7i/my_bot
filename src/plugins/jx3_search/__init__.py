@@ -47,6 +47,7 @@ class REGEX(Enum):
     奇遇汇总 = r"(^汇总$)|(^汇总 [\u4e00-\u9fa5]+$)"
     比赛战绩 = r"^战绩 (?P<value1>[\S]+)$|^战绩 (?P<server>[\u4e00-\u9fa5]+) (?P<value2>[\S]+)$"
     装备属性 = r"^属性 (?P<value1>[\S]+)$|^属性 (?P<server>[\u4e00-\u9fa5]+) (?P<value2>[\S]+)$"
+    招募查询 = r"^招募$|^招募 (?P<server1>[\u4e00-\u9fa5]+)$|^招募 (?P<server2>[\u4e00-\u9fa5]+) (?P<keyword>[\u4e00-\u9fa5]+)$"
 
 
 # ----------------------------------------------------------------
@@ -122,6 +123,9 @@ saohua_query = on_regex(pattern=REGEX.随机骚话.value,
                         permission=GROUP,
                         priority=5,
                         block=True)
+recruit_query = on_regex(
+    pattern=REGEX.招募查询.value, permission=GROUP, priority=5, block=True
+)
 
 
 # ----------------------------------------------------------------
@@ -147,7 +151,7 @@ async def get_server_1(matcher: Matcher, event: GroupMessageEvent) -> str:
 async def get_server_2(matcher: Matcher, event: GroupMessageEvent) -> str:
     '''最多3个参数，获取server'''
     text_list = event.get_plaintext().split(" ")
-    if len(text_list) == 2:
+    if len(text_list) <= 2:
         server = await source.get_server(event.group_id)
         if not server:
             msg = "还没绑定服务器，你让我怎么查？\n发送“绑定 服务器全称”就可以绑定服务器了。\n别发什么“绑定 双梦”、“绑定 电八”之类的黑话，我压根就看不懂！"
@@ -181,7 +185,10 @@ def get_ex_name(event: GroupMessageEvent) -> str:
 
 def get_name(event: GroupMessageEvent) -> str:
     '''获取消息中的name字段，取最后分页'''
-    return event.get_plaintext().split(" ")[-1]
+    l = event.get_plaintext().split(" ")
+    if len(l) == 1:
+        return ""
+    return l[-1]
 
 
 async def get_profession(
@@ -598,3 +605,38 @@ async def _(
         pagename=pagename, server=server, name=name, data=get_data
     )
     await equip_query.finish(MessageSegment.image(img))
+
+
+@recruit_query.handle()
+async def _(
+    event: GroupMessageEvent,
+    server: str = Depends(get_server_2),
+    keyword: str = Depends(get_name)
+):
+    """招募查询"""
+    logger.info(
+        f"群{event.group_id} | {event.user_id} | 招募查询 | 请求：server:{server}, keyword:{keyword}"
+    )
+    params = {"server": server, "keyword": keyword}
+    msg, data = await source.get_data_from_api(app=JX3APP.团队招募, group_id=event.group_id, params=params)
+    if msg != "success":
+        msg = f"查询失败，{msg}"
+        await serendipity_summary_query.finish(msg)
+
+    data: list[dict] = data.get("data")
+    num = len(data)
+    if num > 50:
+        data = data[:50]
+    else:
+        num = None
+    pagename = "团队招募.html"
+    for i in range(len(data)):
+        data[i]["createTime"] = datetime.fromtimestamp(data[i]["createTime"]).strftime("%H:%M:%S")
+
+    img = await browser.template_to_image(
+        pagename=pagename,
+        server=server,
+        data=data,
+        num=num,
+    )
+    await recruit_query.finish(MessageSegment.image(img))
