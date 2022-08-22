@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from random import randint
 from src.utils.db import db
+from src.utils.log import logger
 import os
 import yaml
 
@@ -33,6 +34,11 @@ def init_user_info(user_id):
         },
     }
     db.jianghu.insert_one(init_data)
+    db.user_info.update_one(
+        {"_id": user_id},
+        {"$inc": {"gold": 100000, "energy": 100}}
+    )
+    logger.info(f"新用户: {user_id}")
     return init_data
 
 
