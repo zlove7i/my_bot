@@ -6,7 +6,8 @@ import random
 
 
 async def world_boss(user_id, 世界首领名称):
-    if 世界首领名称 not in world_boss_dict:
+    世界首领 = db.npc.find_one({"名称": 世界首领名称})
+    if not 世界首领:
         if not db.npc.count_documents({"类型": "首领", "重伤状态": False}):
             return "没有存活的世界首领"
         存活的首领 = db.npc.find({"类型": "首领", "重伤状态": False})
@@ -17,7 +18,7 @@ async def world_boss(user_id, 世界首领名称):
     app_name = "世界首领"
     if  db.user_info.find_one({"_id": user_id}).get("重伤状态"):
         return "你已重伤，无法进攻世界首领"
-    if  db.npc.find_one({"_id": world_boss_dict[世界首领名称]}).get("重伤状态"):
+    if 世界首领.get("重伤状态"):
         return "该首领已重伤，无法继续进攻"
     user_info = db.user_info.find_one({"_id": user_id})
     精力 = user_info.get("energy", 0)
