@@ -255,39 +255,6 @@ async def del_bot_to_group(bot: Bot, group_id, msg=None, exit_group=True):
     return ret_msg
 
 
-async def tianjianhongfu(bot: Bot, group_id, user_id, nickname):
-    # 天降鸿福事件
-    # 个人获得奖励概率递减
-    con = db.user_info.find_one({"_id": user_id})
-    user_lucky = 1.0
-    if con:
-        user_lucky = con.get("user_lucky", 1.0)
-    if user_lucky >= random.uniform(0, 50):
-        db.user_info.update_one({"_id": user_id},
-                                {"$set": {
-                                    "user_lucky": user_lucky * 0.7
-                                }}, True)
-        con = db.group_conf.find_one({"_id": group_id})
-        lucky = 0
-        if con:
-            lucky = con.get("lucky", 0)
-        add_gold = random.randint(1, (lucky + 1) * 30)
-        gold = 0
-        _con = db.user_info.find_one({'_id': user_id})
-        if _con:
-            gold = _con.get("gold", 0)
-        gold += add_gold
-        db.user_info.update_one({"_id": user_id}, {"$set": {
-            "gold": gold
-        }}, True)
-        msg = f"{nickname}天降鸿福，银两 +{add_gold}"
-        logger.debug(
-            f"群{group_id} | {nickname} | 天降鸿福 +{add_gold}")
-        await bot.send_group_msg(group_id=group_id, message=msg)
-        return True
-    return False
-
-
 async def play_picture(bot: Bot, event: GroupMessageEvent, group_id):
     _con = db.group_conf.find_one({'_id': group_id})
     if _con:

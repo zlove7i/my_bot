@@ -136,8 +136,6 @@ async def _(bot: Bot, event: GroupMessageEvent) -> None:
         "last_sent": sent_time
     }}, True)
     if len(message) >= 10:
-        if await source.tianjianhongfu(bot, group_id, user_id, nickname):
-            return
         await source.play_picture(bot, event, group_id)
 
 

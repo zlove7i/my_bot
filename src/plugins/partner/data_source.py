@@ -54,10 +54,6 @@ async def get_find_partner_to_group(user_id: int, group_id: int, end_str: str,
         if _con.get("partner"):
             msg = "有情缘了就安分点吧！"
             return msg
-    gold = _con.get("gold", 0)
-    if gold < 1:
-        msg = f"你连一两银子都没有，这么穷怎么配跟{end_str}一起玩？"
-        return msg
     # 随机到的人是否有情缘
     usr = random.choice(group_member_list)
     _con = db.user_info.find_one({'_id': usr["user_id"]})
@@ -78,7 +74,6 @@ async def get_find_partner_to_group(user_id: int, group_id: int, end_str: str,
         return msg
     # 记录一次查询
     await search_once(user_id, app_name)
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"gold": -1}}, True)
     group_cf = db.group_conf.find_one({'_id': group_id})
     msg = MessageSegment.at(user_id)
     msg += f"组织给你分配的{end_str}是"
