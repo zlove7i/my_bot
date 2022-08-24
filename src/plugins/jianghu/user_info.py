@@ -186,6 +186,8 @@ class UserInfo():
 
         if self.基础属性.get("类型") == "秘境首领":
             user_info = self.基础属性
+        elif self.基础属性.get("类型") == "首领":
+            user_info = db_con.find_one({"名称": self.user_id})
         else:
             user_info = db_con.find_one({"_id": self.user_id})
 
