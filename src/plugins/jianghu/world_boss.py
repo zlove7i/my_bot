@@ -4,8 +4,6 @@ from src.plugins.jianghu.jianghu import PK
 from src.utils.db import db
 import random
 
-world_boss_dict = {"咸鱼": 1, "刀妈": 2, "阿鱼": 3, "忆竹": 4}
-
 
 async def world_boss(user_id, 世界首领名称):
     if 世界首领名称 not in world_boss_dict:
@@ -33,4 +31,4 @@ async def world_boss(user_id, 世界首领名称):
         return msg
     await search_once(user_id, app_name)
     战斗 = PK()
-    return await 战斗.main("世界首领", user_id, world_boss_dict[世界首领名称])
+    return await 战斗.main("世界首领", user_id, 世界首领名称)

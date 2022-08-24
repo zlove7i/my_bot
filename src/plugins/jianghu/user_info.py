@@ -51,7 +51,7 @@ class UserInfo():
     def __init__(self, user_id, action="") -> None:
         self.user_id = user_id
         if action == "世界首领":
-            user_info = db.npc.find_one({"_id": user_id})
+            user_info = db.npc.find_one({"名称": user_id})
             if not user_info:
                 return
         elif action == "秘境首领":
