@@ -206,7 +206,7 @@ class UserInfo():
 
         if self.基础属性.get("类型") != "秘境首领":
             db_con.update_one(
-                {"_id": self.user_id},
+                {"_id": user_info["_id"]},
                 {"$set": {
                     "当前气血": self.当前气血,
                     "当前内力": self.当前内力,
