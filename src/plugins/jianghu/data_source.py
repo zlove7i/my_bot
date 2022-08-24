@@ -628,20 +628,29 @@ async def compose(user_id, res):
             最低, 最高 = min(等级限制), max(等级限制)
         if 最高 > 150:
             最高 = 150
+        用户图纸列表 = [i for i in 用户输入图纸列表 if 用户输入图纸列表.count(i) <= 图纸.get(i, 0)]
         while True:
             # 按条件过滤图纸
-            用户图纸列表 = [i for i in 用户输入图纸列表 if i in 图纸]
-            过滤后图纸 = list(set([i for i in 图纸.keys() if i[:2] in 过滤条件 and 最低 <= int(i[2:]) <=最高] + 用户图纸列表))
+            if 用户图纸列表:
+                过滤后图纸 = [i for i in 用户图纸列表 if i[:2] in 过滤条件 and 最低 <= int(i[2:]) <=最高]
+            else:
+                过滤后图纸 = [i for i in 图纸.keys() if i[:2] in 过滤条件 and 最低 <= int(i[2:]) <=最高]
             if not 过滤后图纸:
                 break
             # 排序
             过滤后图纸 = sorted(过滤后图纸, key=lambda x: int(x[2:]), reverse=True)
 
+            全部待合成 = []
+            if 用户图纸列表:
+                全部待合成 = 用户图纸列表
+            else:
+                for i in 过滤后图纸:
+                    全部待合成 += [i] * 图纸.get(i, 0)
             # 首尾分组
-            for n, i in enumerate(过滤后图纸):
-                if (int(i[2:]) + int(过滤后图纸[-1][2:])) <= 合成最高等级:
+            for n, i in enumerate(全部待合成):
+                if (int(i[2:]) + int(全部待合成[-1][2:])) <= 合成最高等级:
                     break
-            可合成 = 过滤后图纸[n:]
+            可合成 = 全部待合成[n:]
             待合成 = []
             for i in range(len(可合成) // 2):
                 首, 尾 = 可合成[i], 可合成[-(i+1)]
@@ -649,15 +658,17 @@ async def compose(user_id, res):
                     待合成.append((首, 尾))
             if not 待合成:
                 break
+            用户图纸列表 = []
             for x, y in 待合成:
                 获得图纸 = 合成图纸(x, y)
+                用户图纸列表.append(获得图纸)
                 if not 图纸.get(获得图纸):
                     图纸[获得图纸] = 0
                 图纸[获得图纸] += 1
                 图纸[x] -= 1
                 图纸[y] -= 1
                 for n in (x, y):
-                    if 图纸[n] <= 0:
+                    if n in 图纸 and 图纸[n] <= 0:
                         del 图纸[n]
         最终合成结果 = {}
         for i in set(图纸.keys()) | set(原始图纸.keys()):
@@ -670,6 +681,7 @@ async def compose(user_id, res):
         end = " ..." if len(结果列表) > 20 else ""
         if 结果列表:
             msg = f"图纸合成完成：{'、'.join(结果列表[:20])}{end}"
+            print(图纸)
             db.knapsack.update_one({"_id": user_id}, {"$set": {"图纸": 图纸}}, True)
         else:
             msg = "你输入的条件根本找不到图纸!自己打开背包检查一下去!"
