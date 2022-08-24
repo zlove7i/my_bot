@@ -681,7 +681,6 @@ async def compose(user_id, res):
         end = " ..." if len(结果列表) > 20 else ""
         if 结果列表:
             msg = f"图纸合成完成：{'、'.join(结果列表[:20])}{end}"
-            print(图纸)
             db.knapsack.update_one({"_id": user_id}, {"$set": {"图纸": 图纸}}, True)
         else:
             msg = "你输入的条件根本找不到图纸!自己打开背包检查一下去!"
