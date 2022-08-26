@@ -44,11 +44,13 @@ async def get_sign_in(user_id: int, user_name: str, group_id: int) -> Message:
                            {'$inc': {
                                "prize_pool": -get_gold_num,
                            }}, True)
+    energy = random.randint(10, 30)
     db.user_info.update_one(
         {'_id': user_id},
         {'$set': {
             "is_sign": True,
             "gold": gold,
+            "energy": energy,
             "gua": suangua_data
         }}, True)
 
