@@ -1,7 +1,10 @@
 name: actions
 
 on:
-  - push
+  push:
+    branches:    
+      - main
+      - test
 
 jobs:
   build:
