@@ -118,7 +118,6 @@ async def reset_sign_nums():
     db.group_conf.update_many({}, {'$set': {"lucky": 0, "add_group_num": 0}}, True)
     db.user_info.update_many({},
                              {'$set': {
-                                 "user_lucky": 1.0,
                                  "is_sign": False,
                                  "river_lantern": 0,
                                  "dungeon_num": 0,

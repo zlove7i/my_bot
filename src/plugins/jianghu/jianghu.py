@@ -303,7 +303,7 @@ class PK(Skill):
             user_info.内力变化(需恢复内力)
             user_info.气海变化(-需恢复内力)
 
-    async def main(self, action, 攻方id: int, 守方id: int, msg=""):
+    async def main(self, action, 攻方id: int, 守方id, msg=""):
         攻方 = UserInfo(攻方id)
         if 攻方.基础属性['名称'] == '无名':
             return "需要改名后才能发起进攻"

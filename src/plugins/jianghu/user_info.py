@@ -51,7 +51,7 @@ class UserInfo():
     def __init__(self, user_id, action="") -> None:
         self.user_id = user_id
         if action == "世界首领":
-            user_info = db.npc.find_one({"_id": user_id})
+            user_info = db.npc.find_one({"名称": user_id})
             if not user_info:
                 return
         elif action == "秘境首领":
@@ -186,6 +186,8 @@ class UserInfo():
 
         if self.基础属性.get("类型") == "秘境首领":
             user_info = self.基础属性
+        elif self.基础属性.get("类型") == "首领":
+            user_info = db_con.find_one({"名称": self.user_id})
         else:
             user_info = db_con.find_one({"_id": self.user_id})
 
@@ -204,7 +206,7 @@ class UserInfo():
 
         if self.基础属性.get("类型") != "秘境首领":
             db_con.update_one(
-                {"_id": self.user_id},
+                {"_id": user_info["_id"]},
                 {"$set": {
                     "当前气血": self.当前气血,
                     "当前内力": self.当前内力,
