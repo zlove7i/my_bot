@@ -70,5 +70,6 @@ async def get_sign_in(user_id: int, user_name: str, group_id: int) -> Message:
                                           get_gold_num=get_gold_num,
                                           add_lucky=add_lucky,
                                           gold=gold,
+                                          energy=energy,
                                           **suangua_data)
     return MessageSegment.image(img)
