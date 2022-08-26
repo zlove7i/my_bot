@@ -642,7 +642,7 @@ async def compose(user_id, res):
 
             全部待合成 = []
             if 用户图纸列表:
-                全部待合成 = 用户图纸列表
+                全部待合成 = 过滤后图纸
             else:
                 for i in 过滤后图纸:
                     全部待合成 += [i] * 图纸.get(i, 0)
@@ -672,7 +672,7 @@ async def compose(user_id, res):
                         del 图纸[n]
         最终合成结果 = {}
         for i in set(图纸.keys()) | set(原始图纸.keys()):
-            if i not in 最终合成结果 :
+            if i not in 最终合成结果:
                 最终合成结果[i] = 0
             最终合成结果[i] -= 原始图纸.get(i, 0)
             最终合成结果[i] += 图纸.get(i, 0)

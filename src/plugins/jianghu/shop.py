@@ -133,9 +133,9 @@ async def _开宝箱(自己: UserInfo,
     获得物品 = {}
     共消耗精力 = 数量 * 消耗精力
     user_info = db.user_info.find_one({"_id": user_id})
-    现有精力 =  user_info.get("energy", 0)
+    现有精力 = user_info.get("energy", 0)
     if 现有精力 < 共消耗精力:
-        return f"使用 {数量} 个{宝箱名称}需要{共消耗精力}点精力, 你目前只有{现有精力}"
+        return False, f"使用 {数量} 个{宝箱名称}需要{共消耗精力}点精力, 你目前只有{现有精力}"
     for _ in range(数量):
         装备池 = list(
             db.equip.find({"持有人": -2}, projection={
