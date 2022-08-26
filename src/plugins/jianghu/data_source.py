@@ -197,7 +197,7 @@ async def recovery_qihai(user_id, res):
 
 async def dig_for_treasure(user_id, number):
     精力 = db.user_info.find_one({"_id": user_id}).get("energy", 0)
-    消耗精力 = number * 10
+    消耗精力 = number * 7
     if 精力 < 消耗精力:
         return f"精力不足, 你只有{精力}精力, 挖宝{number}次需要{消耗精力}精力"
     获得物品 = {}
