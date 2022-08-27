@@ -47,7 +47,11 @@ async def get_sign_in(user_id: int, user_name: str, group_id: int) -> Message:
     energy = random.randint(10, 30)
     db.user_info.update_one(
         {'_id': user_id},
-        {'$set': {
+        {"$inc": {
+            "gold": get_gold_num,
+            "energy": energy,
+        },
+        '$set': {
             "is_sign": True,
             "gold": gold,
             "energy": energy,
