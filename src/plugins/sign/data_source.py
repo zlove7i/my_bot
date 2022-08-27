@@ -50,11 +50,8 @@ async def get_sign_in(user_id: int, user_name: str, group_id: int) -> Message:
         {"$inc": {
             "gold": get_gold_num,
             "energy": energy,
-        },
-        '$set': {
+        }, '$set': {
             "is_sign": True,
-            "gold": gold,
-            "energy": energy,
             "gua": suangua_data
         }}, True)
 
