@@ -94,3 +94,7 @@ docker update --restart=always my_bot
 自动更新
 
 docker run -d --name watchtower --restart always -v /var/run/docker.sock:/var/run/docker.sock containrrr/watchtower --cleanup -i 300 my_bot
+
+## 交流群
+
+[937593602](https://qm.qq.com/cgi-bin/qm/qr?k=pG7qtpP1M80tTVE4moII3dqcRsFi8NBT&jump_from=webapi)
