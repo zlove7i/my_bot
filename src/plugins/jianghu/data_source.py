@@ -1113,16 +1113,46 @@ async def all_pk_log(user_id):
     return msg
 
 
-async def pk_log(日期, 编号):
+async def pk_log(bot_id, 日期, 编号):
     战斗记录 = db.pk_log.find_one({"编号": 编号, "日期": int(日期)})
     if not 战斗记录:
         return "没有找到对应的战斗记录"
-    data = {
-        "战斗记录": 战斗记录.get("记录")
-    }
-    pagename = "pk_log.html"
-    img = await browser.template_to_image(pagename=pagename, **data)
-    return MessageSegment.image(img)
+    msg = []
+    攻方 = 战斗记录["攻方"]
+    守方 = 战斗记录["守方"]
+    胜方 = 战斗记录.get("胜方", "")
+    方式 = 战斗记录.get("方式", "")
+    守_name = 攻_name = "无名"
+    if 攻 := db.jianghu.find_one({"_id": 攻方}):
+        攻_name = 攻.get("名称", "无名")
+    if 守 := db.jianghu.find_one({"_id": 守方}):
+        守_name = 守.get("名称", "无名")
+    攻胜 = 守胜 = ""
+    if 胜方 == 攻方:
+        攻胜 = "-胜"
+    elif 胜方 == 守方:
+        守胜 = "-胜"
+    content = 战斗记录['时间'].strftime('%Y-%m-%d %H:%M:%S')
+    content += f"\n{攻_name}{攻胜} {方式}> {守_name}{守胜}"
+    msg.append({
+        "type": "node",
+        "data": {
+            "name": "战斗记录",
+            "uin": bot_id,
+            "content": content
+        }
+    })
+    for i in 战斗记录.get("记录", []):
+        content = '\n'.join(i)
+        msg.append({
+            "type": "node",
+            "data": {
+                "name": "战斗记录",
+                "uin": bot_id,
+                "content": content
+            }
+        })
+    return msg
 
 
 async def pk(动作, user_id, 目标):

@@ -235,11 +235,10 @@ class PK(Skill):
                 data["攻方"]["胜负"] = False
                 data["守方"]["胜负"] = True
                 data["结算"] = await self.世界首领重伤惩罚(攻方_id)
-                return data
             else:
                 data["攻方"]["平"] = True
                 data["守方"]["平"] = True
-            if 攻方.本次伤害:
+            if 攻方.本次伤害 and 胜方 != 守方_id:
                 data["结算"] += f"{攻方.基础属性['名称']} 对 {守方.基础属性['名称']} 造成了 {-攻方.本次伤害} 伤害，贡献值 +{贡献值}, 精力-4"
                 db.user_info.update_one({"_id": 攻方.user_id},
                                       {"$inc": {"contribution": 贡献值}}, True)
@@ -270,10 +269,10 @@ class PK(Skill):
                 data["攻方"]["胜负"] = False
                 data["守方"]["胜负"] = True
                 data["结算"] = await self.世界首领重伤惩罚(攻方_id)
-                return data
         if msg:
             data["结算"] += f"<br>{msg}"
         log_data = {
+            "时间": 当前时间,
             "日期": int(日期),
             "攻方": 攻方_id,
             "守方": 守方_id,
@@ -311,7 +310,6 @@ class PK(Skill):
         if 攻方.基础属性['名称'] == '无名':
             return "需要改名后才能发起进攻"
         守方 = UserInfo(守方id, action=action)
-        self.战斗记录(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} {攻方.名称} {action}> {守方.名称}")
         await self.战前恢复(攻方)
         await self.战前恢复(守方)
         self.攻方初始气血 = 攻方.当前气血
@@ -324,7 +322,8 @@ class PK(Skill):
             return "对方已重伤，无法进攻"
         回合数 = {"切磋": 10, "偷袭": 10, "死斗": 50, "世界首领": 5, "秘境首领": 10}
         for 当前回合 in range(回合数[action]):
-            self.战斗记录(f"---------------- 第 {当前回合+1} 回合 --------------")
+            self.当前回合 = 当前回合
+            self.战斗记录(f"第 {当前回合+1} 回合")
             await self.compute_buff(攻方)
             await self.compute_buff(守方)
             await self.compute_debuff(攻方, 守方)
@@ -340,7 +339,6 @@ class PK(Skill):
                     break
                 if await self.发动攻击(攻方, 守方, 当前回合):
                     break
-        self.战斗记录("------------------ 战斗结束 -----------------")
         data = await self.战斗结算(action, 攻方, 守方, msg)
         data["战斗编号"] = self.编号
         return data
