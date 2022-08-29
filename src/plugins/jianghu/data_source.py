@@ -653,7 +653,7 @@ async def compose(user_id, res):
             用户图纸列表 = []
             len_全部待合成 = len(全部待合成)
             if len_全部待合成 % 2 == 1:
-                用户图纸列表.append(全部待合成[len(len_全部待合成) // 2])
+                用户图纸列表.append(全部待合成[len_全部待合成 // 2])
             可合成 = 全部待合成[n:]
             待合成 = []
             for i in range(len(可合成) // 2):
