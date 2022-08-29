@@ -613,7 +613,7 @@ async def _(event: GroupMessageEvent):
 
 
 @pk_log.handle()
-async def _(bot: Bot, event: GroupMessageEvent):
+async def _(event: GroupMessageEvent):
     """战斗记录"""
     user_id = event.user_id
     re_obj = re.compile(r"(\d+)")
@@ -629,10 +629,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
         编号 = d_list[0]
     else:
         await pk_log.finish("输入格式错误")
-    msg = await source.pk_log(bot.self_id, 日期, int(编号))
-    if isinstance(msg, list):
-        await bot.send_group_forward_msg(group_id=event.group_id, messages=msg)
-        await pk_log.finish()
+    msg = await source.pk_log(日期, int(编号))
     await pk_log.finish(msg)
 
 

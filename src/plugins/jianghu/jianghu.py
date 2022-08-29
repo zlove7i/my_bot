@@ -323,7 +323,6 @@ class PK(Skill):
         回合数 = {"切磋": 10, "偷袭": 10, "死斗": 50, "世界首领": 5, "秘境首领": 10}
         for 当前回合 in range(回合数[action]):
             self.当前回合 = 当前回合
-            self.战斗记录(f"第 {当前回合+1} 回合")
             await self.compute_buff(攻方)
             await self.compute_buff(守方)
             await self.compute_debuff(攻方, 守方)
