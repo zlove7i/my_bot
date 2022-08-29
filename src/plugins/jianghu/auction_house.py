@@ -71,8 +71,6 @@ async def 上架商品(寄售人id, 商品名称, 价格, 备注=""):
             return f"{商品名称}数量不足{数量}"
         db.knapsack.update_one({"_id": 寄售人id}, {"$inc": {商品名称: -数量}})
 
-
-    # 重构商品: {类型, 名称, 等级, 寄售人id, 寄售时间, 关注, 备注}
     data = {
         "类型": 类型,
         "等级": 等级,
@@ -86,7 +84,6 @@ async def 上架商品(寄售人id, 商品名称, 价格, 备注=""):
     }
     # 上架
     编号 = db.insert_auto_increment("auction_house", data)
-    index_list.append(str(编号))
     logger.info(f"上架商品: {寄售人id} 上架{商品名称}({编号})成功！")
     return f"上架[{商品名称}]成功！商品编号：{编号}"
 
@@ -168,10 +165,10 @@ async def 购买商品(购买人id, 名称):
     商品id = 名称
     if "*" in 名称:
         商品id, 数量 = 名称.split("*")
-    商品 = db.auction_house.find({"_id": int(商品id)})
+    商品 = db.auction_house.find_one({"_id": int(商品id)})
     if not 商品:
         return "商品不存在！"
-
+    数量 = int(数量)
     商品id = 商品["_id"]
     商品价格 = 商品["价格"]
     商品类型 = 商品["类型"]
@@ -180,11 +177,9 @@ async def 购买商品(购买人id, 名称):
     商品数量 = 商品.get("数量", 0)
     if 商品数量 < 数量:
         return f"该商品只有{商品数量}件了"
-    总价 = 商品价格 * 商品数量
-    user_info = db.user_info.find_one({"_id": 购买人id})
+    总价 = 商品价格 * 数量
     if not await 减少银两(购买人id, 总价, "交易行购买"):
         return f"\n购买商品[{商品id}]({商品名称})*{数量}失败，需要银两{商品价格}"
-        
     # 获得商品
     if 商品类型 in ("材料", "图纸"):
         con = db.knapsack.find_one({"_id": 购买人id})
@@ -207,15 +202,14 @@ async def 购买商品(购买人id, 名称):
         db.auction_house.update_one({"_id": 商品id}, {"$inc": {"数量": -数量}})
     # 寄售人获得 银两 使用qq邮箱接收信息
     手续费 = 总价 // 100
-    获得银两 = 商品价格 - 手续费
+    获得银两 = 总价 - 手续费
     await 增加银两(寄售人, 获得银两, "交易行出售")
 
     当前时间 = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    for 寄售人, v in mail_msg.items():
-        await mail_client.send_mail(
-            [寄售人], f"{商品名称}售卖成功通知",
-            f"您寄售的[{商品名称}]于{当前时间}，被【{购买人.基础属性['名称']}】买走[{数量}]个\n共计价格{总价}两银子。扣除手续费{手续费}，共获得{获得银两}")
-        logger.info(f"购买商品: {寄售人}[{商品名称}] -({商品价格}*{数量})-> {购买人.基础属性['名称']}({购买人id})")
+    await mail_client.send_mail(
+        [寄售人], f"{商品名称}售卖成功通知",
+        f"您寄售的[{商品名称}]于{当前时间}，被【{购买人.基础属性['名称']}】买走[{数量}]个\n共计价格{总价}两银子。扣除手续费{手续费}，共获得{获得银两}")
+    logger.info(f"购买商品: {寄售人}[{商品名称}] -({商品价格}*{数量})-> {购买人.基础属性['名称']}({购买人id})")
     msg = f"购买商品完成\n花费{总价}两银子，获得[{商品名称}*{数量}]"
     return msg
 

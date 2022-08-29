@@ -1,9 +1,11 @@
 from src.utils.db import db
 from src.utils.log import logger
 
+
 async def 记录(user_id, 项目, 数额, 余额):
-    logger.info(f'银两变动 | {备注} | {user_id} | {金额}')
-    return 
+    logger.info(f'银两变动 | {项目} | {user_id} | {数额}')
+    return
+
 
 async def 查询银两(user_id):
     user = db.user_info.find_one({'_id': user_id})
