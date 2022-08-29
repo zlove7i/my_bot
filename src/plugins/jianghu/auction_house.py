@@ -17,7 +17,7 @@ async def 上架商品(寄售人id, 商品名称, 价格, 备注=""):
     if int(价格) < 1:
         return "价格不能少于1两银子"
     if int(价格) > 100000000:
-        return "价格不能多于100000000两银子"
+        return "价格不能多于100,000,000两银子"
     if len(备注) > 30:
         return "备注不能多于30个字"
     # 判断有无
@@ -73,23 +73,22 @@ async def 上架商品(寄售人id, 商品名称, 价格, 备注=""):
 
 
     # 重构商品: {类型, 名称, 等级, 寄售人id, 寄售时间, 关注, 备注}
-    index_list = []
-    for _ in range(数量):
-        data = {
-            "类型": 类型,
-            "等级": 等级,
-            "价格": int(价格),
-            "名称": 商品名称,
-            "寄售人": 寄售人id,
-            "日期": datetime.now(),
-            "关注": 0,
-            "备注": 备注
-        }
-        # 上架
-        编号 = db.insert_auto_increment("auction_house", data)
-        index_list.append(str(编号))
-        logger.info(f"上架商品: {寄售人id} 上架{商品名称}({编号})成功！")
-    return f"上架[{商品名称}]成功！商品编号：{'，'.join(index_list)}"
+    data = {
+        "类型": 类型,
+        "等级": 等级,
+        "价格": int(价格),
+        "名称": 商品名称,
+        "寄售人": 寄售人id,
+        "日期": datetime.now(),
+        "数量": 数量,
+        "关注": 0,
+        "备注": 备注
+    }
+    # 上架
+    编号 = db.insert_auto_increment("auction_house", data)
+    index_list.append(str(编号))
+    logger.info(f"上架商品: {寄售人id} 上架{商品名称}({编号})成功！")
+    return f"上架[{商品名称}]成功！商品编号：{编号}"
 
 
 async def 我的商品(操作人id, 命令):
@@ -116,6 +115,7 @@ async def 我的商品(操作人id, 命令):
             "寄售人": 寄售人.基础属性['名称'],
             "日期": i["日期"].strftime("%Y-%m-%d"),
             "关注": i["关注"],
+            "数量": i.get("数量", 1),
             "备注": i["备注"],
         })
     pagename = "auction_house.html"
@@ -133,6 +133,7 @@ async def 下架商品(操作人id, 商品id):
         return "商品不存在！"
     商品类型 = 商品["类型"]
     商品名称 = 商品["名称"]
+    商品数量 = 商品.get("数量", 1)
     寄售人 = 商品["寄售人"]
     if 寄售人 != 操作人id:
         return "这个商品不是你寄售的！"
@@ -146,90 +147,76 @@ async def 下架商品(操作人id, 商品id):
             con[商品类型] = {}
         if not con[商品类型].get(商品名称):
             con[商品类型][商品名称] = 0
-        con[商品类型][商品名称] += 1
+        con[商品类型][商品名称] += 商品数量
         db.knapsack.update_one({"_id": 操作人id}, {"$set": con}, True)
     elif 商品类型 in ("武器", "外装", "饰品"):
         db.equip.update_one({"_id": 商品名称}, {"$set": {"持有人": 操作人id}}, True)
     elif 商品类型 == "物品":
-        db.knapsack.update_one({"_id": 操作人id}, {"$inc": {商品名称: 1}}, True)
+        db.knapsack.update_one({"_id": 操作人id}, {"$inc": {商品名称: 商品数量}}, True)
     # 交易行删除商品
     db.auction_house.delete_one({"_id": 商品id})
-    logger.info(f"下架商品: {操作人id}下架{商品名称}({商品id})成功！")
+    logger.info(f"下架商品: {操作人id}下架{商品名称}({商品id})*{商品数量}成功！")
     return f"下架{商品名称}成功！"
 
 
 async def 购买商品(购买人id, 名称):
-    user_info = UserInfo(购买人id)
-    凶煞 = user_info.基础属性["凶煞"]
+    购买人 = UserInfo(购买人id)
+    凶煞 = 购买人.基础属性["凶煞"]
     if 凶煞 > datetime.now():
         return f"凶煞状态无法购买物品，凶煞状态结束时间：{凶煞.strftime('%Y-%m-%d %H:%M:%S')}"
-    limit = 1
-    if 名称.isdigit():
-        商品id = int(名称)
-        查找商品 = db.auction_house.find({"_id": 商品id})
-        if not 查找商品:
-            return "商品不存在！"
-    else:
-        if "*" in 名称:
-            名称, 数量 = 名称.split("*")
-            limit = int(数量)
-        filter = {'名称': 名称}
-        sort = list({'价格': 1}.items())
-        查找商品 = db.auction_house.find(filter=filter, sort=sort, limit=limit)
+    数量 = 1
+    商品id = 名称
+    if "*" in 名称:
+        商品id, 数量 = 名称.split("*")
+    商品 = db.auction_house.find({"_id": int(商品id)})
+    if not 商品:
+        return "商品不存在！"
 
-    数量 = 0
-    总花费 = 0
-    商品名称 = ""
-    mail_msg = {}
-    msg = ""
-    for 商品 in 查找商品:
-        商品id = 商品["_id"]
-        商品价格 = 商品["价格"]
-        商品类型 = 商品["类型"]
-        商品名称 = 商品["名称"]
-        寄售人 = 商品["寄售人"]
-        user_info = db.user_info.find_one({"_id": 购买人id})
-        if not await 减少银两(购买人id, 商品价格, "交易行购买"):
-            msg += f"\n购买商品[{商品id}]({商品名称})失败，需要银两{商品价格}"
-            break
-        # 获得商品
-        if 商品类型 in ("材料", "图纸"):
-            con = db.knapsack.find_one({"_id": 购买人id})
-            if not con:
-                con = {}
-            if not con.get(商品类型):
-                con[商品类型] = {}
-            if not con[商品类型].get(商品名称):
-                con[商品类型][商品名称] = 0
-            con[商品类型][商品名称] += 1
-            db.knapsack.update_one({"_id": 购买人id}, {"$set": con}, True)
-        elif 商品类型 in ("武器", "外装", "饰品"):
-            db.equip.update_one({"_id": 商品名称}, {"$set": {"持有人": 购买人id, "交易时间": datetime.now()}}, True)
-        elif 商品类型 == "物品":
-            db.knapsack.update_one({"_id": 购买人id}, {"$inc": {商品名称: 1}}, True)
-        # 交易行删除商品
+    商品id = 商品["_id"]
+    商品价格 = 商品["价格"]
+    商品类型 = 商品["类型"]
+    商品名称 = 商品["名称"]
+    寄售人 = 商品["寄售人"]
+    商品数量 = 商品.get("数量", 0)
+    if 商品数量 < 数量:
+        return f"该商品只有{商品数量}件了"
+    总价 = 商品价格 * 商品数量
+    user_info = db.user_info.find_one({"_id": 购买人id})
+    if not await 减少银两(购买人id, 总价, "交易行购买"):
+        return f"\n购买商品[{商品id}]({商品名称})*{数量}失败，需要银两{商品价格}"
+        
+    # 获得商品
+    if 商品类型 in ("材料", "图纸"):
+        con = db.knapsack.find_one({"_id": 购买人id})
+        if not con:
+            con = {}
+        if not con.get(商品类型):
+            con[商品类型] = {}
+        if not con[商品类型].get(商品名称):
+            con[商品类型][商品名称] = 0
+        con[商品类型][商品名称] += 数量
+        db.knapsack.update_one({"_id": 购买人id}, {"$set": con}, True)
+    elif 商品类型 in ("武器", "外装", "饰品"):
+        db.equip.update_one({"_id": 商品名称}, {"$set": {"持有人": 购买人id, "交易时间": datetime.now()}}, True)
+    elif 商品类型 == "物品":
+        db.knapsack.update_one({"_id": 购买人id}, {"$inc": {商品名称: 数量}}, True)
+    # 交易行删除商品
+    if 商品数量 - 数量 <= 0:
         db.auction_house.delete_one({"_id": 商品id})
-        # 寄售人获得 银两 使用qq邮箱接收信息
-        手续费 = 商品价格 // 100
-        获得银两 = 商品价格 - 手续费
-        数量 += 1
-        总花费 += 商品价格
-        await 增加银两(寄售人, 获得银两, "交易行出售")
-        if 寄售人 not in mail_msg:
-            mail_msg[寄售人] = {"数量": 0, "商品价格": 0, "手续费": 0, "获得银两": 0}
-        mail_msg[寄售人]["数量"] += 1
-        mail_msg[寄售人]["商品价格"] += 商品价格
-        mail_msg[寄售人]["手续费"] += 手续费
-        mail_msg[寄售人]["获得银两"] += 获得银两
+    else:
+        db.auction_house.update_one({"_id": 商品id}, {"$inc": {"数量": -数量}})
+    # 寄售人获得 银两 使用qq邮箱接收信息
+    手续费 = 总价 // 100
+    获得银两 = 商品价格 - 手续费
+    await 增加银两(寄售人, 获得银两, "交易行出售")
 
-    购买人 = UserInfo(购买人id)
     当前时间 = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     for 寄售人, v in mail_msg.items():
         await mail_client.send_mail(
             [寄售人], f"{商品名称}售卖成功通知",
-            f"您寄售的[{商品名称}]于{当前时间}，被【{购买人.基础属性['名称']}】买走[{v['数量']}]个\n共计价格{v['商品价格']}两银子。扣除手续费{v['手续费']}，共获得{v['获得银两']}")
-        logger.info(f"购买商品: {寄售人}[{商品名称}] -({v['商品价格']}*{v['数量']})-> {购买人.基础属性['名称']}({购买人id})")
-    msg = f"购买商品完成\n花费{总花费}两银子，获得[{商品名称}*{数量}]"
+            f"您寄售的[{商品名称}]于{当前时间}，被【{购买人.基础属性['名称']}】买走[{数量}]个\n共计价格{总价}两银子。扣除手续费{手续费}，共获得{获得银两}")
+        logger.info(f"购买商品: {寄售人}[{商品名称}] -({商品价格}*{数量})-> {购买人.基础属性['名称']}({购买人id})")
+    msg = f"购买商品完成\n花费{总价}两银子，获得[{商品名称}*{数量}]"
     return msg
 
 
@@ -245,7 +232,7 @@ async def 查找商品(condition=""):
             if n1 > n2:
                 n2, n1 = n1, n2
             filter[i[:2]] = {"$gte": n1, "$lte": n2}
-        elif re.findall("^(等级|价格|日期|关注)[-\+]{0,1}$", i):
+        elif re.findall("^(等级|价格|日期|关注|数量)[-\+]{0,1}$", i):
             sort[i[:2]] = -1 if i[-1] == "-" else 1
         elif re.findall("^[（\(].+[\)）]$", i):
             filter["备注"] = {"$regex": i[1:-1]}
@@ -280,6 +267,7 @@ async def 查找商品(condition=""):
             "名称": i["名称"],
             "寄售人": 寄售人.基础属性['名称'],
             "日期": i["日期"].strftime("%Y-%m-%d"),
+            "数量": i.get("数量", 1),
             "关注": i["关注"],
             "备注": i["备注"],
         })

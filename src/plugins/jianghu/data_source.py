@@ -1089,7 +1089,7 @@ async def all_pk_log(user_id):
     if not 战斗记录:
         return "没有找到对应的战斗记录"
     user_name_map = {}
-    msg = "战斗记录"
+    msg = "【战斗记录】"
     for pk_log in 战斗记录:
         攻方 = pk_log["攻方"]
         守方 = pk_log["守方"]
