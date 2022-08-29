@@ -650,6 +650,10 @@ async def compose(user_id, res):
             for n, i in enumerate(全部待合成):
                 if (int(i[2:]) + int(全部待合成[-1][2:])) <= 合成最高等级:
                     break
+            用户图纸列表 = []
+            len_全部待合成 = len(全部待合成)
+            if len_全部待合成 % 2 == 1:
+                用户图纸列表.append(全部待合成[len(len_全部待合成) // 2])
             可合成 = 全部待合成[n:]
             待合成 = []
             for i in range(len(可合成) // 2):
@@ -658,7 +662,6 @@ async def compose(user_id, res):
                     待合成.append((首, 尾))
             if not 待合成:
                 break
-            用户图纸列表 = []
             for x, y in 待合成:
                 获得图纸 = 合成图纸(x, y)
                 用户图纸列表.append(获得图纸)
