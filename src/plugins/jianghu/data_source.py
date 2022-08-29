@@ -1128,8 +1128,9 @@ async def pk_log(日期, 编号):
     data = {
         "战斗记录": content
     }
-    return msg
-
+    pagename = "pk_log.html"
+    img = await browser.template_to_image(pagename=pagename, **data)
+    return MessageSegment.image(img)
 
 async def pk(动作, user_id, 目标):
     if 目标.isdigit():
