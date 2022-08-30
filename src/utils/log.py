@@ -13,7 +13,7 @@ class Log(object):
 
     def debug(self, msg: str):
         now = datetime.now()
-        log = logs[now.strftime("%Y-%m-%d")]
+        log = logs[now.strftime("bot-%Y-%m")]
         log.insert_one({
             "msg": msg,
             "level": DEBUG,
@@ -23,7 +23,7 @@ class Log(object):
 
     def info(self, msg: str):
         now = datetime.now()
-        log = logs[now.strftime("%Y-%m-%d")]
+        log = logs[now.strftime("bot-%Y-%m")]
         log.insert_one({
             "msg": msg,
             "level": INFO,
@@ -33,7 +33,7 @@ class Log(object):
 
     def warning(self, msg: str):
         now = datetime.now()
-        log = logs[now.strftime("%Y-%m-%d")]
+        log = logs[now.strftime("bot-%Y-%m")]
         log.insert_one({
             "msg": msg,
             "level": WARN,
@@ -43,7 +43,7 @@ class Log(object):
 
     def error(self, msg: str):
         now = datetime.now()
-        log = logs[now.strftime("%Y-%m-%d")]
+        log = logs[now.strftime("bot-%Y-%m")]
         log.insert_one({
             "msg": msg,
             "level": ERROR,

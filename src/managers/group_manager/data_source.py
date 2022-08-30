@@ -173,10 +173,10 @@ async def check_add_bot_to_group(bot: Bot, user_id: int,
     bot_info = db.bot_info.find_one({"_id": bot_id})
     if bot_info.get("master") == user_id:
         return True, None
-    result, _ = check_black_list(user_id, "QQ")
+    result, _ = await check_black_list(user_id, "QQ")
     if result:
         return False, f"{user_id}太烦人被我拉黑了, 下次注意点!"
-    result, _ = check_black_list(group_id, "群号")
+    result, _ = await check_black_list(group_id, "群号")
     if result:
         return False, "群已被拉黑"
     group_conf = db.group_conf.find_one_and_update(
@@ -188,8 +188,8 @@ async def check_add_bot_to_group(bot: Bot, user_id: int,
     if group_conf:
         add_group_num = group_conf.get("add_group_num", 0)
         if add_group_num >= 5:
-            add_black_list(user_id, "QQ", 2592000, f"加群{group_id}单日超过5次")
-            return False, "单日拉机器人超过5次, 用户拉黑30天"
+            await add_black_list(user_id, "QQ", 86400, f"加群{group_id}单日超过5次")
+            return False, "单日拉机器人超过5次, 用户拉黑1天"
     manage_group = config.bot_conf.get("manage_group", [])
     access_group_num = bot_info.get("access_group_num", 50)
     bot_group_num = db.group_conf.count_documents({"bot_id": bot_id})

@@ -5,31 +5,7 @@ from datetime import datetime
 from src.utils.db import db
 
 
-async def del_bot_to_group(bot: Bot, group_id, msg=None, exit_group=True):
-    '''退群动作'''
-    try:
-        bot_id = int(bot.self_id)
-        if exit_group:
-            if msg:
-                # 退群前发送消息
-                await bot.send_group_msg(group_id=group_id, message=msg)
-                time.sleep(0.5)
-            # 退群
-            await bot.set_group_leave(group_id=group_id, is_dismiss=False)
-        # 删除数据库中的机器人记录
-        db.group_conf.update_one({
-            '_id': group_id,
-            'bot_id': bot_id
-        }, {'$set': {
-            "bot_id": 0
-        }})
-        ret_msg = f"成功退群 {group_id}"
-    except:
-        ret_msg = f"退群 {group_id} 失败"
-    return ret_msg
-
-
-def add_black_list(_id, black_type, black_time, remark=""):
+async def add_black_list(_id, black_type, black_time, remark=""):
     """
     加黑
     """
@@ -50,7 +26,7 @@ def add_black_list(_id, black_type, black_time, remark=""):
     }, True)
 
 
-def check_black_list(_id, black_type):
+async def check_black_list(_id, black_type):
     """
     检查是否在黑名单中
     """
