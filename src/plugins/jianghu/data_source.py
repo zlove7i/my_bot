@@ -165,10 +165,10 @@ async def practice_qihai(user_id, res):
     energy = 0
     if con:
         energy = con.get("energy", 0)
-    if not await 减少银两(user_id, 花费银两, "修炼气海"):
-        return "你的银两不够！"
     if energy < 3:
         return "你的精力不足3点！"
+    if not await 减少银两(user_id, 花费银两, "修炼气海"):
+        return "你的银两不够！"
     增加气海 = random.randint(花费银两//10, 花费银两//5)
 
     db.user_info.update_one({"_id": user_id}, {"$inc": {"energy": -3}})
