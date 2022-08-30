@@ -14,6 +14,6 @@ ADD . .
 
 RUN python3 -m pip install -r requirements.txt &&\
     cp /my_bot/msyh.ttc /usr/share/fonts/ &&\
-    python3 -m playwright install
+    python3 -m playwright install chromium
 
 CMD python3 bot.py
