@@ -43,5 +43,5 @@ async def check_black_list(_id, black_type):
         }
     })
     if black_info:
-        return True, black_info.get("remarks")
+        return True, black_info.get("remark")
     return False, ""
