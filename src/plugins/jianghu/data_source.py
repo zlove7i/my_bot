@@ -1120,17 +1120,18 @@ async def pk_log(日期, 编号):
     战斗记录 = db.pk_log.find_one({"编号": 编号, "日期": int(日期)})
     if not 战斗记录:
         return "没有找到对应的战斗记录"
-    content = f"{战斗记录['时间'].strftime('%Y-%m-%d %H:%M:%S')}<br>"
+    content = f"<h2>{战斗记录['时间'].strftime('%Y-%m-%d %H:%M:%S')}</h2><br>"
     for n, i in enumerate(战斗记录.get("记录")):
         content += f'<div class="text-with-hr fs-5"><span>第 {n + 1} 回合</span></div>'
         content += "<br>".join(i)
-    content += f'<br><div class="text-with-hr fs-5"><span>战斗结束</span></div>'
+    content += '<br><div class="text-with-hr fs-5"><span>战斗结束</span></div>'
     data = {
         "战斗记录": content
     }
     pagename = "pk_log.html"
     img = await browser.template_to_image(pagename=pagename, **data)
     return MessageSegment.image(img)
+
 
 async def pk(动作, user_id, 目标):
     if 目标.isdigit():
