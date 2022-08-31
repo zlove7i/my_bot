@@ -651,15 +651,19 @@ async def compose(user_id, res):
                 if (int(i[2:]) + int(全部待合成[-1][2:])) <= 合成最高等级:
                     break
             用户图纸列表 = []
-            len_全部待合成 = len(全部待合成)
-            if len_全部待合成 % 2 == 1:
-                用户图纸列表.append(全部待合成[len_全部待合成 // 2])
             可合成 = 全部待合成[n:]
             待合成 = []
-            for i in range(len(可合成) // 2):
-                首, 尾 = 可合成[i], 可合成[-(i+1)]
+            尾坐标 = len(可合成) - 1
+            for n, i in enumerate(可合成):
+                if n >= 尾坐标:
+                    if n == 尾坐标:
+                        用户图纸列表.append(可合成[n])
+                    break
+                首, 尾 = 可合成[n], 可合成[尾坐标]
                 if (int(首[2:]) + int(尾[2:])) <= 合成最高等级:
                     待合成.append((首, 尾))
+                    尾坐标 -= 1
+
             if not 待合成:
                 break
             for x, y in 待合成:
@@ -670,9 +674,9 @@ async def compose(user_id, res):
                 图纸[获得图纸] += 1
                 图纸[x] -= 1
                 图纸[y] -= 1
-                for n in (x, y):
-                    if n in 图纸 and 图纸[n] <= 0:
-                        del 图纸[n]
+                for j in (x, y):
+                    if j in 图纸 and 图纸[j] <= 0:
+                        del 图纸[j]
         最终合成结果 = {}
         for i in set(图纸.keys()) | set(原始图纸.keys()):
             if i not in 最终合成结果:
