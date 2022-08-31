@@ -1120,7 +1120,18 @@ async def pk_log(日期, 编号):
     战斗记录 = db.pk_log.find_one({"编号": 编号, "日期": int(日期)})
     if not 战斗记录:
         return "没有找到对应的战斗记录"
-    content = f"<h2>{战斗记录['时间'].strftime('%Y-%m-%d %H:%M:%S')}</h2><br>"
+    攻方 = 战斗记录["攻方"]
+    守方 = 战斗记录["守方"]
+    方式 = 战斗记录.get("方式", "")
+    攻_name = "无名"
+    if 攻 := db.jianghu.find_one({"_id": 攻方}):
+        攻_name = 攻.get("名称", "无名")
+    守_name = "无名"
+    if 守 := db.jianghu.find_one({"_id": 守方}):
+        守_name = 守.get("名称", "无名")
+
+    content = f"<h3>{攻_name} {方式} {守_name}</h3><br>"
+    content += f"<h4>{战斗记录['时间'].strftime('%Y-%m-%d %H:%M:%S')}</h4><br>"
     for n, i in enumerate(战斗记录.get("记录")):
         content += f'<div class="text-with-hr fs-5"><span>第 {n + 1} 回合</span></div>'
         content += "<br>".join(i)
