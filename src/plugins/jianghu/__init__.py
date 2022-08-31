@@ -175,6 +175,8 @@ async def _(event: GroupMessageEvent):
 async def _(event: GroupMessageEvent, res=Depends(get_content)):
     '''改名'''
     user_id = event.user_id
+    if user_id == 80000000:
+        await set_name.finish("木桩不要改名。")
     group_id = event.group_id
     logger.info(f"群{group_id} | {user_id} | 查看个人信息")
     msg = await source.set_name(user_id, res)
@@ -231,7 +233,7 @@ async def _(event: GroupMessageEvent, res=Depends(get_content)):
     '''上架物品'''
     user_id = event.user_id
     if user_id == 80000000:
-        await put_on_shelves.finish("这条路是孤独的，只能前行，退无可退。")
+        await put_on_shelves.finish("木桩不会卖东西。")
     group_id = event.group_id
     logger.info(f"群{group_id} | {user_id} | 上架物品")
     msg = await 上架商品(user_id, *res)
@@ -243,7 +245,7 @@ async def _(event: GroupMessageEvent, res=Depends(get_content)):
     '''下架物品'''
     user_id = event.user_id
     if user_id == 80000000:
-        await pull_off_shelves.finish("这条路是孤独的，只能前行，退无可退。")
+        await pull_off_shelves.finish("木桩哈哈哈哈哈。")
     group_id = event.group_id
     logger.info(f"群{group_id} | {user_id} | 下架物品")
     if len(res) != 1 or not res[0].isdigit():
@@ -282,7 +284,7 @@ async def _(event: GroupMessageEvent, res=Depends(get_content)):
     '''购买物品'''
     user_id = event.user_id
     if user_id == 80000000:
-        await buy_commodity.finish("这条路是孤独的，只能前行，退无可退。")
+        await buy_commodity.finish("木桩买不了东西。")
     group_id = event.group_id
     logger.info(f"群{group_id} | {user_id} | 购买物品")
     if len(res) != 1:
@@ -300,6 +302,8 @@ async def _(event: GroupMessageEvent):
 async def _(event: GroupMessageEvent):
     """赠送银两"""
     user_id = event.user_id
+    if user_id == 80000000:
+        await give.finish("木桩送不了钱。")
     user_name = event.sender.nickname
     message = event.raw_message
     message_list = message.split()
@@ -675,7 +679,7 @@ async def _(event: GroupMessageEvent):
     '''送东西'''
     user_id = event.user_id
     if user_id == 80000000:
-        await give.finish("这条路是孤独的，只能前行，退无可退。")
+        await give.finish("木桩送不了东西。")
     at_member_obj = re.compile(r"^赠送 *\[CQ:at,qq=(\d*)\] *(.+?)$")
     at_member_list = at_member_obj.findall(event.raw_message)
     if not at_member_list or len(at_member_list[0]) < 2:

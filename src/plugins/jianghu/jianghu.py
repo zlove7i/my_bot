@@ -200,7 +200,7 @@ class PK(Skill):
                 data["结算"] = await self.偷袭死斗结算(守方, 攻方, 攻方善恶值)
                 data["攻方"]["胜负"] = False
                 data["守方"]["胜负"] = True
-            if 善恶值 and 守方.基础属性['凶煞'] < 当前时间:
+            if 善恶值 and 守方.基础属性['凶煞'] < 当前时间 and 守方_id != 80000000:
                 await self.善恶值变化(攻方_id, 善恶值)
                 data["善恶值"] = f"{攻方.基础属性['名称']} 善恶值 {善恶值}"
         if action == "切磋":

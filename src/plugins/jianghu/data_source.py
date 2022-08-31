@@ -1156,7 +1156,7 @@ async def pk(动作, user_id, 目标):
         if 动作 == "切磋":
             return "不能通过名称进行切磋"
         消耗精力 += 1
-    if 消耗精力:
+    if 消耗精力 and 目标_id != 80000000:
         善恶值 = db.jianghu.find_one({"_id": user_id}).get("善恶值", 0)
         if 善恶值 < 0:
             消耗精力 += -(善恶值 // 300)
@@ -1317,10 +1317,11 @@ async def healing(user_id, target_id):
     target_id = int(target_id)
     user = UserInfo(target_id)
     凶煞 = user.基础属性["凶煞"]
-    if user_id != target_id and 凶煞 < datetime.now():
-        return "无法帮此目标疗伤"
-    if not user.基础属性["重伤状态"]:
-        return "未重伤，不需要疗伤"
+    if target_id != 80000000:
+        if user_id != target_id and 凶煞 < datetime.now():
+            return "无法帮此目标疗伤"
+        if not user.基础属性["重伤状态"]:
+            return "未重伤，不需要疗伤"
 
     善恶值 = user.基础属性["善恶值"]
     复活需要银两 = 1000 - (善恶值 * 10)
