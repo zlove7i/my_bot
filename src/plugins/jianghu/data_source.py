@@ -1317,11 +1317,10 @@ async def healing(user_id, target_id):
     target_id = int(target_id)
     user = UserInfo(target_id)
     凶煞 = user.基础属性["凶煞"]
-    if target_id != 80000000:
-        if user_id != target_id and 凶煞 < datetime.now():
-            return "无法帮此目标疗伤"
-        if not user.基础属性["重伤状态"]:
-            return "未重伤，不需要疗伤"
+    if user_id != target_id and 凶煞 < datetime.now() and target_id != 80000000:
+        return "无法帮此目标疗伤"
+    if not user.基础属性["重伤状态"]:
+        return "未重伤，不需要疗伤"
 
     善恶值 = user.基础属性["善恶值"]
     复活需要银两 = 1000 - (善恶值 * 10)

@@ -526,6 +526,8 @@ async def _(event: GroupMessageEvent):
 async def _(event: GroupMessageEvent):
     """领悟武学"""
     user_id = event.user_id
+    if user_id == 80000000:
+        comprehension_skill.finish("木桩能学啥?")
     msg = await source.comprehension_skill(user_id)
     await comprehension_skill.finish(msg)
 
@@ -533,6 +535,8 @@ async def _(event: GroupMessageEvent):
 async def _(event: GroupMessageEvent, res=Depends(get_content)):
     """遗忘武学"""
     user_id = event.user_id
+    if user_id == 80000000:
+        comprehension_skill.finish("木桩忘不了")
     msg = await source.forgotten_skill(user_id, res)
     await forgotten_skill.finish(msg)
 
@@ -647,6 +651,8 @@ async def _(event: GroupMessageEvent):
         msg = "需要艾特传授目标"
         await impart_skill.finish(msg)
     at_qq = int(at_member_list[0][0])
+    if at_qq == 80000000:
+        comprehension_skill.finish("木桩学不会")
     武学 = at_member_list[0][1]
     if at_qq == user_id:
         msg = "不可以传授给自己武学"
