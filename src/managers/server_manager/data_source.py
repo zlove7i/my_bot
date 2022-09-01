@@ -44,7 +44,7 @@ async def check_group(group_id: int, bot: Bot):
     if group_id in config.bot_conf.get("manage_group", []):
         return
 
-    is_black, info = check_black_list(group_id, "群号")
+    is_black, info = await check_black_list(group_id, "群号")
     if is_black:
         msg = f"好家伙，这个群被拉黑了。原因是：{info}"
         db.group_conf.update_one({'_id': group_id}, {'$set': {

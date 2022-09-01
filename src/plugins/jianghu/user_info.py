@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from random import randint
 from src.utils.db import db
+from src.utils.log import logger
 import os
 import yaml
 
@@ -33,6 +34,12 @@ def init_user_info(user_id):
         },
     }
     db.jianghu.insert_one(init_data)
+    db.user_info.update_one(
+        {"_id": user_id},
+        {"$inc": {"gold": 100000, "energy": 100}},
+        True
+    )
+    logger.info(f"新用户: {user_id}")
     return init_data
 
 
@@ -44,7 +51,7 @@ class UserInfo():
     def __init__(self, user_id, action="") -> None:
         self.user_id = user_id
         if action == "世界首领":
-            user_info = db.npc.find_one({"_id": user_id})
+            user_info = db.npc.find_one({"名称": user_id})
             if not user_info:
                 return
         elif action == "秘境首领":
@@ -167,7 +174,7 @@ class UserInfo():
                 self.基础属性[k] += v
         self.计算当前状态()
 
-    def 最终结算(self, 战斗编号=None, 敌方id=None):
+    def 最终结算(self, 敌方id=None):
         """
         # 是否重伤, 是否本场战斗重伤, 剩余血量
         """
@@ -179,6 +186,8 @@ class UserInfo():
 
         if self.基础属性.get("类型") == "秘境首领":
             user_info = self.基础属性
+        elif self.基础属性.get("类型") == "首领":
+            user_info = db_con.find_one({"名称": self.user_id})
         else:
             user_info = db_con.find_one({"_id": self.user_id})
 
@@ -197,14 +206,13 @@ class UserInfo():
 
         if self.基础属性.get("类型") != "秘境首领":
             db_con.update_one(
-                {"_id": self.user_id},
+                {"_id": user_info["_id"]},
                 {"$set": {
                     "当前气血": self.当前气血,
                     "当前内力": self.当前内力,
                     "当前气海": self.当前气海,
                     "重伤状态": self.重伤状态,
                     "击杀人": 敌方id,
-                    "战斗编号": 战斗编号
                 }}, True)
 
     def 气血变化(self, 气血变化量):

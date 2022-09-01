@@ -80,7 +80,7 @@ async def _(event: GroupMessageEvent, res=Depends(get_content)):
     if 类型 == "匿名河灯":
         user_name = ""
     logger.debug(
-        f"<y>群{group_id}</y> | <g>{user_id}</g> | <e>放河灯</e> | {content}")
+        f"群{group_id} | {user_id} | 放河灯 | {content}")
     msg = await source.sent_river_lantern(user_id, user_name, 类型, content)
     await sent_river_lantern.finish(msg)
 
@@ -99,7 +99,7 @@ async def _(event: PokeNotifyEvent):
     '''戳一戳，捡一个河灯'''
     group_id = event.group_id
     user_id = event.user_id
-    logger.debug(f"<y>群{group_id}</y> | <g>{user_id}</g> | <e>捡河灯</e>")
+    logger.debug(f"群{group_id} | {user_id} | 捡河灯")
     msg = await source.get_river_lantern(group_id, user_id)
     await get_river_lantern.finish(msg)
 
@@ -109,6 +109,6 @@ async def _(event: GroupMessageEvent):
     '''戳一戳，捡一个河灯'''
     group_id = event.group_id
     user_id = event.user_id
-    logger.debug(f"<y>群{group_id}</y> | <g>{user_id}</g> | <e>捡河灯</e>")
+    logger.debug(f"群{group_id} | {user_id} | 捡河灯")
     msg = await source.get_river_lantern(group_id, user_id)
     await get_river_lantern.finish(msg)

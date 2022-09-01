@@ -13,14 +13,35 @@
             div{
                 font-family: youai;
             }
+            h3, h4 {
+                text-align: center;
+            }
+            .text-with-hr:before {
+                position: absolute;
+                content: '';
+                top: 25px;
+                left: 0px;
+                width: 100%;
+                border-bottom: 2px solid #c2c0c0;
+                z-index: -1;
+            }
+
+            .text-with-hr span {
+                display: inline-block;
+                background-image: url('img/bg.png');
+                padding: 10px;
+            }
+            .text-with-hr {
+                text-align: center;
+                position: relative;
+                z-index: 2;
+            }
         </style>
     </head>
     <body>
         <div id="main"  style="width: 600px;background-image: url('img/bg.png');">
             <div style="padding:30px">
-                {% for i in 战斗记录 %}
-                    <p>{{ i }}</p>
-                {% endfor %}
+                {{ 战斗记录 }}
             </div>
         </div>
     </body>

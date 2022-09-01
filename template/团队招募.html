@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>团队招募</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/table.css" rel="stylesheet">
+</head>
+
+<body>
+    <div style="padding: 10px;width: 1100px;">
+        <div id="main" class="card" style="background-image: url('img/bg.png');">
+            <div class="card-header">
+                <div style="text-align:center; margin:10px">
+                    <h3><img src="./img/jx3.ico" height="50" width="50"> <strong> {{ server }} • 招募</strong></h3>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <table class="table table-striped table-hover">
+                        <thead class="fs-4">
+                            <tr>
+                                <th scope="col">&nbsp;&nbsp;活动<span style="color:rgb(136, 57, 43);">名</span>称</th>
+                                <th scope="col" style="text-align:center">等级</th>
+                                <th scope="col">团长</th>
+                                <th scope="col" style="text-align:right">人数</th>
+                                <th scope="col">招募信息</th>
+                                <th scope="col" style="text-align:center">创建时间</th>
+                            </tr>
+                        </thead>
+                        <tbody class="fs-6">
+                            {% for one in data %}
+                            <tr>
+                                <td scope="col">&nbsp;&nbsp;{{ one.activity }}</td>
+                                <td scope="col" style="text-align:center">{{ one.level }}</td>
+                                <td scope="col">{{ one.leader }}</td>
+                                <td scope="col" style="text-align:right">{{ one.number }} / {{ one.maxNumber }}</td>
+                                <td scope="col">{{ one.content }}</td>
+                                <td scope="col" style="text-align:center">{{ one.createTime }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if num %}
+                    <p class="text-center fs-4">共 {{ num }} 条数据，但我只显示 50 条</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

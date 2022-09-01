@@ -9,4 +9,4 @@ scheduler = AsyncIOScheduler(timezone="Asia/Shanghai")
 def start_scheduler():
     if not scheduler.running:
         scheduler.start()
-        logger.info("<g>定时器模块已开启。</g>")
+        logger.info("定时器模块已开启。")

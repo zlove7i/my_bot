@@ -173,10 +173,10 @@ async def check_add_bot_to_group(bot: Bot, user_id: int,
     bot_info = db.bot_info.find_one({"_id": bot_id})
     if bot_info.get("master") == user_id:
         return True, None
-    result, _ = check_black_list(user_id, "QQ")
+    result, _ = await check_black_list(user_id, "QQ")
     if result:
         return False, f"{user_id}太烦人被我拉黑了, 下次注意点!"
-    result, _ = check_black_list(group_id, "群号")
+    result, _ = await check_black_list(group_id, "群号")
     if result:
         return False, "群已被拉黑"
     group_conf = db.group_conf.find_one_and_update(
@@ -188,8 +188,8 @@ async def check_add_bot_to_group(bot: Bot, user_id: int,
     if group_conf:
         add_group_num = group_conf.get("add_group_num", 0)
         if add_group_num >= 5:
-            add_black_list(user_id, "QQ", 2592000, f"加群{group_id}单日超过5次")
-            return False, "单日拉机器人超过5次, 用户拉黑30天"
+            await add_black_list(user_id, "QQ", 86400, f"加群{group_id}单日超过5次")
+            return False, "单日拉机器人超过5次, 用户拉黑1天"
     manage_group = config.bot_conf.get("manage_group", [])
     access_group_num = bot_info.get("access_group_num", 50)
     bot_group_num = db.group_conf.count_documents({"bot_id": bot_id})
@@ -255,39 +255,6 @@ async def del_bot_to_group(bot: Bot, group_id, msg=None, exit_group=True):
     return ret_msg
 
 
-async def tianjianhongfu(bot: Bot, group_id, user_id, nickname):
-    # 天降鸿福事件
-    # 个人获得奖励概率递减
-    con = db.user_info.find_one({"_id": user_id})
-    user_lucky = 1.0
-    if con:
-        user_lucky = con.get("user_lucky", 1.0)
-    if user_lucky >= random.uniform(0, 50):
-        db.user_info.update_one({"_id": user_id},
-                                {"$set": {
-                                    "user_lucky": user_lucky * 0.7
-                                }}, True)
-        con = db.group_conf.find_one({"_id": group_id})
-        lucky = 0
-        if con:
-            lucky = con.get("lucky", 0)
-        add_gold = random.randint(1, (lucky + 1) * 30)
-        gold = 0
-        _con = db.user_info.find_one({'_id': user_id})
-        if _con:
-            gold = _con.get("gold", 0)
-        gold += add_gold
-        db.user_info.update_one({"_id": user_id}, {"$set": {
-            "gold": gold
-        }}, True)
-        msg = f"{nickname}天降鸿福，银两 +{add_gold}"
-        logger.debug(
-            f"<y>群{group_id}</y> | <g>{nickname}</g> | 天降鸿福 +{add_gold}")
-        await bot.send_group_msg(group_id=group_id, message=msg)
-        return True
-    return False
-
-
 async def play_picture(bot: Bot, event: GroupMessageEvent, group_id):
     _con = db.group_conf.find_one({'_id': group_id})
     if _con:
@@ -303,10 +270,10 @@ async def play_picture(bot: Bot, event: GroupMessageEvent, group_id):
             if not content:
                 return
             msg = await chat(content)
-            logger.debug(f"<y>群({group_id})</y> | 搭话 | {msg}")
+            logger.debug(f"群({group_id}) | 搭话 | {msg}")
         else:
             memes = db.memes.aggregate([{"$sample": {"size": 1}}])
-            logger.debug(f"<y>群({group_id})</y> | 斗图")
+            logger.debug(f"群({group_id}) | 斗图")
             for meme in memes:
                 url = meme.get("url")
                 async with AsyncClient() as client:

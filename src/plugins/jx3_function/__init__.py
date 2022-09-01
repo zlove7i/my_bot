@@ -256,7 +256,7 @@ async def _(event: GroupMessageEvent):
     user_info = db.user_info.find_one({"_id": user_id})
     if text == "角色管理":
         # 返回当前所有角色
-        if not user_info.get("user_data"):
+        if not user_info or not user_info.get("user_data"):
             await user_manage.finish(
                 "你还没有绑定过任何角色, 请发送以下命令进行绑定:\n角色管理 角色名称 心法 服务器(选填)")
         msg = "\n".join([
@@ -299,7 +299,7 @@ async def _(event: GroupMessageEvent):
     if not profession:
         await user_manage.finish("找不到你写的心法，换个写法再来一次吧")
 
-    if not user_info.get("user_data"):
+    if not user_info or not user_info.get("user_data"):
         user_info["user_data"] = {}
         user_info["teams"] = {}
         user_info["default_user"] = user_name
@@ -666,6 +666,8 @@ async def _(event: GroupMessageEvent):
         await view_team.finish(MessageSegment.image(img))
     else:
         user_info = db.user_info.find_one({"_id": user_id})
+        if not user_info:
+            user_info = {}
         user_teams = user_info.get("teams", {})
         datas = []
         tmp_user_teams = deepcopy(user_teams)
@@ -698,6 +700,8 @@ async def _(event: GroupMessageEvent):
     group_id = int(event.group_id)
     text = event.get_plaintext()
     user_info = db.user_info.find_one({"_id": user_id})
+    if not user_info:
+        user_info = {}
     text.replace("（", "(").replace("）", ")")
     server_re = re.findall(r" \(([\u4e00-\u9fa5]{2,5})\)", text)
     if server_re:
@@ -807,12 +811,13 @@ async def _(bot: Bot, event: GroupMessageEvent):
     group_id = int(event.group_id)
     bot_id = int(bot.self_id)
     user_info = db.user_info.find_one({"_id": user_id})
+    if not user_info:
+        user_info = {
+            "user_data": {}
+        }
     text = event.get_plaintext()
     text_list = text.split()
     team_id = int(text_list[-1])
-    default_user = user_info.get("default_user")
-    if not default_user:
-        await register.finish("你还没有绑定角色：\n发送“角色管理 角色名称 心法 服务器(选填)”")
     msg = ""
     if len(text_list) == 3:
         user_name = text_list[1]
@@ -827,6 +832,8 @@ async def _(bot: Bot, event: GroupMessageEvent):
         if user_name not in user_info["user_data"]:
             user_info["user_data"][user_name] = {}
             user_info["teams"][user_name] = []
+        if not user_info.get("default_user"):
+            user_info["default_user"] = user_name
         user_info["user_data"][user_name] = {
             "profession": profession,
             "server": server
