@@ -22,6 +22,7 @@ class Skill():
 
     def __init__(self) -> None:
         self.战斗内容 = []
+        self.当前回合 = 1
         self.skill = {
             ""
             "势如破竹": {
@@ -136,7 +137,9 @@ class Skill():
         }
 
     def 战斗记录(self, 战斗记录):
-        self.战斗内容.append(战斗记录)
+        if len(self.战斗内容) < self.当前回合+1:
+            self.战斗内容.append([])
+        self.战斗内容[self.当前回合].append(战斗记录)
 
     def 触发被动(self, 被动类型: str, 事件: str, 数值: int, 自己: UserInfo, 目标: UserInfo):
         武学 = 自己.基础属性["武学"]

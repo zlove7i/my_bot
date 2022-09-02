@@ -98,7 +98,7 @@ friend_request = on_request(priority=3, block=True)
 
 manage_group = config.bot_conf.get("manage_group", [])
 
-archive = db.client["archive"]
+logs = db.client["logs"]
 
 
 @event_postprocessor
@@ -109,6 +109,10 @@ async def _(bot: Bot, event: GroupMessageEvent) -> None:
     group_id = event.group_id
     if group_id in manage_group:
         return
+    is_black, content = await check_black_list(group_id, "群号")
+    if is_black:
+        msg = f"这个群被拉黑了, 拉黑原因是: {content}, 我先溜了"
+        await source.del_bot_to_group(bot, group_id, msg)
     group_info = await bot.get_group_info(group_id=group_id)
     group_name = group_info["group_name"]
     bot_id = int(bot.self_id)
@@ -117,7 +121,7 @@ async def _(bot: Bot, event: GroupMessageEvent) -> None:
     role = event.sender.role
     message = event.raw_message
     sent_time = datetime.datetime.now()
-    chat_log = archive[sent_time.strftime("chat-log-%Y-%m-%d")]
+    chat_log = logs[sent_time.strftime("chat-log-%Y-%m-%d")]
     chat_log.insert_one({
         "bot_id": bot_id,
         "role": role,
@@ -221,7 +225,7 @@ async def _(bot: Bot, event: FriendRequestEvent):
     if bot_info.get("master"):
         approve = True
     else:
-        is_black, _ = check_black_list(user_id, "QQ")
+        is_black, _ = await check_black_list(user_id, "QQ")
         approve = not is_black and bot_info.get("work_stat")
     await bot.set_friend_add_request(
         flag=event.flag,

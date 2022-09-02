@@ -174,7 +174,7 @@ class UserInfo():
                 self.基础属性[k] += v
         self.计算当前状态()
 
-    def 最终结算(self, 战斗编号=None, 敌方id=None):
+    def 最终结算(self, 敌方id=None):
         """
         # 是否重伤, 是否本场战斗重伤, 剩余血量
         """
@@ -213,7 +213,6 @@ class UserInfo():
                     "当前气海": self.当前气海,
                     "重伤状态": self.重伤状态,
                     "击杀人": 敌方id,
-                    "战斗编号": 战斗编号
                 }}, True)
 
     def 气血变化(self, 气血变化量):

@@ -165,10 +165,10 @@ async def practice_qihai(user_id, res):
     energy = 0
     if con:
         energy = con.get("energy", 0)
-    if not await 减少银两(user_id, 花费银两, "修炼气海"):
-        return "你的银两不够！"
     if energy < 3:
         return "你的精力不足3点！"
+    if not await 减少银两(user_id, 花费银两, "修炼气海"):
+        return "你的银两不够！"
     增加气海 = random.randint(花费银两//10, 花费银两//5)
 
     db.user_info.update_one({"_id": user_id}, {"$inc": {"energy": -3}})
@@ -650,15 +650,22 @@ async def compose(user_id, res):
             for n, i in enumerate(全部待合成):
                 if (int(i[2:]) + int(全部待合成[-1][2:])) <= 合成最高等级:
                     break
+            用户图纸列表 = []
             可合成 = 全部待合成[n:]
             待合成 = []
-            for i in range(len(可合成) // 2):
-                首, 尾 = 可合成[i], 可合成[-(i+1)]
+            尾坐标 = len(可合成) - 1
+            for n, i in enumerate(可合成):
+                if n >= 尾坐标:
+                    if n == 尾坐标:
+                        用户图纸列表.append(可合成[n])
+                    break
+                首, 尾 = 可合成[n], 可合成[尾坐标]
                 if (int(首[2:]) + int(尾[2:])) <= 合成最高等级:
                     待合成.append((首, 尾))
+                    尾坐标 -= 1
+
             if not 待合成:
                 break
-            用户图纸列表 = []
             for x, y in 待合成:
                 获得图纸 = 合成图纸(x, y)
                 用户图纸列表.append(获得图纸)
@@ -667,9 +674,9 @@ async def compose(user_id, res):
                 图纸[获得图纸] += 1
                 图纸[x] -= 1
                 图纸[y] -= 1
-                for n in (x, y):
-                    if n in 图纸 and 图纸[n] <= 0:
-                        del 图纸[n]
+                for j in (x, y):
+                    if j in 图纸 and 图纸[j] <= 0:
+                        del 图纸[j]
         最终合成结果 = {}
         for i in set(图纸.keys()) | set(原始图纸.keys()):
             if i not in 最终合成结果:
@@ -1072,12 +1079,69 @@ async def impart_skill(user_id, at_qq, 武学):
     return f"花费{需要花费银两}两银子，成功传授武学：{武学}"
 
 
+async def all_pk_log(user_id):
+    filter = {'$or': [{'攻方': user_id}, {'守方': user_id}]}
+    project = {'记录': 0}
+    sort = [('日期', -1), ("编号", -1)]
+    limit = 20
+    战斗记录 = db.pk_log.find(
+        filter=filter,
+        projection=project,
+        sort=sort,
+        limit=limit
+    )
+    if not 战斗记录:
+        return "没有找到对应的战斗记录"
+    user_name_map = {}
+    msg = "【战斗记录】"
+    for pk_log in 战斗记录:
+        攻方 = pk_log["攻方"]
+        守方 = pk_log["守方"]
+        胜方 = pk_log.get("胜方", "")
+        方式 = pk_log.get("方式", "")
+        编号 = f"{pk_log['日期']}-{pk_log['编号']}"
+        if 攻方 not in user_name_map:
+            name = "无名"
+            if 攻 := db.jianghu.find_one({"_id": 攻方}):
+                name = 攻.get("名称", "无名")
+            user_name_map[攻方] = name
+        if 守方 not in user_name_map:
+            name = "无名"
+            if 守 := db.jianghu.find_one({"_id": 守方}):
+                name = 守.get("名称", "无名")
+            user_name_map[守方] = name
+        攻胜 = 守胜 = ""
+        if 胜方 == 攻方:
+            攻胜 = "-胜"
+        elif 胜方 == 守方:
+            守胜 = "-胜"
+
+        msg += f"\n{编号} {user_name_map[攻方]}{攻胜} {方式}> {user_name_map[守方]}{守胜}"
+    return msg
+
+
 async def pk_log(日期, 编号):
     战斗记录 = db.pk_log.find_one({"编号": 编号, "日期": int(日期)})
     if not 战斗记录:
         return "没有找到对应的战斗记录"
+    攻方 = 战斗记录["攻方"]
+    守方 = 战斗记录["守方"]
+    方式 = 战斗记录.get("方式", "")
+    攻_name = "无名"
+    if 攻 := db.jianghu.find_one({"_id": 攻方}):
+        攻_name = 攻.get("名称", "无名")
+    守_name = "无名"
+    if 守 := db.jianghu.find_one({"_id": 守方}):
+        守_name = 守.get("名称", "无名")
+
+    content = f"<h3>{攻_name} {方式} {守_name}</h3><br>"
+    content += f"<h4>{战斗记录['时间'].strftime('%Y-%m-%d %H:%M:%S')}</h4><br>"
+    for n, i in enumerate(战斗记录.get("记录")):
+        content += f'<div class="text-with-hr fs-5"><span>第 {n + 1} 回合</span></div>'
+        content += "<br>".join(i)
+    content += '<br><div class="text-with-hr fs-5"><span>战斗结束</span></div>'
     data = {
-        "战斗记录": 战斗记录.get("记录")
+        "战斗记录": content
     }
     pagename = "pk_log.html"
     img = await browser.template_to_image(pagename=pagename, **data)
@@ -1108,7 +1172,7 @@ async def pk(动作, user_id, 目标):
         if 动作 == "切磋":
             return "不能通过名称进行切磋"
         消耗精力 += 1
-    if 消耗精力:
+    if 消耗精力 and 目标_id != 80000000:
         善恶值 = db.jianghu.find_one({"_id": user_id}).get("善恶值", 0)
         if 善恶值 < 0:
             消耗精力 += -(善恶值 // 300)
@@ -1269,7 +1333,7 @@ async def healing(user_id, target_id):
     target_id = int(target_id)
     user = UserInfo(target_id)
     凶煞 = user.基础属性["凶煞"]
-    if user_id != target_id and 凶煞 < datetime.now():
+    if user_id != target_id and 凶煞 < datetime.now() and target_id != 80000000:
         return "无法帮此目标疗伤"
     if not user.基础属性["重伤状态"]:
         return "未重伤，不需要疗伤"

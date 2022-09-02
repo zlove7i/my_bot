@@ -142,23 +142,17 @@ class PK(Skill):
     async def 战斗结算(self, action, 攻方: UserInfo, 守方: UserInfo, msg=""):
         攻方_id = 攻方.基础属性["_id"]
         守方_id = 守方.基础属性["_id"]
-        日期 = datetime.now().strftime("%Y%m%d")
-        data = {
-            "日期": int(日期),
-            "攻方": 攻方_id,
-            "守方": 守方_id,
-            "记录": self.战斗内容
-        }
-        self.编号 = db.insert_auto_increment("pk_log", data=data, id_name="编号")
-        永久编号 = f"{日期}-{self.编号}"
-        攻方.最终结算(永久编号, 守方_id)
-        守方.最终结算(永久编号, 攻方_id)
+        当前时间 = datetime.now()
+        日期 = 当前时间.strftime("%m%d")
+        攻方.最终结算(守方_id)
+        守方.最终结算(攻方_id)
         if 攻方.本场战斗重伤:
-            胜方 = "守"
+            胜方 = 守方_id
         elif 守方.本场战斗重伤:
-            胜方 = "攻"
+            胜方 = 攻方_id
         else:
-            胜方 = ""
+            胜方 = 0
+
         data = {
             "攻方": {
                 "名称": 攻方.基础属性['名称'],
@@ -194,23 +188,23 @@ class PK(Skill):
             攻方善恶值 = 攻方.基础属性['善恶值']
             if action == "死斗":
                 善恶值 = -2
-            if 胜方 == "攻":
+            if 胜方 == 攻方_id:
                 善恶值 -= 1
                 # 如果守方在凶煞时间内，攻方不进入凶煞状态
-                if 守方.基础属性['凶煞'] < datetime.now():
+                if 守方.基础属性['凶煞'] < 当前时间:
                     await self.更新凶煞状态(攻方_id)
                 data["结算"] = await self.偷袭死斗结算(攻方, 守方, 攻方善恶值)
                 data["攻方"]["胜负"] = True
                 data["守方"]["胜负"] = False
-            elif 胜方 == "守":
+            elif 胜方 == 守方_id:
                 data["结算"] = await self.偷袭死斗结算(守方, 攻方, 攻方善恶值)
                 data["攻方"]["胜负"] = False
                 data["守方"]["胜负"] = True
-            if 善恶值 and 守方.基础属性['凶煞'] < datetime.now():
+            if 善恶值 and 守方.基础属性['凶煞'] < 当前时间 and 守方_id != 80000000:
                 await self.善恶值变化(攻方_id, 善恶值)
                 data["善恶值"] = f"{攻方.基础属性['名称']} 善恶值 {善恶值}"
         if action == "切磋":
-            if 胜方 == "攻":
+            if 胜方 == 攻方_id:
                 data["攻方"]["胜负"] = True
                 data["守方"]["胜负"] = False
                 data["守方"]["当前气血"] = 1
@@ -219,7 +213,7 @@ class PK(Skill):
                     "当前气血": 1,
                     "重伤状态": False
                 }}, True)
-            elif 胜方 == "守":
+            elif 胜方 == 守方_id:
                 data["攻方"]["胜负"] = False
                 data["守方"]["胜负"] = True
                 data["攻方"]["当前气血"] = 1
@@ -231,22 +225,21 @@ class PK(Skill):
         if action == "世界首领":
             贡献值 = - 攻方.本次伤害 // 10
             data["守方"]["类型"] = "首领"
-            if 胜方 == "攻":
+            if 胜方 == 攻方_id:
                 data["攻方"]["胜负"] = True
                 data["守方"]["胜负"] = False
                 db.npc.update_one({"_id": 守方_id}, {"$set": {
                     "重伤状态": True,
                 }}, True)
-            elif 胜方 == "守":
+            elif 胜方 == 守方_id:
                 data["攻方"]["胜负"] = False
                 data["守方"]["胜负"] = True
                 data["结算"] = await self.世界首领重伤惩罚(攻方_id)
-                return data
             else:
                 data["攻方"]["平"] = True
                 data["守方"]["平"] = True
-            if 攻方.本次伤害:
-                data["结算"] += f"{攻方.基础属性['名称']} 对 {守方.基础属性['名称']} 造成了 {-攻方.本次伤害} 伤害，贡献值 +{贡献值}, 精力-4"
+            if 攻方.本次伤害 and 胜方 != 守方_id:
+                data["结算"] += f"{攻方.基础属性['名称']} 对 {守方.基础属性['名称']} 造成了 {-攻方.本次伤害} 伤害，贡献值 +{贡献值}, 精力-5"
                 db.user_info.update_one({"_id": 攻方.user_id},
                                       {"$inc": {"contribution": 贡献值}}, True)
                 if data["守方"]["气血百分比"] < 70 < data["守方"]["气血百分比"]+data["守方"]["减血百分比"]:
@@ -268,17 +261,26 @@ class PK(Skill):
 
         if action == "秘境首领":
             data["守方"]["类型"] = "首领"
-            if 胜方 == "攻":
+            if 胜方 == 攻方_id:
                 data["攻方"]["胜负"] = True
                 data["守方"]["胜负"] = False
                 data["结算"] = await self.秘境首领掉落(攻方_id, 守方)
-            elif 胜方 == "守":
+            elif 胜方 == 守方_id:
                 data["攻方"]["胜负"] = False
                 data["守方"]["胜负"] = True
                 data["结算"] = await self.世界首领重伤惩罚(攻方_id)
-                return data
         if msg:
             data["结算"] += f"<br>{msg}"
+        log_data = {
+            "时间": 当前时间,
+            "日期": int(日期),
+            "攻方": 攻方_id,
+            "守方": 守方_id,
+            "记录": self.战斗内容,
+            "方式": action,
+            "胜方": 胜方
+        }
+        self.编号 = db.insert_auto_increment("pk_log", data=log_data, id_name="编号")
         return data
 
     async def 战前恢复(self, user_info: UserInfo):
@@ -308,7 +310,6 @@ class PK(Skill):
         if 攻方.基础属性['名称'] == '无名':
             return "需要改名后才能发起进攻"
         守方 = UserInfo(守方id, action=action)
-        self.战斗记录(f"{攻方.名称} ---{action}--> {守方.名称}")
         await self.战前恢复(攻方)
         await self.战前恢复(守方)
         self.攻方初始气血 = 攻方.当前气血
@@ -321,7 +322,7 @@ class PK(Skill):
             return "对方已重伤，无法进攻"
         回合数 = {"切磋": 10, "偷袭": 10, "死斗": 50, "世界首领": 5, "秘境首领": 10}
         for 当前回合 in range(回合数[action]):
-            self.战斗记录(f"---------------- 第 {当前回合+1} 回合 --------------")
+            self.当前回合 = 当前回合
             await self.compute_buff(攻方)
             await self.compute_buff(守方)
             await self.compute_debuff(攻方, 守方)
@@ -337,7 +338,6 @@ class PK(Skill):
                     break
                 if await self.发动攻击(攻方, 守方, 当前回合):
                     break
-        self.战斗记录("------------------ 战斗结束 -----------------")
         data = await self.战斗结算(action, 攻方, 守方, msg)
         data["战斗编号"] = self.编号
         return data
