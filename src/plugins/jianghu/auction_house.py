@@ -42,6 +42,8 @@ async def 上架商品(寄售人id, 商品名称, 价格, 备注=""):
     else:
         return "找不到物品名字"
     数量 = int(数量)
+    if 数量 < 1:
+        return "上架数量必须大大于1"
     # 删除背包
     if 类型 in ("材料", "图纸"):
         con = db.knapsack.find_one({"_id": 寄售人id})
