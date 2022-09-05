@@ -18,9 +18,9 @@ SERENDIPITY = {
         "舞众生", "白日梦", "劝学记", "寻猫记", "旧宴承欢", "凌云梯", "度人心"
     ]
 }
-'''剑网三查询插件配置'''
+"""剑网三查询插件配置"""
 
-DAILIY_LIST = {
+DAILY_LIST = {
     "一": "帮会跑商：阴山商路(10:00)\n阵营祭天：出征祭祀(19:00)\n",
     "二": "阵营攻防：逐鹿中原(20:00)\n",
     "三": "世界首领：少林·乱世，七秀·乱世(20:00)\n",
@@ -29,20 +29,20 @@ DAILIY_LIST = {
     "六": "攻防前置：南屏山(12:00)\n阵营攻防：浩气盟；奇袭：恶人谷(13:00，19:00)\n",
     "日": "攻防前置：昆仑(12:00)\n阵营攻防：恶人谷；奇袭：浩气盟(13:00，19:00)\n"
 }
-'''日常任务对应表'''
+"""日常任务对应表"""
 
 
 @dataclass
 class APP(object):
-    '''jx3api的app类，关联url和cd时间'''
+    """jx3api的app类，关联url和cd时间"""
     url: str
-    '''app的url'''
+    """app的url"""
     cd: int
-    '''app的cd时间'''
+    """app的cd时间"""
 
 
 class JX3APP(Enum):
-    '''jx3api的接口枚举'''
+    """jx3api的接口枚举"""
     日常任务 = APP("/app/daily", 0)
     开服检查 = APP("/app/check", 0)
     金价比例 = APP("/app/demon", 0)
@@ -87,7 +87,7 @@ class JX3PROFESSION_ROLE(Enum):
 
 
 class JX3PROFESSION(Enum):
-    '''剑网三心法枚举'''
+    """剑网三心法枚举"""
     无方 = {"无方", "药宗", "药宗输出", "药宗dps"}
     灵素 = {"灵素", "药奶", "奶药", "药宗奶妈"}
     太玄经 = {"太玄经", "衍天宗", "衍天", "太玄"}
@@ -127,7 +127,7 @@ class JX3PROFESSION(Enum):
 
     @classmethod
     def get_profession(cls, name: str) -> Optional[str]:
-        '''通过别名获取职业名称'''
+        """通过别名获取职业名称"""
         for profession in cls:
             if name in profession.value:
                 return profession.name
@@ -135,14 +135,14 @@ class JX3PROFESSION(Enum):
 
 
 class TicketManager(object):
-    '''ticket管理器类'''
+    """ticket管理器类"""
     _client: AsyncClient
-    '''异步请求客户端'''
+    """异步请求客户端"""
     _check_url: str
-    '''检测ticket有效性接口'''
+    """检测ticket有效性接口"""
 
     def __new__(cls, *args, **kwargs):
-        '''单例'''
+        """单例"""
         if not hasattr(cls, '_instance'):
             orig = super(TicketManager, cls)
             cls._instance = orig.__new__(cls, *args, **kwargs)
@@ -158,7 +158,7 @@ class TicketManager(object):
         self._check_url = config.jx3api['jx3_url'] + "/token/validity"
 
     async def check_ticket(self, ticket: str) -> bool:
-        '''检查ticket的有效性'''
+        """检查ticket的有效性"""
         params = {"ticket": ticket}
         try:
             req_url = await self._client.get(url=self._check_url,
@@ -172,34 +172,34 @@ class TicketManager(object):
             return False
 
     async def get_ticket(self) -> Optional[str]:
-        '''获取一条有效的ticket，如果没有则返回None'''
+        """获取一条有效的ticket，如果没有则返回None"""
         return "sdfsdg32322sfsdfsdf"
 
 
 class SearchManager(object):
-    '''查询管理器，负责查询记录和cd，负责搓app'''
+    """查询管理器，负责查询记录和cd，负责搓app"""
 
     _main_site: str
-    '''jx3api主站url'''
+    """jx3api主站url"""
 
     def __init__(self):
         self._main_site = config.jx3api['jx3_url']
 
     def get_search_url(self, app: JX3APP) -> str:
-        '''获取app请求地址'''
+        """获取app请求地址"""
         return self._main_site + app.value.url
 
 
 class Jx3Searcher(object):
-    '''剑三查询类'''
+    """剑三查询类"""
 
     _client: AsyncClient
-    '''异步请求客户端'''
+    """异步请求客户端"""
     _search_manager = SearchManager()
-    '''查询管理器'''
+    """查询管理器"""
 
     def __new__(cls, *args, **kwargs):
-        '''单例'''
+        """单例"""
         if not hasattr(cls, '_instance'):
             orig = super(Jx3Searcher, cls)
             cls._instance = orig.__new__(cls, *args, **kwargs)
@@ -214,7 +214,7 @@ class Jx3Searcher(object):
         self._client = AsyncClient(headers=headers)
 
     async def get_server(self, server: str) -> Optional[str]:
-        '''获取主服务器'''
+        """获取主服务器"""
         url = self._search_manager.get_search_url(JX3APP.主从大区)
         params = {"name": server}
         try:
@@ -230,7 +230,7 @@ class Jx3Searcher(object):
 
     async def get_data_from_api(self, group_id: int, app: JX3APP,
                                 params: dict) -> Tuple[str, dict]:
-        '''
+        """
         :说明
             从jx3api获取数据
         :参数
@@ -240,7 +240,7 @@ class Jx3Searcher(object):
         :返回
             * str：返回消息
             * dict：网站返回数据
-        '''
+        """
         # 判断cd
         flag, cd_time = await search_record(group_id, app.name, app.value.cd)
         if not flag:
@@ -268,7 +268,7 @@ class Jx3Searcher(object):
 
 
 ticket_manager = TicketManager()
-'''ticket管理器'''
+"""ticket管理器"""
 
 jx3_searcher = Jx3Searcher()
-'''剑三查询器'''
+"""剑三查询器"""
