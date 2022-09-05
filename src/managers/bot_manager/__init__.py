@@ -12,7 +12,7 @@ from nonebot.adapters.onebot.v11.permission import GROUP
 from nonebot.plugin import on_regex
 from src.plugins.jianghu.auction_house import 下架商品
 from src.utils.config import config
-from src.utils.db import db
+from src.utils.db import my_bot, management, jianghu
 from src.utils.log import logger
 from src.utils.scheduler import scheduler
 
@@ -34,11 +34,11 @@ instructions = on_regex(pattern=r"^使用说明$",
 @activation.handle()
 async def _(bot: Bot, event: PrivateMessageEvent):
     bot_id = int(bot.self_id)
-    bot_info = db.bot_info.find_one({"_id": bot_id})
+    bot_info = management.bot_info.find_one({"_id": bot_id})
     if bot_info.get("master"):
         return
     user_id = int(event.user_id)
-    db.bot_info.update_one(
+    management.bot_info.update_one(
         {"_id": bot_id},
         {"$set": {"master": user_id, "enable": True, "access_group_num": 20}},
         True)
@@ -51,7 +51,7 @@ async def _(bot: Bot):
     '''使用说明'''
     msg = "https://docs.qq.com/doc/DVkNsaGVzVURMZ0ls"
     bot_id = int(bot.self_id)
-    bot_info = db.bot_info.find_one({"_id": bot_id})
+    bot_info = management.bot_info.find_one({"_id": bot_id})
     if bot_info:
         msg = bot_info.get("instructions", msg)
     await instructions.finish(msg)
@@ -63,10 +63,10 @@ async def _(bot: Bot, event: PrivateMessageEvent):
     user_id = event.user_id
     bot_id = int(bot.self_id)
     text = event.get_plaintext().split(" ", 1)[-1]
-    bot_info = db.bot_info.find_one({"_id": bot_id})
+    bot_info = management.bot_info.find_one({"_id": bot_id})
     if bot_info.get("master") != user_id:
         return
-    db.bot_info.update_one(
+    management.bot_info.update_one(
         {"_id": bot_id},
         {"$set": {"instructions": text}}, True)
     await set_instructions.finish("修改成功")
@@ -75,14 +75,14 @@ async def _(bot: Bot, event: PrivateMessageEvent):
 async def archive_river_lantern():
     """河灯归档"""
     logger.info("河灯归档")
-    river_lantern_info = db.river_lantern.find({
+    river_lantern_info = my_bot.river_lantern.find({
         'last_sent': {
             "$lte": datetime.today() + timedelta(days=-5)
         }
     })
-    archive = db.client["archive"]["river_lantern"]
+    archive = my_bot.client["archive"]["river_lantern"]
     for lantern in river_lantern_info:
-        db.river_lantern.delete_one(lantern)
+        my_bot.river_lantern.delete_one(lantern)
         del lantern["_id"]
         archive.insert_one(lantern)
     logger.info("河灯归档完成")
@@ -92,7 +92,7 @@ async def pull_off_shelves():
     """下架商品"""
     logger.info("下架商品")
     try:
-        shelves = db.auction_house.find({
+        shelves = jianghu.auction_house.find({
             '日期': {
                 "$lte": datetime.today() + timedelta(days=-5)
             }
@@ -108,15 +108,15 @@ async def pull_off_shelves():
 async def reset_sign_nums():
     '''重置签到人数与福缘'''
 
-    sign_num = db.bot_conf.find_one({'_id': 1}).get("sign_num", 0)
+    sign_num = my_bot.bot_conf.find_one({'_id': 1}).get("sign_num", 0)
     prize_pool = sign_num * 5000
-    db.bot_conf.update_one({"_id": 1},
+    my_bot.bot_conf.update_one({"_id": 1},
                            {'$set': {
                                "sign_num": 0,
                                "prize_pool": prize_pool
                            }}, True)
-    db.group_conf.update_many({}, {'$set': {"lucky": 0, "add_group_num": 0}}, True)
-    db.user_info.update_many({},
+    my_bot.group_conf.update_many({}, {'$set': {"lucky": 0, "add_group_num": 0}}, True)
+    my_bot.user_info.update_many({},
                              {'$set': {
                                  "is_sign": False,
                                  "river_lantern": 0,
@@ -127,7 +127,7 @@ async def reset_sign_nums():
                              }}, True)
     project = {"_id": 1}
     users = []
-    for i in db.jianghu.find({"重伤状态": True}, projection=project):
+    for i in jianghu.user.find({"重伤状态": True}, projection=project):
         user = UserInfo(i["_id"])
         users.append(UpdateOne({"_id": i["_id"]}, {
             "$set": {
@@ -136,16 +136,16 @@ async def reset_sign_nums():
                 "当前内力": user.当前状态["内力上限"]
             }
         }, True))
-    db.jianghu.bulk_write(users)
+    jianghu.user.bulk_write(users)
 
 
 def del_user_team(user_id, user_name, team_id):
     """删除用户信息表中的对应的团队"""
-    user_info = db.user_info.find_one({"_id": user_id})
+    user_info = my_bot.user_info.find_one({"_id": user_id})
     user_teams = user_info["teams"]
     if team_id in user_teams[user_name]:
         user_teams[user_name].remove(team_id)
-        db.user_info.update_one({"_id": user_id},
+        my_bot.user_info.update_one({"_id": user_id},
                                 {"$set": {
                                     "teams": user_teams
                                 }})
@@ -153,7 +153,7 @@ def del_user_team(user_id, user_name, team_id):
 
 async def disband_team():
     meeting_time = datetime.now() - timedelta(minutes=60)
-    team_infos = db.j3_teams.find({"meeting_time": {"$lte": meeting_time}})
+    team_infos = my_bot.j3_teams.find({"meeting_time": {"$lte": meeting_time}})
     for team_info in team_infos:
         team_id = team_info["_id"]
         logger.info(f"解散团队{team_id}")
@@ -161,12 +161,12 @@ async def disband_team():
             for member in members:
                 if member:
                     del_user_team(member["user_id"], member["user_name"], team_id)
-        db.j3_teams.delete_one({"_id": team_id})
+        my_bot.j3_teams.delete_one({"_id": team_id})
 
 
 async def team_notice():
     meeting_time = datetime.now() + timedelta(minutes=30)
-    team_infos = db.j3_teams.find(
+    team_infos = my_bot.j3_teams.find(
         {"meeting_time": {"$lte": meeting_time},
          "need_notice": True})
     if not team_infos:
@@ -208,25 +208,25 @@ async def team_notice():
                     await asyncio.sleep(random.uniform(1, 5))
                 except Exception:
                     logger.warning("开团通知发送失败")
-        db.j3_teams.update_one({"_id": team_id}, {"$set": {"need_notice": False}})
+        my_bot.j3_teams.update_one({"_id": team_id}, {"$set": {"need_notice": False}})
 
 
 async def recovery_qihai():
-    datas = db.jianghu.find({"$expr": {"$lt": ["$当前气海", "$气海上限"]}})
+    datas = jianghu.user.find({"$expr": {"$lt": ["$当前气海", "$气海上限"]}})
     for data in datas:
         data["当前气海"] += data["气海上限"] // 10
         if data["当前气海"] > data["气海上限"]:
             data["当前气海"] = data["气海上限"]
-        db.jianghu.update_one({"_id": data["_id"]}, {"$set": {"当前气海": data["当前气海"]}})
+        jianghu.user.update_one({"_id": data["_id"]}, {"$set": {"当前气海": data["当前气海"]}})
 
 
 async def start_resurrection_world_boss():
     project = {"_id": 1, "体质": 1, "根骨": 1}
-    if 已重伤首领 := db.npc.find({"类型": "首领", "重伤状态": True}, projection=project):
+    if 已重伤首领 := jianghu.npc.find({"类型": "首领", "重伤状态": True}, projection=project):
         已重伤首领列表 = list(已重伤首领)
         if 已重伤首领列表:
             复活首领 = random.choice(已重伤首领列表)
-            db.npc.update_one({"_id": 复活首领["_id"]}, {
+            jianghu.npc.update_one({"_id": 复活首领["_id"]}, {
                 "$set": {
                     "重伤状态": False,
                     "当前气血": 复活首领["体质"] * 30,

@@ -18,7 +18,7 @@ from nonebot.rule import Rule
 from src.utils.black_list import check_black_list
 from src.utils.browser import browser
 from src.utils.config import config
-from src.utils.db import db
+from src.utils.db import logs
 from src.utils.log import logger
 
 from . import data_source as source
@@ -98,8 +98,6 @@ friend_request = on_request(priority=3, block=True)
 
 manage_group = config.bot_conf.get("manage_group", [])
 
-logs = db.client["logs"]
-
 
 @event_postprocessor
 async def _(bot: Bot, event: GroupMessageEvent) -> None:
@@ -121,23 +119,27 @@ async def _(bot: Bot, event: GroupMessageEvent) -> None:
     role = event.sender.role
     message = event.raw_message
     sent_time = datetime.datetime.now()
-    chat_log = logs[sent_time.strftime("chat-log-%Y-%m-%d")]
-    chat_log.insert_one({
-        "bot_id": bot_id,
-        "role": role,
-        "group_id": group_id,
-        "group_name": group_name,
-        "user_id": user_id,
-        "nickname": nickname,
-        "sent_time": sent_time,
-        "message": message
-    })
+    logs.write_log(
+        sent_time.strftime("chat-log-%Y-%m-%d"),
+        {
+            "bot_id": bot_id,
+            "role": role,
+            "group_id": group_id,
+            "group_name": group_name,
+            "user_id": user_id,
+            "nickname": nickname,
+            "sent_time": sent_time,
+            "message": message
+        }
+    )
     # 记录群最后发言时间
-    db.group_conf.update_one({
+    my_bot.group_conf.update_one(
+    {
         "_id": group_id,
-    }, {"$set": {
-        "bot_id": bot_id,
-        "last_sent": sent_time
+    }, {
+        "$set": {
+            "bot_id": bot_id,
+            "last_sent": sent_time
     }}, True)
     if len(message) >= 10:
         await source.play_picture(bot, event, group_id)
@@ -203,7 +205,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
     '''菜单'''
     pagename = "meau.html"
     meau_data = await source.get_meau_data(event.group_id)
-    nickname = db.bot_info.find_one({
+    nickname = management.bot_info.find_one({
         "_id": int(bot.self_id)
     }).get("bot_name", "二猫子")
     bot_id = bot.self_id
@@ -220,7 +222,7 @@ async def _(bot: Bot, event: FriendRequestEvent):
     """加好友事件"""
     bot_id = int(bot.self_id)
     user_id = int(event.user_id)
-    bot_info = db.bot_info.find_one({"_id": bot_id})
+    bot_info = management.bot_info.find_one({"_id": bot_id})
     logger.info(f"bot({bot_id}) | 加好友({user_id})")
     if bot_info.get("master"):
         approve = True
@@ -269,13 +271,13 @@ async def _(event: GroupMessageEvent,
 @bot_list.handle()
 async def _(event: GroupMessageEvent):
     '''查看机器人列表'''
-    bot_info_list = db.bot_info.find({"work_stat": True})
+    bot_info_list = management.bot_info.find({"work_stat": True})
     available_bot_list = []
     for bot_info in bot_info_list:
         bot_id = int(bot_info.get("_id"))
-        db_bot_info = db.bot_info.find_one({'_id': bot_id})
+        db_bot_info = management.bot_info.find_one({'_id': bot_id})
         access_group_num = db_bot_info.get("access_group_num", 50)
-        bot_group_num = db.group_conf.count_documents({"bot_id": bot_id})
+        bot_group_num = management.group_conf.count_documents({"bot_id": bot_id})
         on_line = db_bot_info.get("online_status", False)
         if on_line and (bot_group_num < access_group_num):
             available_bot_list.append(
@@ -302,7 +304,7 @@ async def _(bot: Bot, event: GroupIncreaseNoticeEvent):
         # 若群id不在管理群列表, 则需要进行加群条件过滤
         if group_id not in manage_group:
             # 判断是否有其他机器人
-            _con = db.bot_info.find()
+            _con = management.bot_info.find()
             if _con:
                 bot_id_list = [int(i["_id"]) for i in _con]
             group_member_list = await bot.get_group_member_list(
@@ -337,7 +339,7 @@ async def _(bot: Bot, event: GroupDecreaseNoticeEvent):
     group_id = event.group_id
     user_id = event.user_id
     self_id = event.self_id
-    _con = db.bot_info.find()
+    _con = management.bot_info.find()
     if _con:
         bot_id_list = [int(i["_id"]) for i in _con]
     # 在机器人列表中且非自己
@@ -369,7 +371,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
     if group_id in manage_group:
         return
     # 机器人列表
-    _con = db.bot_info.find()
+    _con = management.bot_info.find()
     if _con:
         bot_id_list = [int(i["_id"]) for i in _con]
     if user_id in bot_id_list:

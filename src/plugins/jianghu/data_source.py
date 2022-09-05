@@ -16,7 +16,7 @@ from src.utils.browser import browser
 from src.utils.email import mail_client
 from src.plugins.jianghu.shop import shop
 from src.plugins.jianghu.equipment import 打造装备, 合成图纸, 合成材料, 装备价格, 镶嵌装备, 材料等级表, 重铸装备
-from src.plugins.jianghu.jianghu import PK
+from src.plugins.jianghu.user import PK
 from src.plugins.jianghu.world_boss import world_boss
 from src.utils.cooldown_time import search_record, search_once
 from src.plugins.jianghu.dungeon import 挑战秘境, 查看秘境, 秘境进度
@@ -39,7 +39,7 @@ async def get_my_info(user_id: int, user_name: str) -> Message:
         * Message：机器人返回消息
     '''
 
-    _con = db.user_info.find_one({'_id': user_id})
+    _con = jianghu.user.find_one({'_id': user_id})
     if not _con:
         _con = {}
     last_sign = _con.get("last_sign")
@@ -57,7 +57,7 @@ async def get_my_info(user_id: int, user_name: str) -> Message:
     base_attribute = jianghu_data.基础属性
     pagename = "my_info.html"
     if base_attribute.get("击杀人", 0) >= 10000:
-        base_attribute["击杀人"] = db.jianghu.find_one({"_id": base_attribute["击杀人"]})["名称"]
+        base_attribute["击杀人"] = jianghu.user.find_one({"_id": base_attribute["击杀人"]})["名称"]
     else:
         base_attribute["击杀人"] = "未知目标"
     img = await browser.template_to_image(user_name=user_name,
@@ -81,7 +81,7 @@ async def bind_email(res):
     if not match:
         return "邮箱格式错误"
     vcode = "".join(random.choices("1234567890", k=6))
-    db.client["management"]["verification_code"].update_one(
+    management.verification_code.update_one(
         {"_id": my_email},
         {"$set": {
             "_id": my_email,
@@ -101,7 +101,7 @@ async def make_sure_bind_email(user_id, res):
         return "邮箱格式错误"
     verification_code = res[1]
     now_time = datetime.now()
-    vcode = db.client["management"]["verification_code"].find_one_and_delete(
+    vcode = management.verification_code.find_one_and_delete(
         {
             "_id": my_email,
             "verification_code": verification_code,
@@ -111,7 +111,7 @@ async def make_sure_bind_email(user_id, res):
         })
     if not vcode:
         return "绑定失败：验证码错误或已过期"
-    db.user_info.update_one({"_id": user_id}, {"$set": {"email": my_email}}, True)
+    my_bot.user_info.update_one({"_id": user_id}, {"$set": {"email": my_email}}, True)
     return "绑定成功！"
 
 
@@ -123,7 +123,7 @@ async def set_name(user_id, res):
     match = zhPattern.search(name)
     if not match:
         return "名字需要八字以内的汉字"
-    if db.jianghu.find_one({"名称": name}) or name == "无名":
+    if jianghu.user.find_one({"名称": name}) or name == "无名":
         return "名称重复"
     usr = UserInfo(user_id)
     if usr.基础属性["善恶值"] < -1000:
@@ -134,19 +134,19 @@ async def set_name(user_id, res):
             return "改名需要花费一百两银子，你的银两不够！"
     else:
         msg = "，首次改名不需要花费银两。"
-    db.jianghu.update_one({"_id": user_id}, {"$set": {"名称": name}}, True)
+    jianghu.user.update_one({"_id": user_id}, {"$set": {"名称": name}}, True)
     return "改名成功" + msg
 
 
 async def open_qihai(user_id):
     """开启气海"""
-    db.jianghu.update_one({"_id": user_id}, {"$set": {"气海开关": True}}, True)
+    jianghu.user.update_one({"_id": user_id}, {"$set": {"气海开关": True}}, True)
     return "气海开启"
 
 
 async def close_qihai(user_id):
     """关闭气海"""
-    db.jianghu.update_one({"_id": user_id}, {"$set": {"气海开关": False}}, True)
+    jianghu.user.update_one({"_id": user_id}, {"$set": {"气海开关": False}}, True)
     return "气海关闭"
 
 
@@ -161,7 +161,7 @@ async def practice_qihai(user_id, res):
     花费银两 = int(res[0])
     if 花费银两 < 10:
         return "最少十两银子"
-    con = db.user_info.find_one({"_id": user_id})
+    con = jianghu.user.find_one({"_id": user_id})
     energy = 0
     if con:
         energy = con.get("energy", 0)
@@ -171,8 +171,7 @@ async def practice_qihai(user_id, res):
         return "你的银两不够！"
     增加气海 = random.randint(花费银两//10, 花费银两//5)
 
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"energy": -3}})
-    db.jianghu.update_one({"_id": user_id}, {"$inc": {"气海上限": 增加气海}})
+    jianghu.user.update_one({"_id": user_id}, {"$inc": {"气海上限": 增加气海, "energy": -3}})
 
     return f"花费{花费银两}两银子与3点精力，成功增加{增加气海}上限"
 
@@ -190,13 +189,13 @@ async def recovery_qihai(user_id, res):
     if 花费银两 < 需要花费:
         需要花费 = 花费银两
 
-    db.jianghu.update_one({"_id": user_id}, {"$inc": {"当前气海": 需要花费*100}})
+    jianghu.user.update_one({"_id": user_id}, {"$inc": {"当前气海": 需要花费*100}})
 
     return f"花费{需要花费}两银子，恢复气海{需要花费*100}"
 
 
 async def dig_for_treasure(user_id, number):
-    精力 = db.user_info.find_one({"_id": user_id}).get("energy", 0)
+    精力 = jianghu.user.find_one({"_id": user_id}).get("energy", 0)
     消耗精力 = number * 7
     if 精力 < 消耗精力:
         return f"精力不足, 你只有{精力}精力, 挖宝{number}次需要{消耗精力}精力"
@@ -211,8 +210,8 @@ async def dig_for_treasure(user_id, number):
         if i not in 获得物品:
             获得物品[i] = 0
         获得物品[i] += 1
-    db.knapsack.update_one({"_id": user_id}, {"$inc": 获得物品}, True)
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"energy": -消耗精力}})
+    jianghu.knapsack.update_one({"_id": user_id}, {"$inc": 获得物品}, True)
+    jianghu.user.update_one({"_id": user_id}, {"$inc": {"energy": -消耗精力}})
     return f"精力-{消耗精力}, 获得: {'、'.join([f'{k}*{v}' for k, v in 获得物品.items()])}"
 
 
@@ -251,7 +250,7 @@ async def purchase_goods(user_id, res):
     总价 = 价格 * 数量
     if not await 减少银两(user_id, 总价, f"购买{商品} * {数量}"):
         return "你的银两不够！"
-    db.knapsack.update_one({"_id": user_id}, {"$inc": {商品: 数量}}, True)
+    jianghu.knapsack.update_one({"_id": user_id}, {"$inc": {商品: 数量}}, True)
     return "购买成功!"
 
 
@@ -270,7 +269,7 @@ async def use_goods(user_id, res):
         return "使用数量必须大于等于1个"
     if 数量 > 使用数量限制:
         return f"该物品一次只能用{使用数量限制}个"
-    con = db.knapsack.find_one({"_id": user_id})
+    con = jianghu.knapsack.find_one({"_id": user_id})
     if not con:
         con = {}
     if con.get(物品, 0) < 数量:
@@ -279,24 +278,24 @@ async def use_goods(user_id, res):
     user_info = UserInfo(user_id)
     result, msg = await 使用物品(user_info, 数量)
     if result:
-        db.knapsack.update_one({"_id": user_id}, {"$inc": {物品: -数量}}, True)
+        jianghu.knapsack.update_one({"_id": user_id}, {"$inc": {物品: -数量}}, True)
     return msg
 
 
 async def remove_equipment(user_id, 装备名称):
     """摧毁装备"""
-    con = db.equip.find_one({"_id": 装备名称})
+    con = jianghu.equip.find_one({"_id": 装备名称})
     if not con:
         return "该装备不存在"
     if con["持有人"] != user_id:
         return "你没有此装备"
     if con.get("标记"):
         return "该装备已被标记，无法摧毁"
-    装备 = db.jianghu.find_one({"_id": user_id})["装备"]
+    装备 = jianghu.user.find_one({"_id": user_id})["装备"]
     if 装备名称 == 装备[con["类型"]]:
         return "该装备正在使用，无法摧毁"
 
-    db.equip.delete_one({"_id": 装备名称})
+    jianghu.equip.delete_one({"_id": 装备名称})
     return f"成功摧毁装备{装备名称}"
 
 
@@ -304,15 +303,15 @@ async def tag_gear(user_id, 装备名称: str, 标记: str):
     '''标记装备'''
     if 标记 and len(标记) != 2:
         return "标记必须为两个字"
-    con = db.equip.find_one({"_id": 装备名称})
+    con = jianghu.equip.find_one({"_id": 装备名称})
     if not con:
         return "该装备不存在"
     if con["持有人"] != user_id:
         return "你没有此装备"
     if 标记:
-        db.equip.update_one({"_id": 装备名称}, {"$set": {"标记": 标记}}, True)
+        jianghu.equip.update_one({"_id": 装备名称}, {"$set": {"标记": 标记}}, True)
     else:
-        db.equip.update_one({"_id": 装备名称}, {"$unset": {"标记": 1}}, True)
+        jianghu.equip.update_one({"_id": 装备名称}, {"$unset": {"标记": 1}}, True)
     return "标记成功！"
 
 
@@ -321,27 +320,27 @@ async def sell_equipment(user_id, 装备名称: str):
     获得银两 = 0
     if 装备名称.isdigit():
         售卖分数 = int(装备名称)
-        cons = db.equip.find({"持有人": user_id})
+        cons = jianghu.equip.find({"持有人": user_id})
         for con in cons:
             装备名称 = con['_id']
-            装备 = db.jianghu.find_one({"_id": user_id})["装备"]
+            装备 = jianghu.user.find_one({"_id": user_id})["装备"]
             if 装备名称 == 装备[con["类型"]] or con.get("标记"):
                 continue
             银两 = 装备价格(con)
             if (con.get("装备分数", 0) + con.get("镶嵌分数", 0)) <= 售卖分数:
                 获得银两 += 银两
-                db.equip.delete_one({"_id": 装备名称})
+                jianghu.equip.delete_one({"_id": 装备名称})
     else:
-        con = db.equip.find_one({"_id": 装备名称})
+        con = jianghu.equip.find_one({"_id": 装备名称})
         if not con:
             return "该装备不存在"
         if con["持有人"] != user_id:
             return "你没有此装备"
-        装备 = db.jianghu.find_one({"_id": user_id})["装备"]
+        装备 = jianghu.user.find_one({"_id": user_id})["装备"]
         if 装备名称 == 装备[con["类型"]]:
             return "该装备正在使用，无法出售"
         获得银两 += 装备价格(con)
-        db.equip.delete_one({"_id": 装备名称})
+        jianghu.equip.delete_one({"_id": 装备名称})
     await 增加银两(user_id, 获得银两, "出售装备")
     return f"出售成功，获得银两：{获得银两}"
 
@@ -350,13 +349,13 @@ async def rename_equipment(user_id, 装备一名称, 装备二名称):
     '''重铸装备'''
     if 装备一名称[-1] != 装备二名称[-1]:
         return "同类型装备才可以重铸"
-    装备 = db.jianghu.find_one({"_id": user_id})["装备"]
-    装备一 = db.equip.find_one({"_id": 装备一名称})
+    装备 = jianghu.user.find_one({"_id": user_id})["装备"]
+    装备一 = jianghu.equip.find_one({"_id": 装备一名称})
     if not 装备一:
         return "装备一不存在"
     if 装备一["持有人"] != user_id:
         return "你没有装备一"
-    装备二 = db.equip.find_one({"_id": 装备二名称})
+    装备二 = jianghu.equip.find_one({"_id": 装备二名称})
     if not 装备二:
         return "装备二不存在"
     if 装备二.get("标记"):
@@ -368,15 +367,15 @@ async def rename_equipment(user_id, 装备一名称, 装备二名称):
     if 装备二名称 == 装备[装备二["类型"]]:
         return "该装备二正在使用，无法重铸"
     del 装备一["_id"]
-    db.equip.update_one({"_id": 装备二名称}, {"$set": 装备一})
-    db.equip.delete_one({"_id": 装备一名称})
+    jianghu.equip.update_one({"_id": 装备二名称}, {"$set": 装备一})
+    jianghu.equip.delete_one({"_id": 装备一名称})
     return "装备重铸成功"
 
 
 async def rebuild_equipment(user_id, 装备名称, 图纸列表):
     '''重铸装备'''
-    用户装备 = db.jianghu.find_one({"_id": user_id})["装备"]
-    装备 = db.equip.find_one({"_id": 装备名称})
+    用户装备 = jianghu.user.find_one({"_id": user_id})["装备"]
+    装备 = jianghu.equip.find_one({"_id": 装备名称})
     if not 装备:
         return "装备一不存在"
     if 装备["持有人"] != user_id:
@@ -386,7 +385,7 @@ async def rebuild_equipment(user_id, 装备名称, 图纸列表):
     if 装备名称 == 用户装备[装备["类型"]]:
         return "该装备正在使用，无法重铸"
 
-    用户背包 = db.knapsack.find_one({"_id": user_id})
+    用户背包 = jianghu.knapsack.find_one({"_id": user_id})
     用户图纸 = 用户背包.get("图纸", {})
     图纸分数 = 0
     for 图纸名称 in 图纸列表:
@@ -417,12 +416,12 @@ async def rebuild_equipment(user_id, 装备名称, 图纸列表):
     if 装备["装备分数"] > 图纸分数 * 10:
         return "图纸等级之和需要高于装备分数"
     装备 = 重铸装备(装备)
-    db.equip.update_one({"_id": 装备名称}, {"$set": 装备})
-    db.knapsack.update_one({"_id": user_id}, {"$set": {"图纸": 用户图纸}})
+    jianghu.equip.update_one({"_id": 装备名称}, {"$set": 装备})
+    jianghu.knapsack.update_one({"_id": user_id}, {"$set": {"图纸": 用户图纸}})
     msg = f"消耗: {','.join(图纸列表)}, 装备重铸成功\n装备名称：{装备['_id']}（{装备['装备分数']}）\n基础属性：{装备['基础属性']}\n"
     if 装备.get("附加属性"):
         msg += f"附加属性：{装备['附加属性']}\n"
-    打造人 = db.jianghu.find_one({'_id': 装备['打造人']})
+    打造人 = jianghu.user.find_one({'_id': 装备['打造人']})
     msg += f"打造人：{打造人['名称']}\n打造时间：{装备['打造日期'].strftime('%Y-%m-%d %H:%M:%S')}"
     return msg
 
@@ -440,7 +439,7 @@ async def build_equipment(user_id, res):
     材料名称 = 材料list[0]
     图纸名称 = 图纸list[0]
 
-    con = db.knapsack.find_one({"_id": user_id})
+    con = jianghu.knapsack.find_one({"_id": user_id})
     if con:
         材料 = con.get("材料", {})
         图纸 = con.get("图纸", {})
@@ -467,15 +466,15 @@ async def build_equipment(user_id, res):
     装备["打造人"] = user_id
     装备["持有人"] = user_id
     装备["打造日期"] = datetime.now()
-    db.equip.insert_one(装备)
-    db.knapsack.update_one({"_id": user_id}, {"$set": {
+    jianghu.equip.insert_one(装备)
+    jianghu.knapsack.update_one({"_id": user_id}, {"$set": {
         "材料": 材料,
         "图纸": 图纸
     }}, True)
     msg = f"消耗{图纸名称}、{材料名称}打造成功！\n装备名称：{装备['_id']}（{装备['装备分数']}）\n基础属性：{装备['基础属性']}\n"
     if 装备.get("附加属性"):
         msg += f"附加属性：{装备['附加属性']}\n"
-    打造人 = db.jianghu.find_one({'_id': 装备['打造人']})
+    打造人 = jianghu.user.find_one({'_id': 装备['打造人']})
     msg += f"打造人：{打造人['名称']}\n打造时间：{装备['打造日期'].strftime('%Y-%m-%d %H:%M:%S')}"
     return msg
 
@@ -489,19 +488,19 @@ async def discard_equipment(user_id, res):
     if not 装备list:
         return "输入错误"
     装备名称 = 装备list[0]
-    善恶值 = db.jianghu.find_one({"_id": user_id})["善恶值"]
-    装备 = db.equip.find_one({"_id": 装备名称})
+    善恶值 = jianghu.user.find_one({"_id": user_id})["善恶值"]
+    装备 = jianghu.equip.find_one({"_id": 装备名称})
     if 装备["持有人"] != user_id:
         return "你没有这件装备"
-    用户装备 = db.jianghu.find_one({"_id": user_id})["装备"]
+    用户装备 = jianghu.user.find_one({"_id": user_id})["装备"]
     if 装备['_id'] == 用户装备[装备["类型"]]:
         return "该装备正在使用, 无法丢弃"
     装备["持有人"] = -2
-    db.equip.update_one({"_id": 装备名称}, {"$set": 装备})
+    jianghu.equip.update_one({"_id": 装备名称}, {"$set": 装备})
     装备分数 = 装备.get("装备分数", 0) + 装备.get("镶嵌分数", 0)
     if 装备["打造人"] != user_id:
         return f"丢弃装备【{装备名称}】({装备分数})成功, 丢弃非自己打造的装备无法获得善恶值"
-    discard_equipment_num = db.user_info.find_one_and_update(
+    discard_equipment_num = jianghu.user.find_one_and_update(
             filter={"_id": user_id},
             update={"$inc": {"discard_equipment_num": 1}},
             upsert=True
@@ -513,7 +512,7 @@ async def discard_equipment(user_id, res):
     if 善恶增加上限 < 0:
         善恶增加上限 = 0
     增加善恶值 = random.randint(0, 善恶增加上限)
-    当前善恶值 = db.jianghu.find_one_and_update(
+    当前善恶值 = jianghu.user.find_one_and_update(
             filter={"_id": user_id},
             update={"$inc": {"善恶值": 增加善恶值}},
             upsert=True
@@ -535,9 +534,9 @@ async def inlay_equipment(user_id, res):
     材料名称 = 材料list[0]
     装备名称 = 装备list[0]
 
-    con = db.knapsack.find_one({"_id": user_id})
-    善恶值 = db.jianghu.find_one({"_id": user_id})["善恶值"]
-    装备 = db.equip.find_one({"_id": 装备名称})
+    con = jianghu.knapsack.find_one({"_id": user_id})
+    善恶值 = jianghu.user.find_one({"_id": user_id})["善恶值"]
+    装备 = jianghu.equip.find_one({"_id": 装备名称})
     if 装备["持有人"] != user_id:
         return "你没有这件装备"
     if con:
@@ -549,14 +548,14 @@ async def inlay_equipment(user_id, res):
     材料[材料名称] = 材料数量
     if 材料数量 == 0:
         del 材料[材料名称]
-    db.knapsack.update_one({"_id": user_id}, {"$set": {"材料": 材料}}, True)
+    jianghu.knapsack.update_one({"_id": user_id}, {"$set": {"材料": 材料}}, True)
     装备 = 镶嵌装备(装备, 材料名称, 善恶值)
-    db.equip.update_one({"_id": 装备名称}, {"$set": 装备})
+    jianghu.equip.update_one({"_id": 装备名称}, {"$set": 装备})
     return f'镶嵌分数: {装备["镶嵌分数"]}, 镶嵌属性: {装备["镶嵌属性"]}'
 
 
 async def compose(user_id, res):
-    con = db.knapsack.find_one({"_id": user_id})
+    con = jianghu.knapsack.find_one({"_id": user_id})
     if not con:
         return "物品不足"
     if res[0] == "合成材料":
@@ -584,7 +583,7 @@ async def compose(user_id, res):
             可继续合成数量 = [v for k, v in 材料.items() if v >= 3 and 材料等级表[k[0]] < 材料限制等级]
             if not 可继续合成数量:
                 break
-        db.knapsack.update_one({"_id": user_id}, {"$set": {"材料": 材料}}, True)
+        jianghu.knapsack.update_one({"_id": user_id}, {"$set": {"材料": 材料}}, True)
 
         最终合成结果 = {}
         for i in set(材料.keys()) & set(原始材料集合.keys()):
@@ -688,7 +687,7 @@ async def compose(user_id, res):
         end = " ..." if len(结果列表) > 20 else ""
         if 结果列表:
             msg = f"图纸合成完成：{'、'.join(结果列表[:20])}{end}"
-            db.knapsack.update_one({"_id": user_id}, {"$set": {"图纸": 图纸}}, True)
+            jianghu.knapsack.update_one({"_id": user_id}, {"$set": {"图纸": 图纸}}, True)
         else:
             msg = "你输入的条件根本找不到图纸!自己打开背包检查一下去!"
         return msg
@@ -696,7 +695,7 @@ async def compose(user_id, res):
 
 
 async def ranking(user_id):
-    con = db.knapsack.find_one({"_id": user_id}, projection={"_id": 0})
+    con = jianghu.knapsack.find_one({"_id": user_id}, projection={"_id": 0})
     if not con:
         return "你的背包啥都没有"
     user_info = UserInfo(user_id)
@@ -731,13 +730,13 @@ async def my_gear(user_id, 内容):
         limit = 10
         n = 内容
         filter = {"持有人": user_id}
-    装备数量 = db.equip.count_documents(filter)
+    装备数量 = jianghu.equip.count_documents(filter)
     页数 = math.ceil(装备数量 / limit)
     if n > 页数:
         return f"你只有{页数}页装备"
     skip = limit * (n - 1)
     sort = list({'装备分数': -1}.items())
-    cons = db.equip.find(filter=filter, sort=sort, limit=limit, skip=skip)
+    cons = jianghu.equip.find(filter=filter, sort=sort, limit=limit, skip=skip)
     if not cons:
         return "你没有装备"
     user_info = UserInfo(user_id)
@@ -766,12 +765,12 @@ async def check_gear(user_id, res):
         return "查看格式错误"
     gear_name = res[0]
     if gear_name.isdigit():
-        if con := db.auction_house.find_one({"_id": int(gear_name)}):
+        if con := jianghu.auction_house.find_one({"_id": int(gear_name)}):
             gear_name = con.get("名称", "")
     if len(gear_name) == 2:
-        datas = db.equip.find({"持有人": user_id, "标记": gear_name})
+        datas = jianghu.equip.find({"持有人": user_id, "标记": gear_name})
     else:
-        datas = db.equip.find({"_id": gear_name})
+        datas = jianghu.equip.find({"_id": gear_name})
     ret_data_list = []
     for data in datas:
         打造人_info = UserInfo(data['打造人'])
@@ -801,11 +800,11 @@ async def use_gear(user_id, res):
         return "输入格式错误"
     gear_name = res[0]
     if len(gear_name) == 2:
-        cons = db.equip.find({"持有人": user_id, "标记": gear_name})
+        cons = jianghu.equip.find({"持有人": user_id, "标记": gear_name})
         if not cons:
             return "找不到被标记的装备"
     else:
-        con = db.equip.find_one({"_id": gear_name})
+        con = jianghu.equip.find_one({"_id": gear_name})
         if not con:
             return "不存在这件装备"
         if con["持有人"] != user_id:
@@ -815,7 +814,7 @@ async def use_gear(user_id, res):
     for con in cons:
         装备 = user_info.基础属性["装备"]
         装备.update({con['类型']: con['_id']})
-    db.jianghu.update_one({'_id': user_id}, {"$set": {"装备": 装备}})
+    jianghu.user.update_one({'_id': user_id}, {"$set": {"装备": 装备}})
     return f"装备{gear_name}成功"
 
 
@@ -836,7 +835,7 @@ async def pk_world_boss(user_id, res):
 
 async def claim_rewards(user_id):
     """领取首领奖励"""
-    user = db.user_info.find_one_and_update({"_id": user_id}, {"$set": {"contribution": 0}})
+    user = jianghu.user.find_one_and_update({"_id": user_id}, {"$set": {"contribution": 0}})
     contribution = 0
     if user:
         contribution = int(user.get("contribution", 0))
@@ -851,7 +850,7 @@ async def claim_rewards(user_id):
     if 获得紫材料 < 0:
         获得紫材料 = 0
     获得图纸 = 图纸分 // 550000
-    背包 = db.knapsack.find_one({"_id": user_id})
+    背包 = jianghu.knapsack.find_one({"_id": user_id})
     图纸 = 背包.get("图纸", {})
     材料 = 背包.get("材料", {})
     msg = ""
@@ -884,7 +883,7 @@ async def claim_rewards(user_id):
             奖励[获得图纸名称] = 0
         图纸[获得图纸名称] += 1
         奖励[获得图纸名称] += 1
-    db.knapsack.update_one({"_id": user_id}, {"$set": {"图纸": 图纸, "材料": 材料}})
+    jianghu.knapsack.update_one({"_id": user_id}, {"$set": {"图纸": 图纸, "材料": 材料}})
     await 增加银两(user_id, 获得银两, "世界首领奖励")
     if 奖励:
         msg = "、".join([f"{k}*{v}" for k, v in 奖励.items()])
@@ -922,7 +921,7 @@ async def set_skill(user_id, res):
     已领悟武学 = []
     武学 = [""] * 5
     武学配置 = {}
-    con = db.jianghu.find_one({"_id": user_id})
+    con = jianghu.user.find_one({"_id": user_id})
     if con:
         已领悟武学 = con.get("已领悟武学", [])
         武学 = con.get("武学", 武学)
@@ -944,7 +943,7 @@ async def set_skill(user_id, res):
         武学[skill_index] = skill_name
     else:
         return "格式输入错误，请发送“江湖”查看武学说明。"
-    db.jianghu.update_one({"_id": user_id}, {"$set": {"武学": 武学}}, True)
+    jianghu.user.update_one({"_id": user_id}, {"$set": {"武学": 武学}}, True)
     return f"配置武学{skill_name}成功！"
 
 
@@ -953,7 +952,7 @@ async def save_skill(user_id, res):
     if len(res) != 1 or len(res[0]) != 2:
         return "输入格式错误，配置名称只能是两个字"
     setting_name = res[0]
-    con = db.jianghu.find_one({"_id": user_id})
+    con = jianghu.user.find_one({"_id": user_id})
     武学 = [""] * 5
     武学配置 = {}
     if con:
@@ -962,7 +961,7 @@ async def save_skill(user_id, res):
     武学配置[setting_name] = 武学
     if len(武学配置) > 10:
         return "最多只能保存10套武学配置"
-    db.jianghu.update_one({"_id": user_id}, {"$set": {"武学配置": 武学配置}}, True)
+    jianghu.user.update_one({"_id": user_id}, {"$set": {"武学配置": 武学配置}}, True)
     return f"保存武学配置{setting_name}成功！"
 
 
@@ -979,7 +978,7 @@ async def view_skill(res):
 
 async def view_skill_set(user_id):
     """查看武学配置"""
-    con = db.jianghu.find_one({"_id": user_id})
+    con = jianghu.user.find_one({"_id": user_id})
     user_info = UserInfo(user_id)
     武学配置 = {}
     if con:
@@ -998,14 +997,14 @@ async def del_skill(user_id, res):
     if len(res) != 1 or len(res[0]) != 2:
         return "输入格式错误，配置名称只能是两个字"
     setting_name = res[0]
-    con = db.jianghu.find_one({"_id": user_id})
+    con = jianghu.user.find_one({"_id": user_id})
     武学配置 = {}
     if con:
         武学配置 = con.get("武学配置", 武学配置)
     if setting_name not in 武学配置:
         return "你没有该武学配置，请发送查看武学配置进行查看"
     del 武学配置[setting_name]
-    db.jianghu.update_one({"_id": user_id}, {"$set": {"武学配置": 武学配置}}, True)
+    jianghu.user.update_one({"_id": user_id}, {"$set": {"武学配置": 武学配置}}, True)
     return f"删除武学配置{setting_name}成功！"
 
 
@@ -1014,7 +1013,7 @@ async def forgotten_skill(user_id, res):
     if len(res) != 1:
         return "输入格式错误"
     skill_name = res[0]
-    con = db.jianghu.find_one({"_id": user_id})
+    con = jianghu.user.find_one({"_id": user_id})
     已领悟武学 = []
     武学 = [""] * 5
     if con:
@@ -1026,7 +1025,7 @@ async def forgotten_skill(user_id, res):
         if i == skill_name:
             武学[n] = ""
     已领悟武学.remove(skill_name)
-    db.jianghu.update_one({"_id": user_id}, {"$set": {"武学": 武学, "已领悟武学": 已领悟武学}}, True)
+    jianghu.user.update_one({"_id": user_id}, {"$set": {"武学": 武学, "已领悟武学": 已领悟武学}}, True)
     return f"遗忘武学{skill_name}成功！"
 
 
@@ -1058,7 +1057,7 @@ async def comprehension_skill(user_id):
         return f"花费{银两}两银子，领悟失败"
 
     已领悟武学.append(武学)
-    db.jianghu.update_one({"_id": user_id}, {"$set": {"已领悟武学": 已领悟武学}}, True)
+    jianghu.user.update_one({"_id": user_id}, {"$set": {"已领悟武学": 已领悟武学}}, True)
     return f"花费{银两}两银子，成功领悟武学：{武学}"
 
 
@@ -1075,7 +1074,7 @@ async def impart_skill(user_id, at_qq, 武学):
     if not await 减少银两(user_id, 需要花费银两, "传授武学"):
         return f"传授武学需要{需要花费银两}两银子，你的银两不足"
     被传授方武学.append(武学)
-    db.jianghu.update_one({"_id": at_qq}, {"$set": {"已领悟武学": 被传授方武学}}, True)
+    jianghu.user.update_one({"_id": at_qq}, {"$set": {"已领悟武学": 被传授方武学}}, True)
     return f"花费{需要花费银两}两银子，成功传授武学：{武学}"
 
 
@@ -1084,7 +1083,7 @@ async def all_pk_log(user_id):
     project = {'记录': 0}
     sort = [('日期', -1), ("编号", -1)]
     limit = 20
-    战斗记录 = db.pk_log.find(
+    战斗记录 = logs.pk_log.find(
         filter=filter,
         projection=project,
         sort=sort,
@@ -1102,12 +1101,12 @@ async def all_pk_log(user_id):
         编号 = f"{pk_log['日期']}-{pk_log['编号']}"
         if 攻方 not in user_name_map:
             name = "无名"
-            if 攻 := db.jianghu.find_one({"_id": 攻方}):
+            if 攻 := jianghu.user.find_one({"_id": 攻方}):
                 name = 攻.get("名称", "无名")
             user_name_map[攻方] = name
         if 守方 not in user_name_map:
             name = "无名"
-            if 守 := db.jianghu.find_one({"_id": 守方}):
+            if 守 := jianghu.user.find_one({"_id": 守方}):
                 name = 守.get("名称", "无名")
             user_name_map[守方] = name
         攻胜 = 守胜 = ""
@@ -1121,17 +1120,17 @@ async def all_pk_log(user_id):
 
 
 async def pk_log(日期, 编号):
-    战斗记录 = db.pk_log.find_one({"编号": 编号, "日期": int(日期)})
+    战斗记录 = logs.pk_log.find_one({"编号": 编号, "日期": int(日期)})
     if not 战斗记录:
         return "没有找到对应的战斗记录"
     攻方 = 战斗记录["攻方"]
     守方 = 战斗记录["守方"]
     方式 = 战斗记录.get("方式", "")
     攻_name = "无名"
-    if 攻 := db.jianghu.find_one({"_id": 攻方}):
+    if 攻 := jianghu.user.find_one({"_id": 攻方}):
         攻_name = 攻.get("名称", "无名")
     守_name = "无名"
-    if 守 := db.jianghu.find_one({"_id": 守方}):
+    if 守 := jianghu.user.find_one({"_id": 守方}):
         守_name = 守.get("名称", "无名")
 
     content = f"<h3>{攻_name} {方式} {守_name}</h3><br>"
@@ -1155,7 +1154,7 @@ async def pk(动作, user_id, 目标):
     else:
         if 目标 == "无名":
             return "此人过于神秘, 无法进攻"
-        江湖info = db.jianghu.find_one({"名称": 目标})
+        江湖info = jianghu.user.find_one({"名称": 目标})
         if not 江湖info:
             return "找不到正确的目标"
         目标_id = 江湖info["_id"]
@@ -1173,15 +1172,15 @@ async def pk(动作, user_id, 目标):
             return "不能通过名称进行切磋"
         消耗精力 += 1
     if 消耗精力 and 目标_id != 80000000:
-        善恶值 = db.jianghu.find_one({"_id": user_id}).get("善恶值", 0)
+        善恶值 = jianghu.user.find_one({"_id": user_id}).get("善恶值", 0)
         if 善恶值 < 0:
             消耗精力 += -(善恶值 // 300)
-        精力 = db.user_info.find_one({"_id": user_id}).get("energy", 0)
+        精力 = jianghu.user.find_one({"_id": user_id}).get("energy", 0)
         if 精力 < 消耗精力:
             精力 = 0
             return f"精力不足, 你只有{精力}精力, {动作}需要{消耗精力}精力"
         msg = f"{动作}成功, 精力-{消耗精力}"
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"energy": -消耗精力}})
+    jianghu.user.update_one({"_id": user_id}, {"$inc": {"energy": -消耗精力}})
     战斗 = PK()
     data = await 战斗.main(动作, user_id, 目标_id, msg)
     if isinstance(data, str):
@@ -1220,7 +1219,7 @@ async def give(user_id, at_qq, 物品列表):
             msg += "\n赠送失败：物品名称不对"
             continue
         if 类型 in ["材料", "图纸", "物品"]:
-            con = db.knapsack.find_one({"_id": user_id})
+            con = jianghu.knapsack.find_one({"_id": user_id})
             if not con:
                 msg += f"\n赠送失败：{物品}数量不足"
                 continue
@@ -1229,12 +1228,12 @@ async def give(user_id, at_qq, 物品列表):
                     msg += f"\n赠送失败：{物品}数量不足"
                     continue
                 msg += f"\n{物品}*{数量}赠送成功！"
-                db.knapsack.update_one({"_id": user_id}, {"$inc": {物品: -数量}}, True)
-                db.knapsack.update_one({"_id": at_qq}, {"$inc": {物品: 数量}}, True)
+                jianghu.knapsack.update_one({"_id": user_id}, {"$inc": {物品: -数量}}, True)
+                jianghu.knapsack.update_one({"_id": at_qq}, {"$inc": {物品: 数量}}, True)
             else:
                 # 重置双方物品
                 data = con.get(类型, {})
-                at_con = db.knapsack.find_one({"_id": at_qq})
+                at_con = jianghu.knapsack.find_one({"_id": at_qq})
 
                 if 类型 == "图纸" and "-" in 物品:
                     下限, 上限 = re.findall(r"(\d+)", 物品)
@@ -1270,10 +1269,10 @@ async def give(user_id, at_qq, 物品列表):
                             at_data[k] = 0
                         at_data[k] += 赠送数量
                         msg += f"\n{k}*{赠送数量}赠送成功！"
-                        db.knapsack.update_one({"_id": user_id}, {"$set": {
+                        jianghu.knapsack.update_one({"_id": user_id}, {"$set": {
                             类型: data
                         }}, True)
-                        db.knapsack.update_one({"_id": at_qq}, {"$set": {
+                        jianghu.knapsack.update_one({"_id": at_qq}, {"$set": {
                             类型: at_data
                         }}, True)
                 else:
@@ -1288,18 +1287,18 @@ async def give(user_id, at_qq, 物品列表):
                     if not at_data.get(物品):
                         at_data[物品] = 0
                     at_data[物品] += 数量
-                    db.knapsack.update_one({"_id": user_id}, {"$set": {
+                    jianghu.knapsack.update_one({"_id": user_id}, {"$set": {
                         类型: data
                     }}, True)
-                    db.knapsack.update_one({"_id": at_qq}, {"$set": {
+                    jianghu.knapsack.update_one({"_id": at_qq}, {"$set": {
                         类型: at_data
                     }}, True)
                     msg += f"\n{物品}*{数量}赠送成功！"
         else:
             if len(物品) == 2:
-                datas = db.equip.find({"持有人": user_id, "标记": 物品})
+                datas = jianghu.equip.find({"持有人": user_id, "标记": 物品})
             else:
-                datas = db.equip.find({"_id": 物品})
+                datas = jianghu.equip.find({"_id": 物品})
             if not datas:
                 msg += f"\n赠送失败：名称不对"
                 continue
@@ -1313,12 +1312,12 @@ async def give(user_id, at_qq, 物品列表):
                     if 交易保护时间 > 0:
                         msg += f"\n{data['_id']}正在交易保护期间，无法赠送。剩余时间：{交易保护时间}秒"
                         continue
-                装备 = db.jianghu.find_one({"_id": user_id})["装备"]
+                装备 = jianghu.user.find_one({"_id": user_id})["装备"]
                 if data['_id'] == 装备[data["类型"]]:
                     msg += f"\n赠送失败：{data['_id']}正在使用，无法赠送"
                     continue
                 msg += f"\n{data['_id']}赠送成功！"
-                db.equip.update_one({"_id": data["_id"]}, {"$set": {"持有人": at_qq, "交易时间": datetime.now()}}, True)
+                jianghu.equip.update_one({"_id": data["_id"]}, {"$set": {"持有人": at_qq, "交易时间": datetime.now()}}, True)
     return msg
 
 
@@ -1326,7 +1325,7 @@ async def healing(user_id, target_id):
     if not target_id.isdigit():
         if target_id == "无名":
             return "此人过于神秘, 无法进攻"
-        江湖info = db.jianghu.find_one({"名称": target_id})
+        江湖info = jianghu.user.find_one({"名称": target_id})
         if not 江湖info:
             return "找不到正确的目标"
         target_id = 江湖info["_id"]
@@ -1343,7 +1342,7 @@ async def healing(user_id, target_id):
     复活需要银两 = 复活需要银两 if 复活需要银两 > 500 else 500
     if not await 减少银两(user_id, 复活需要银两, "疗伤"):
         return f"疗伤需要{复活需要银两}两银子，你的银两不够！"
-    db.jianghu.update_one({"_id": target_id}, {
+    jianghu.user.update_one({"_id": target_id}, {
         "$set": {
             "重伤状态": False,
             "当前气血": user.当前状态["气血上限"],
@@ -1361,7 +1360,7 @@ async def gad_guys_ranking(bot: Bot, user_id):
     limit = 10
     msg = "恶人排行\n"
 
-    result = db.jianghu.find(filter=filter, sort=sort, limit=limit)
+    result = jianghu.user.find(filter=filter, sort=sort, limit=limit)
     for n, i in enumerate(result):
         重伤 = "x" if i.get("重伤状态") else ""
         msg += f"{n+1} {重伤}{i.get('名称')} {i.get('善恶值', 0)}\n"
@@ -1375,7 +1374,7 @@ async def good_guys_ranking(bot: Bot, user_id):
     sort = list({'善恶值': -1}.items())
     limit = 10
     msg = "善人排行\n"
-    result = db.jianghu.find(filter=filter, sort=sort, limit=limit)
+    result = jianghu.user.find(filter=filter, sort=sort, limit=limit)
     for n, i in enumerate(result):
         重伤 = "x" if i.get("重伤状态") else ""
         msg += f"{n+1} {重伤}{i['名称']} {i['善恶值']}\n"
@@ -1393,7 +1392,7 @@ async def gear_ranking(bot: Bot, user_id):
     limit = 10
     msg = "神兵排行\n"
 
-    result = db.equip.aggregate([
+    result = jianghu.equip.aggregate([
         {"$project": project},
         {"$sort": sort},
         {"$limit": limit}
@@ -1412,7 +1411,7 @@ async def xiongsha_ranking(bot: Bot):
     sort = list({'凶煞': 1}.items())
     limit = 10
     msg = "凶煞榜\n"
-    result = db.jianghu.find(filter=filter, sort=sort, limit=limit)
+    result = jianghu.user.find(filter=filter, sort=sort, limit=limit)
     for n, i in enumerate(result):
         重伤 = "x" if i.get("重伤状态") else ""
         msg += f"{n+1} {i['凶煞'].strftime('%m-%d %H:%M:%S')} {重伤}{i['名称']} {i['善恶值']}\n"
@@ -1430,14 +1429,14 @@ async def gold_ranking(bot: Bot, user_id):
     limit = 10
     msg = "银两排行\n"
 
-    result = db.user_info.find(filter=filter, sort=sort, limit=limit)
+    result = jianghu.user.find(filter=filter, sort=sort, limit=limit)
     for n, i in enumerate(result):
         user_info = UserInfo(i['_id'])
         重伤 = "x" if user_info.基础属性.get("重伤状态") else ""
         名称 = user_info.基础属性["名称"]
         msg += f"{n+1} {重伤}{名称} {i['gold']}\n"
 
-    ret = db.user_info.aggregate([{
+    ret = jianghu.user.aggregate([{
         "$sort": {
             "gold": -1
         }
