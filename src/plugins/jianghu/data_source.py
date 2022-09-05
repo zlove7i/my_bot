@@ -181,13 +181,13 @@ async def recovery_qihai(user_id, res):
     if not res:
         return "输入错误"
     花费银两 = int(res[0])
-    if not await 减少银两(user_id, 花费银两, "恢复气海"):
-        return "你的银两不够！"
     usr = UserInfo(user_id)
     损失气海 = usr.基础属性["气海上限"] - usr.当前气海
     需要花费 = 损失气海 // 100
     if 花费银两 < 需要花费:
         需要花费 = 花费银两
+    if not await 减少银两(user_id, 需要花费, "恢复气海"):
+        return "你的银两不够！"
 
     jianghu.user.update_one({"_id": user_id}, {"$inc": {"当前气海": 需要花费*100}})
 
