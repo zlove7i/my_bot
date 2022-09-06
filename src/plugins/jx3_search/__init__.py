@@ -209,7 +209,7 @@ async def get_ticket(event: GroupMessageEvent) -> str:
 async def _(event: GroupMessageEvent, ticket: str = Depends(get_ticket)):
     """提交ticket"""
     logger.info(
-        f"群{event.group_id} | {event.user_id} | 提交ticket | 请求：{ticket}"
+        f"群{event.group_id} | {event.user_id} | 提交ticket | 请求:ticket"
     )
     params = {"ticket": ticket}
     msg, data = await source.get_data_from_api(
@@ -217,12 +217,12 @@ async def _(event: GroupMessageEvent, ticket: str = Depends(get_ticket)):
     )
     if msg != "success":
         msg = f"你骗老子!你给我的ticket根本不能用!"
-        await submit_ticket.finish(msg)
-
-    msg = f"谢谢你!你是个好人!祝你好运剑三,奇遇常伴!"
-    db.tickets.insertOne({
-        "ticket": ticket
-    })
+    else:
+        msg = f"谢谢你!你是个好人!祝你好运剑三,奇遇常伴!"
+        db.tickets.insertOne({
+            "ticket": ticket,
+            "提交人": event.user_id
+        })
     await submit_ticket.finish(msg)
 
 
