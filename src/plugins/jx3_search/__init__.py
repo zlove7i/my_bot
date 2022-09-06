@@ -216,13 +216,15 @@ async def _(event: GroupMessageEvent, ticket: str = Depends(get_ticket)):
         app=JX3APP.查有效值, group_id=event.group_id, params=params
     )
     if msg != "success":
-        msg = f"你骗老子!你给我的ticket根本不能用!"
+        msg = f"你骗老子!你给老子的ticket根本不能用!"
     else:
         msg = f"谢谢你!你是个好人!祝你好运剑三,奇遇常伴!"
-        db.tickets.insertOne({
-            "ticket": ticket,
-            "提交人": event.user_id
-        })
+        exists = db.tickets.find_one({"ticket": ticket})
+        if not exists:
+            db.tickets.insert_one({
+                "ticket": ticket,
+                "提交人": event.user_id
+            })
     await submit_ticket.finish(msg)
 
 
