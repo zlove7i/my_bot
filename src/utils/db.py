@@ -58,8 +58,6 @@ class DB():
         self.j3_teams = self.db.j3_teams
         # tickets
         self.tickets = self.db.tickets
-        # 表情包
-        self.memes = self.db.memes
         # 违禁词
         self.forbidden_word = self.db.forbidden_word
 

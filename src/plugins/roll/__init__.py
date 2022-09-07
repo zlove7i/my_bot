@@ -5,7 +5,7 @@ from nonebot import export, on_regex
 from nonebot.adapters.onebot.v11.event import GroupMessageEvent
 from nonebot.adapters.onebot.v11.permission import GROUP
 from nonebot.params import Depends
-from src.plugins.roll.data import food_list
+from httpx import AsyncClient
 from src.utils.content_check import content_check
 from src.utils.log import logger
 from tortoise import os
@@ -20,6 +20,7 @@ Export.default_status = True
 
 what_to_eat = on_regex(r"^吃什么$", permission=GROUP, priority=5, block=True)
 roll = on_regex(r"^(掷筹.+?)$", permission=GROUP, priority=5, block=True)
+
 
 def get_content(event: GroupMessageEvent) -> str:
     '''从前置这些可前可后的消息中获取name'''
@@ -52,10 +53,15 @@ async def _(event: GroupMessageEvent):
     user_id = event.user_id
     group_id = event.group_id
     logger.debug(f"群{group_id} | {user_id} | 吃什么")
-    msg = "给你挑了这三个吃的："
-    for i in random.choices(food_list, k=3):
-        msg += f"\n  - {i}"
-    await what_to_eat.finish(msg)
+    client = AsyncClient()
+    url = "https://www.ermaozi.cn/api/food?method=random&count=3"
+    req = await client.get(url=url)
+    req_data = req.json()
+    if req_data.get("code") == 200:
+        msg = "给你挑了这三个吃的："
+        for i in random.sample(req_data.get("content"), k=3):
+            msg += f"\n  - {i}"
+        await what_to_eat.finish(msg)
 
 
 @roll.handle()

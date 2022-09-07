@@ -262,6 +262,7 @@ async def play_picture(bot: Bot, event: GroupMessageEvent, group_id):
     else:
         robot_active = 0
     if robot_active >= random.randint(0, 500):
+        msg = ""
         if random.choice((True, False)):
             content = ""
             for i in event.message:
@@ -272,11 +273,11 @@ async def play_picture(bot: Bot, event: GroupMessageEvent, group_id):
             msg = await chat(content)
             logger.debug(f"群({group_id}) | 搭话 | {msg}")
         else:
-            memes = db.memes.aggregate([{"$sample": {"size": 1}}])
-            logger.debug(f"群({group_id}) | 斗图")
-            for meme in memes:
-                url = meme.get("url")
-                async with AsyncClient() as client:
+            async with AsyncClient() as client:
+                req = await client.get(url="https://www.ermaozi.cn/api/meme?method=random&count=1")
+                req_data = req.json()
+                if req_data.get("code") == 200:
+                    url = req_data.get("memes")[0]
                     req = await client.get(url=url)
                     msg = MessageSegment.image(req.content)
         await bot.send_group_msg(group_id=group_id, message=msg)

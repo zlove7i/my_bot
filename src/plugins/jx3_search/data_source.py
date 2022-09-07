@@ -22,9 +22,12 @@ async def get_main_server(server: str) -> Optional[str]:
 
 async def get_kfc():
     client = AsyncClient()
-    url = "https://kfc-crazy-thursday.vercel.app/api/index"
+    url = "https://www.ermaozi.cn/api/kfc?method=random&count=1"
     req = await client.get(url=url)
-    return req.text
+    req_data = req.json()
+    if req_data.get("code") == 200:
+        return req_data.get("content")[0]
+    return
 
 
 async def get_sand(server):
