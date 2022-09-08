@@ -119,7 +119,7 @@ async def set_name(user_id, res):
     if not res:
         return "输入错误"
     name = res[0]
-    zhPattern = re.compile(u'[\u4e00-\u9fa5]+')
+    zhPattern = re.compile(r'[\u4e00-\u9fa5]+')
     match = zhPattern.search(name)
     if not match:
         return "名字需要八字以内的汉字"
