@@ -46,21 +46,12 @@
                         </thead>
                         <tbody>
                             {% for data in datas %}
-                                {% if data.is_expired %}
-                                <tr class="text-secondary">
-                                    <td class="text-center">{{data.index_num}}</th>
-                                    <td class="text-center">{{data.datetime}}</th>
-                                    <td>{{data.content}}</th>
-                                    <td class="text-center">{{data.views_num}}</th>
-                                </tr>
-                                {% else %}
                                 <tr>
                                     <td class="text-center">{{data.index_num}}</th>
                                     <td class="text-center">{{data.datetime}}</th>
                                     <td>{{data.content}}</th>
                                     <td class="text-center">{{data.views_num}}</th>
                                 </tr>
-                                {% endif %}
                             {% endfor %}
                         </tbody>
                       </table>
