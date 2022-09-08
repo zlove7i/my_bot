@@ -94,7 +94,7 @@ async def get_river_lantern(group_id, user_id) -> Message:
     if not status:
         return "本群已关闭河灯功能，如果要恢复，请发送“打开 河灯”"
 
-    con_list = list(db.river_lantern.aggregate([{"$sample":{ "size": cou1nt}}]))
+    con_list = list(db.river_lantern.aggregate([{"$sample": {"size": 1}}]))
     if not con_list:
         logger.debug("无河灯")
         return "现在找不到河灯。"
