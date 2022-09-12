@@ -12,7 +12,7 @@ from nonebot.adapters.onebot.v11.permission import GROUP
 from nonebot.plugin import on_regex
 from src.plugins.jianghu.auction_house import 下架商品
 from src.utils.config import config
-from src.utils.db import my_bot, management, jianghu
+from src.utils.db import my_bot, management, jianghu, jx3_data, logs
 from src.utils.log import logger
 from src.utils.scheduler import scheduler
 
@@ -111,19 +111,18 @@ async def reset_sign_nums():
     sign_num = my_bot.bot_conf.find_one({'_id': 1}).get("sign_num", 0)
     prize_pool = sign_num * 5000
     my_bot.bot_conf.update_one({"_id": 1},
-                           {'$set': {
-                               "sign_num": 0,
-                               "prize_pool": prize_pool
-                           }}, True)
-    my_bot.group_conf.update_many({}, {'$set': {"lucky": 0, "add_group_num": 0}}, True)
-    my_bot.user_info.update_many({},
+                                {'$set': {
+                                    "sign_num": 0,
+                                    "prize_pool": prize_pool
+                                }}, True)
+    management.group_conf.update_many({}, {'$set': {"lucky": 0, "add_group_num": 0}}, True)
+    jianghu.user.update_many({},
                              {'$set': {
-                                 "is_sign": False,
-                                 "river_lantern": 0,
-                                 "dungeon_num": 0,
-                                 "contribution": 0,
-                                 "energy": 100,
-                                 "discard_equipment_num": 0
+                                 "是否签到": False,
+                                 "秘境次数": 0,
+                                 "贡献": 0,
+                                 "精力": 100,
+                                 "丢弃装备次数": 0
                              }}, True)
     project = {"_id": 1}
     users = []
@@ -153,7 +152,7 @@ def del_user_team(user_id, user_name, team_id):
 
 async def disband_team():
     meeting_time = datetime.now() - timedelta(minutes=60)
-    team_infos = my_bot.j3_teams.find({"meeting_time": {"$lte": meeting_time}})
+    team_infos = jx3_data.j3_teams.find({"meeting_time": {"$lte": meeting_time}})
     for team_info in team_infos:
         team_id = team_info["_id"]
         logger.info(f"解散团队{team_id}")
@@ -161,12 +160,12 @@ async def disband_team():
             for member in members:
                 if member:
                     del_user_team(member["user_id"], member["user_name"], team_id)
-        my_bot.j3_teams.delete_one({"_id": team_id})
+        jx3_data.j3_teams.delete_one({"_id": team_id})
 
 
 async def team_notice():
     meeting_time = datetime.now() + timedelta(minutes=30)
-    team_infos = my_bot.j3_teams.find(
+    team_infos = jx3_data.j3_teams.find(
         {"meeting_time": {"$lte": meeting_time},
          "need_notice": True})
     if not team_infos:
@@ -208,7 +207,7 @@ async def team_notice():
                     await asyncio.sleep(random.uniform(1, 5))
                 except Exception:
                     logger.warning("开团通知发送失败")
-        my_bot.j3_teams.update_one({"_id": team_id}, {"$set": {"need_notice": False}})
+        jx3_data.j3_teams.update_one({"_id": team_id}, {"$set": {"need_notice": False}})
 
 
 async def recovery_qihai():
@@ -248,7 +247,7 @@ async def _():
 async def _():
     '''0点重置'''
     # 重置战斗记录编号
-    db.counters.update_one({"_id": "pk_log"}, {"$set": {"sequence_value": 0}})
+    logs.counters.update_one({"_id": "pk_log"}, {"$set": {"sequence_value": 0}})
 
 
 @scheduler.scheduled_job("cron", minute="*")

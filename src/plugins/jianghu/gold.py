@@ -9,7 +9,7 @@ async def 记录(user_id, 项目, 数额, 余额, 目标=0):
 
 async def 查询银两(user_id):
     user = jianghu.user.find_one({'_id': user_id})
-    return user.get("gold", 0) if user else 0
+    return user.get("银两", 0) if user else 0
 
 
 async def 减少银两(user_id, 金额, 备注: str = "", 目标=0):
@@ -18,7 +18,7 @@ async def 减少银两(user_id, 金额, 备注: str = "", 目标=0):
         return False
     jianghu.user.update_one(
         {"_id": user_id},
-        {"$inc": {"gold": -金额}}
+        {"$inc": {"银两": -金额}}
     )
     await 记录(user_id, 备注, -金额, 余额 - 金额, 目标)
     return True
@@ -28,7 +28,7 @@ async def 增加银两(user_id, 金额, 备注: str = "", 目标=0):
     余额 = await 查询银两(user_id)
     jianghu.user.update_one(
         {"_id": user_id},
-        {"$inc": {"gold": 金额}}
+        {"$inc": {"银两": 金额}}
     )
     await 记录(user_id, 备注, 金额, 余额 + 金额, 目标)
     return True

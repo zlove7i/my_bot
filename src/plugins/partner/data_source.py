@@ -4,8 +4,9 @@ from datetime import datetime
 from httpx import AsyncClient
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
 from src.utils.cooldown_time import search_record, search_once
-from src.utils.db import db
+from src.utils.db import my_bot, management, jx3_data
 import random
+
 
 client = AsyncClient()
 '''异步请求客户端'''
@@ -14,7 +15,7 @@ client = AsyncClient()
 async def set_find_partner_cooldown_time(group_id: int, cooldown_time: int):
     if cooldown_time < 60:
         return "分配情缘冷却时间必须高于 60 秒"
-    db.group_cd_conf.update_one({"_id": group_id},
+    my_bot.group_cd_conf.update_one({"_id": group_id},
                                 {"$set": {
                                     "分配情缘": cooldown_time
                                 }}, True)
@@ -24,7 +25,7 @@ async def set_find_partner_cooldown_time(group_id: int, cooldown_time: int):
 
 async def set_find_partner_do_not_disturb(group_id: int,
                                           do_not_disturb_switch: bool):
-    db.group_conf.update_one(
+    management.group_conf.update_one(
         {"_id": group_id},
         {"$set": {
             "partner_disturb_switch": do_not_disturb_switch
@@ -47,7 +48,7 @@ async def get_find_partner_to_group(user_id: int, group_id: int, end_str: str,
         * Message：机器人返回消息
     '''
     # 请求方是否有情缘
-    _con = db.user_info.find_one({'_id': user_id})
+    _con = jx3_data.j3_user.find_one({'_id': user_id})
     if not _con:
         _con = {}
     if end_str == "情缘":
@@ -56,14 +57,14 @@ async def get_find_partner_to_group(user_id: int, group_id: int, end_str: str,
             return msg
     # 随机到的人是否有情缘
     usr = random.choice(group_member_list)
-    _con = db.user_info.find_one({'_id': usr["user_id"]})
+    _con = jx3_data.j3_user.find_one({'_id': usr["user_id"]})
     if _con:
         if _con.get("partner") or usr["user_id"] == user_id:
             msg = "你就认了吧，我也帮不了你了。"
             return msg
 
     app_name = "分配情缘"
-    group_cd = db.group_cd_conf.find_one({'_id': group_id})
+    group_cd = my_bot.group_cd_conf.find_one({'_id': group_id})
     # 查看冷却时间
     n_cd_time = 300
     if group_cd:
@@ -74,7 +75,7 @@ async def get_find_partner_to_group(user_id: int, group_id: int, end_str: str,
         return msg
     # 记录一次查询
     await search_once(user_id, app_name)
-    group_cf = db.group_conf.find_one({'_id': group_id})
+    group_cf = my_bot.group_conf.find_one({'_id': group_id})
     msg = MessageSegment.at(user_id)
     msg += f"组织给你分配的{end_str}是"
     if group_cf and group_cf.get("partner_disturb_switch"):
@@ -138,13 +139,13 @@ async def partner_request_to_group(user_id: int, user_name: str,
         return msg
 
     # 请求方是否有情缘
-    _con = db.user_info.find_one({'_id': user_id})
+    _con = jx3_data.j3_user.find_one({'_id': user_id})
     if _con:
         if _con.get("partner"):
             msg = MessageSegment.at(user_id) + "你都有情缘了还要求情缘，你想干什？"
             return msg
     # 被请求方是否有情缘
-    _con = db.user_info.find_one({'_id': at_qq})
+    _con = jx3_data.j3_user.find_one({'_id': at_qq})
     if not _con:
         _con = {}
     if _con.get("partner"):
@@ -162,7 +163,7 @@ async def partner_request_to_group(user_id: int, user_name: str,
         "qq": user_id,
         "name": user_name
     })
-    db.user_info.update_one(
+    jx3_data.j3_user.update_one(
         {'_id': at_qq}, {'$set': {
             "partner_request": partner_request_list
         }}, True)
@@ -174,7 +175,7 @@ async def partner_request_to_group(user_id: int, user_name: str,
 
 
 async def partner_agreed_to_group(user_id, user_name, at_qq):
-    _con = db.user_info.find_one({'_id': user_id})
+    _con = jx3_data.j3_user.find_one({'_id': user_id})
     at_name = None
     if _con:
         # 是否存在申请
@@ -186,7 +187,7 @@ async def partner_agreed_to_group(user_id, user_name, at_qq):
         msg = "对方不在你的“情缘申请列表”中"
         return msg
     date_time = datetime.now()
-    db.user_info.update_one({'_id': at_qq}, {
+    jx3_data.j3_user.update_one({'_id': at_qq}, {
         '$set': {
             "partner": {
                 "qq": user_id,
@@ -196,7 +197,7 @@ async def partner_agreed_to_group(user_id, user_name, at_qq):
             "partner_request": []
         }
     }, True)
-    db.user_info.update_one({'_id': user_id}, {
+    jx3_data.j3_user.update_one({'_id': user_id}, {
         '$set': {
             "partner": {
                 "qq": at_qq,
@@ -212,7 +213,7 @@ async def partner_agreed_to_group(user_id, user_name, at_qq):
 
 async def get_partner_request_list(user_id: int, title: str) -> Message:
     # 请求方是否有情缘
-    _con = db.user_info.find_one({'_id': user_id})
+    _con = jx3_data.j3_user.find_one({'_id': user_id})
     if not _con or not _con.get("partner_request"):
         msg = MessageSegment.at(user_id) + "并没有人向你求情缘。"
         return msg
@@ -223,7 +224,7 @@ async def get_partner_request_list(user_id: int, title: str) -> Message:
 
 
 async def get_my_partner(user_id: int, user_name: str):
-    _con = db.user_info.find_one({'_id': user_id})
+    _con = jx3_data.j3_user.find_one({'_id': user_id})
     partner = None
     if _con:
         partner = _con.get("partner")
@@ -240,15 +241,15 @@ async def get_my_partner(user_id: int, user_name: str):
 
 
 async def parted_to_group(user_id: int):
-    _con = db.user_info.find_one({'_id': user_id})
+    _con = jx3_data.j3_user.find_one({'_id': user_id})
     partner = None
     if _con:
         partner = _con.get("partner")
     if not partner:
         msg = MessageSegment.at(user_id) + "你还没有情缘。"
         return msg
-    db.user_info.update_one({'_id': user_id}, {'$set': {"partner": {}}}, True)
-    db.user_info.update_one({'_id': partner['qq']},
+    jx3_data.j3_user.update_one({'_id': user_id}, {'$set': {"partner": {}}}, True)
+    jx3_data.j3_user.update_one({'_id': partner['qq']},
                             {'$set': {
                                 "partner": {},
                             }}, True)
@@ -258,7 +259,7 @@ async def parted_to_group(user_id: int):
 
 
 async def clear_partner_request(user_id: int):
-    db.user_info.update_one({'_id': user_id},
+    jx3_data.j3_user.update_one({'_id': user_id},
                             {'$set': {
                                 "partner_request": []
                             }}, True)

@@ -10,13 +10,13 @@ from src.plugins.jianghu.skill import Skill
 
 from httpx import AsyncClient
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
-from src.utils.db import db
+from src.utils.db import jianghu, logs
 from src.utils.log import logger
 from src.utils.browser import browser
 from src.utils.email import mail_client
 from src.plugins.jianghu.shop import shop
 from src.plugins.jianghu.equipment import 打造装备, 合成图纸, 合成材料, 装备价格, 镶嵌装备, 材料等级表, 重铸装备
-from src.plugins.jianghu.user import PK
+from src.plugins.jianghu.jianghu import PK
 from src.plugins.jianghu.world_boss import world_boss
 from src.utils.cooldown_time import search_record, search_once
 from src.plugins.jianghu.dungeon import 挑战秘境, 查看秘境, 秘境进度
@@ -42,13 +42,13 @@ async def get_my_info(user_id: int, user_name: str) -> Message:
     _con = jianghu.user.find_one({'_id': user_id})
     if not _con:
         _con = {}
-    last_sign = _con.get("last_sign")
+    last_sign = _con.get("签到时间")
     today = datetime.today()
     suangua_data = {}
     if last_sign and today.date() == last_sign.date():
         suangua_data = _con.get("gua", {})
-    gold = _con.get("gold", 0)
-    energy = _con.get("energy", 0)
+    gold = _con.get("银两", 0)
+    energy = _con.get("精力", 0)
     contribution = _con.get("contribution", 0)
     jianghu_data = UserInfo(user_id)
     user_stat = jianghu_data.当前状态
@@ -164,14 +164,14 @@ async def practice_qihai(user_id, res):
     con = jianghu.user.find_one({"_id": user_id})
     energy = 0
     if con:
-        energy = con.get("energy", 0)
+        energy = con.get("精力", 0)
     if energy < 3:
         return "你的精力不足3点！"
     if not await 减少银两(user_id, 花费银两, "修炼气海"):
         return "你的银两不够！"
     增加气海 = random.randint(花费银两//10, 花费银两//5)
 
-    jianghu.user.update_one({"_id": user_id}, {"$inc": {"气海上限": 增加气海, "energy": -3}})
+    jianghu.user.update_one({"_id": user_id}, {"$inc": {"气海上限": 增加气海, "精力": -3}})
 
     return f"花费{花费银两}两银子与3点精力，成功增加{增加气海}上限"
 
@@ -195,7 +195,7 @@ async def recovery_qihai(user_id, res):
 
 
 async def dig_for_treasure(user_id, number):
-    精力 = jianghu.user.find_one({"_id": user_id}).get("energy", 0)
+    精力 = jianghu.user.find_one({"_id": user_id}).get("精力", 0)
     消耗精力 = number * 7
     if 精力 < 消耗精力:
         return f"精力不足, 你只有{精力}精力, 挖宝{number}次需要{消耗精力}精力"
@@ -211,7 +211,7 @@ async def dig_for_treasure(user_id, number):
             获得物品[i] = 0
         获得物品[i] += 1
     jianghu.knapsack.update_one({"_id": user_id}, {"$inc": 获得物品}, True)
-    jianghu.user.update_one({"_id": user_id}, {"$inc": {"energy": -消耗精力}})
+    jianghu.user.update_one({"_id": user_id}, {"$inc": {"精力": -消耗精力}})
     return f"精力-{消耗精力}, 获得: {'、'.join([f'{k}*{v}' for k, v in 获得物品.items()])}"
 
 
@@ -1175,13 +1175,13 @@ async def pk(动作, user_id, 目标):
         善恶值 = jianghu.user.find_one({"_id": user_id}).get("善恶值", 0)
         if 善恶值 < 0:
             消耗精力 += -(善恶值 // 300)
-        精力 = jianghu.user.find_one({"_id": user_id}).get("energy", 0)
+        精力 = jianghu.user.find_one({"_id": user_id}).get("精力", 0)
         if 精力 < 消耗精力:
             精力 = 0
             return f"精力不足, 你只有{精力}精力, {动作}需要{消耗精力}精力"
         msg = f"{动作}成功, 精力-{消耗精力}"
 
-    jianghu.user.update_one({"_id": user_id}, {"$inc": {"energy": -消耗精力}})
+    jianghu.user.update_one({"_id": user_id}, {"$inc": {"精力": -消耗精力}})
     战斗 = PK()
     data = await 战斗.main(动作, user_id, 目标_id, msg)
     if isinstance(data, str):
@@ -1426,7 +1426,7 @@ async def gold_ranking(bot: Bot, user_id):
 
     logger.debug(f"银两排行 | {user_id}")
     filter = {}
-    sort = list({'gold': -1}.items())
+    sort = list({'银两': -1}.items())
     limit = 10
     msg = "银两排行\n"
 
@@ -1435,11 +1435,11 @@ async def gold_ranking(bot: Bot, user_id):
         user_info = UserInfo(i['_id'])
         重伤 = "x" if user_info.基础属性.get("重伤状态") else ""
         名称 = user_info.基础属性["名称"]
-        msg += f"{n+1} {重伤}{名称} {i['gold']}\n"
+        msg += f"{n+1} {重伤}{名称} {i['银两']}\n"
 
     ret = jianghu.user.aggregate([{
         "$sort": {
-            "gold": -1
+            "银两": -1
         }
     }, {
         "$group": {

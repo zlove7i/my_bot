@@ -1,7 +1,7 @@
 # coding:utf-8
 import random
 import math
-from src.utils.db import db
+from src.utils.db import jianghu
 
 text = "翊哈天地玄黄宇宙洪荒日月盈昃辰宿列张寒来暑往秋收冬藏闰余成岁律吕调阳苍腾致"\
        "雨露结为霜金生丽水玉出昆冈剑号巨阙珠称夜光果珍李柰菜重芥姜海咸河淡鳞潜羽翔"\

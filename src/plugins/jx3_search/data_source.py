@@ -5,14 +5,14 @@ from typing import List, Optional, Tuple
 from httpx import AsyncClient
 from nonebot.adapters.onebot.v11.message import MessageSegment
 from src.utils.config import config
-from src.utils.db import db
+from src.utils.db import management, jx3_data, my_bot
 from src.utils.jx3_search import (JX3APP, SERENDIPITY, jx3_searcher)
 from src.utils.log import logger
 
 
 async def get_server(group_id: int) -> str:
     '''获取群绑定的区服'''
-    return db.group_conf.find_one({'_id': group_id}).get("server")
+    return management.group_conf.find_one({'_id': group_id}).get("server")
 
 
 async def get_main_server(server: str) -> Optional[str]:
@@ -32,7 +32,7 @@ async def get_kfc():
 
 async def get_sand(server):
     client = AsyncClient()
-    token = db.bot_conf.find_one({"_id": 1}).get("sptoken", "")
+    token = my_bot.bot_conf.find_one({"_id": 1}).get("sptoken", "")
     for _ in range(10):
         client.headers = {"token": token, "User-Agent": "Nonebot2-jx3_bot"}
         url = "https://www.j3sp.com/api/token/check"
@@ -49,7 +49,7 @@ async def get_sand(server):
             }
             req = await client.get(url=url, params=params)
             token = req.json().get("data", {}).get("userinfo", {}).get("token")
-    db.bot_conf.update_one({"_id": 1}, {"$set": {"sptoken": token}}, True)
+    my_bot.bot_conf.update_one({"_id": 1}, {"$set": {"sptoken": token}}, True)
     url = "https://www.j3sp.com/api/sand/"
     params = {
         "serverName": server,
@@ -84,7 +84,7 @@ async def get_data_from_api(app: JX3APP, group_id: int, params: dict, ticket: bo
         # 获取ticket
 
         while True:
-            tickets = db.tickets.aggregate([{"$sample": {"size": 1}}])
+            tickets = jx3_data.tickets.aggregate([{"$sample": {"size": 1}}])
             for ticket_data in tickets:
                 ticket = ticket_data.get("ticket")
             params["ticket"] = ticket

@@ -13,7 +13,7 @@ from src.utils.black_list import add_black_list, check_black_list
 from src.utils.chat import chat
 from src.utils.config import config
 from src.utils.content_check import content_check
-from src.utils.db import db
+from src.utils.db import management, my_bot
 from src.utils.log import logger
 
 data_dir = os.path.realpath(__file__ + "/../../../../data/")
@@ -65,7 +65,7 @@ async def get_meau_data(group_id: int) -> dict:
         req_data['group'] = _con
     else:
         req_data['group'] = {}
-    _con = db.plugins_info.find_one({'_id': group_id})
+    _con = my_bot.plugins_info.find_one({'_id': group_id})
     if _con:
         req_data['plugin'] = []
         for v in _con.values():
@@ -170,7 +170,7 @@ async def check_add_bot_to_group(bot: Bot, user_id: int,
                                  group_id: int) -> tuple:
     '''检查加群条件'''
     bot_id = int(bot.self_id)
-    bot_info = db.bot_info.find_one({"_id": bot_id})
+    bot_info = management.bot_info.find_one({"_id": bot_id})
     if bot_info.get("master") == user_id:
         return True, None
     result, _ = await check_black_list(user_id, "QQ")
@@ -218,7 +218,7 @@ async def add_bot_to_group(group_id: int, bot_id: int) -> None:
         plugin_name = export.get("plugin_name")
         if plugin_name is None:
             continue
-        db.plugins_info.update_one({'_id': group_id}, {
+        my_bot.plugins_info.update_one({'_id': group_id}, {
             '$set': {
                 one_plugin.name: {
                     "module_name": one_plugin.name,

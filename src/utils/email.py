@@ -5,7 +5,7 @@ from email.header import Header
 from aiosmtplib import SMTP, SMTPException
 from src.utils.config import config
 from src.utils.log import logger
-from src.utils.db import db
+from src.utils.db import my_bot, management
 
 import random
 
@@ -49,7 +49,7 @@ class MailClient(object):
         receiver_list = []
         for receiver in receivers:
             if isinstance(receiver, int):
-                cui_receiver = db.user_info.find_one({"_id": receiver}).get("email")
+                cui_receiver = my_bot.user_info.find_one({"_id": receiver}).get("email")
                 if cui_receiver:
                     receiver = cui_receiver
                 else:
@@ -71,7 +71,7 @@ class MailClient(object):
             logger.error(f"发送邮件失败，可能是你的配置有问题：{str(e)}")
 
     async def bot_offline(self, robot_id: int):
-        db.bot_info.update_one({"_id": robot_id},
+        management.bot_info.update_one({"_id": robot_id},
                                {"$set": {
                                    "online_status": False
                                }}, True)

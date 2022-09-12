@@ -4,7 +4,7 @@ from numpy import arctan
 from datetime import datetime, timedelta
 from src.plugins.jianghu.user_info import UserInfo
 from src.plugins.jianghu.skill import Skill
-from src.utils.db import db
+from src.utils.db import jianghu
 import re
 from src.utils.log import logger
 from src.plugins.jianghu.gold import 减少银两, 增加银两, 查询银两
@@ -85,7 +85,7 @@ class PK(Skill):
         击败首领次数 = user_info.get("dungeon_num", 0)
         if 击败首领次数 >= 5:
             return "每天只有前 5 次击败秘境首领可以获得奖励"
-        精力 = user_info.get("energy", 0)
+        精力 = user_info.get("精力", 0)
         if 精力 < 4:
             精力 = 0
             return f"你只有{精力}精力, 无法获得奖励"
@@ -119,7 +119,7 @@ class PK(Skill):
             秘境进度[秘境首领.基础属性["秘境"]] = {}
         秘境进度[秘境首领.基础属性["秘境"]][秘境首领.名称] = True
         jianghu.user.update_one({"_id": 击杀者}, {"$set": {"秘境进度": 秘境进度}}, True)
-        jianghu.user.update_one({"_id": 击杀者}, {"$inc": {"dungeon_num": 1, "energy": -4}}, True)
+        jianghu.user.update_one({"_id": 击杀者}, {"$inc": {"dungeon_num": 1, "精力": -4}}, True)
         msg += 秘境首领.基础属性["提示"]
         return msg
 
@@ -255,7 +255,7 @@ class PK(Skill):
                     jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.2}}, True)
                     data["结算"] += f"<br>首领气被击败！当前贡献值提高 20%！"
                 user = jianghu.user.find_one({"_id": 攻方.user_id})
-                精力 = user['energy']
+                精力 = user['精力']
                 data["结算"] += f"<br>当前贡献：{int(user['contribution'])}<br>当前精力: {精力}"
                 logger.info(f"{攻方.名称} | 世界首领 | 伤害：{攻方.本次伤害} | 首领气血：{守方.当前气血}/{守方.当前状态['气血上限']} | 精力：{精力}")
 

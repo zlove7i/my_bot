@@ -1,10 +1,9 @@
-import random
 import datetime
 
 from httpx import AsyncClient
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
 from src.utils.cooldown_time import search_record, search_once
-from src.utils.db import db
+from src.utils.db import my_bot
 from src.utils.log import logger
 from src.utils.browser import browser
 from src.utils.email import mail_client
@@ -41,7 +40,7 @@ async def sent_river_lantern(
 
     if 类型 == "回复河灯":
         河灯id, content = content
-        con = db.river_lantern.find_one({"_id": int(河灯id)})
+        con = my_bot.river_lantern.find_one({"_id": int(河灯id)})
         if not con:
             return "找不到你要回复的河灯"
         回复内容 = con["content"]
@@ -61,7 +60,7 @@ async def sent_river_lantern(
     if user_name:
         insert_data.update({"user_name": user_name})
     # 记录投放
-    编号 = db.insert_auto_increment("river_lantern", insert_data)
+    编号 = my_bot.insert_auto_increment("river_lantern", insert_data)
     msg = f"{user_name}，河灯{编号}帮你放好了"
 
     if 类型 == "回复河灯":
@@ -87,14 +86,14 @@ async def get_river_lantern(group_id, user_id) -> Message:
         return msg
     # 记录一次查询
     await search_once(user_id, app_name)
-    plugins_info = db.plugins_info.find_one({"_id": group_id})
+    plugins_info = my_bot.plugins_info.find_one({"_id": group_id})
     status = True
     if plugins_info:
         status = plugins_info.get("river_lantern", {}).get("status", True)
     if not status:
         return "本群已关闭河灯功能，如果要恢复，请发送“打开 河灯”"
 
-    con_list = list(db.river_lantern.aggregate([{"$sample": {"size": 1}}]))
+    con_list = list(my_bot.river_lantern.aggregate([{"$sample": {"size": 1}}]))
     if not con_list:
         logger.debug("无河灯")
         return "现在找不到河灯。"
@@ -106,7 +105,7 @@ async def get_river_lantern(group_id, user_id) -> Message:
     if not content:
         logger.debug("空河灯")
         return "你捡到了一个空的河灯。要不你来放一个？"
-    db.river_lantern.update_one({"_id": lantern_id},
+    my_bot.river_lantern.update_one({"_id": lantern_id},
                                 {"$inc": {
                                     "views_num": 1
                                 }})
@@ -125,7 +124,7 @@ async def my_river_lantern(user_id: int, user_name: str):
     filter = {'user_id': user_id}
     sort = list({'last_sent': -1}.items())
     limit = 10
-    con = db.river_lantern.find(filter=filter, sort=sort, limit=limit)
+    con = my_bot.river_lantern.find(filter=filter, sort=sort, limit=limit)
     data = list(con)
     if not data:
         return "你还没投放过河灯。"

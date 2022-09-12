@@ -5,7 +5,7 @@ from nonebot import Bot
 from nonebot.plugin import get_loaded_plugins
 from src.utils.black_list import check_black_list
 from src.utils.config import config
-from src.utils.db import db
+from src.utils.db import my_bot, management
 from src.utils.utils import bot_info
 
 from . import _jx3_event as Event
@@ -14,7 +14,7 @@ from . import _jx3_event as Event
 async def load_plugins(group_id: int):
     '''给某个群默认加载插件'''
     # 注册过的不再注册
-    _con = db.plugins_info.find_one({'_id': group_id})
+    _con = my_bot.plugins_info.find_one({'_id': group_id})
     if not _con:
         _con = {}
     # 注册所有插件
@@ -26,7 +26,7 @@ async def load_plugins(group_id: int):
             continue
         if _con.get(one_plugin.name, ""):
             continue
-        db.plugins_info.update_one({'_id': group_id}, {
+        my_bot.plugins_info.update_one({'_id': group_id}, {
             '$set': {
                 one_plugin.name: {
                     "module_name": one_plugin.name,
@@ -47,7 +47,7 @@ async def check_group(group_id: int, bot: Bot):
     is_black, info = await check_black_list(group_id, "群号")
     if is_black:
         msg = f"好家伙，这个群被拉黑了。原因是：{info}"
-        db.group_conf.update_one({'_id': group_id}, {'$set': {
+        management.group_conf.update_one({'_id': group_id}, {'$set': {
             "bot_id": 0
         }}, True)
         await bot.send_group_msg(group_id=group_id, message=msg)
@@ -61,7 +61,7 @@ async def register_bot(bot: Bot):
     ret = await bot.get_stranger_info(user_id=bot_id, no_cache=False)
     bot_name = ret['nickname']
     bot_info.bot_name_map[bot_id] = bot_name
-    db.bot_info.update_one({"_id": bot_id}, {
+    management.bot_info.update_one({"_id": bot_id}, {
         "$set": {
             "online_status": True,
             "bot_name": bot_name,
@@ -74,7 +74,7 @@ async def register_bot(bot: Bot):
 
 async def get_server(group_id: int) -> str:
     '''获取绑定服务器'''
-    _con = db.group_conf.find_one({'_id': group_id})
+    _con = management.group_conf.find_one({'_id': group_id})
     if _con:
         return _con.get("server", "")
 
@@ -91,7 +91,7 @@ async def get_ws_status(group_id: int, event: Event.RecvEvent) -> bool:
     :返回
         * bool：ws通知开关
     '''
-    _con = db.group_conf.find_one({'_id': group_id})
+    _con = management.group_conf.find_one({'_id': group_id})
     if not _con or not _con.get("group_switch", False):
         return False
 
