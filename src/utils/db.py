@@ -6,16 +6,9 @@ mg_usr = config.mongodb.get("mongodb_username")
 mg_pwd = config.mongodb.get("mongodb_password")
 
 
-class DB():
+class DB(object):
 
-    def __new__(cls, *args, **kwargs):
-        '''单例'''
-        if not hasattr(cls, '_instance'):
-            orig = super(DB, cls)
-            cls._instance = orig.__new__(cls, *args, **kwargs)
-        return cls._instance
-
-    def __init__(self, db_name="my_bot"):
+    def __init__(self, db_name):
         """
         创建mongodb客户端
         """
@@ -23,46 +16,8 @@ class DB():
                                   username=mg_usr,
                                   password=mg_pwd)
         self.db = self.client[db_name]
-
-        # 机器人配置
-        self.bot_conf = self.db.bot_conf
-        # 机器人信息
-        self.bot_info = self.db.bot_info
-        # 群配置
-        self.group_conf = self.db.group_conf
-        # 群冷却时间配置
-        self.group_cd_conf = self.db.group_cd_conf
-        # 插件信息
-        self.plugins_info = self.db.plugins_info
-        # 用户信息
-        self.user_info = self.db.user_info
-        # 冷却时间记录
-        self.search_record = self.db.search_record
-        # 河灯
-        self.river_lantern = self.db.river_lantern
-        # 聊天记录
-        self.chat_log = self.db.chat_log
-        # 用户背包
-        self.knapsack = self.db.knapsack
-        # 江湖
-        self.jianghu = self.db.jianghu
-        # 装备
-        self.equip = self.db.equip
-        # npc
-        self.npc = self.db.npc
-        # 交易行
-        self.auction_house = self.db.auction_house
-        # 战斗记录
-        self.pk_log = self.db.pk_log
-        # 剑三团队
-        self.j3_teams = self.db.j3_teams
-        # tickets
-        self.tickets = self.db.tickets
-        # 违禁词
-        self.forbidden_word = self.db.forbidden_word
-
         # 计数器
-        self.counters = self.db.counters
+        self.counters = self.client["my_bot"].counters
 
     def __enter__(self):
         return self
@@ -86,8 +41,72 @@ class DB():
         if self.client:
             self.client.close()
 
+class Management(DB):
+    def __init__(self):
+        super().__init__("management")
+        self.group_black_list = self.db.group_black_list
+        self.user_black_list = self.db.user_black_list
+        self.bot_info = self.db.bot_info
+        self.group_conf = self.db.group_conf
 
-db = DB()
+class Logs(DB):
+    def __init__(self):
+        super().__init__("logs")
+        self.pk_log = self.db.pk_log
+
+    def write_pk_log(self, log_data):
+        return self.insert_auto_increment("pk_log", data=log_data, id_name="编号")
+
+    def write_log(self, collection, log_data):
+        self.db[collection].insert_one(log_data)
+
+class Jx3Data(DB):
+    def __init__(self):
+        super().__init__("jx3_data")
+        # 剑三团队
+        self.j3_teams = self.jx3_data.j3_teams
+        # tickets
+        self.tickets = self.db.tickets
+        # user_info
+        self.j3_user = self.db.j3_user
+
+class JiangHu(DB):
+    def __init__(self):
+        super().__init__("jianghu")
+        self.knapsack = self.jianghu.knapsack
+        self.user = self.jianghu.user
+        self.equip = self.jianghu.equip
+        self.auction_house = self.db.auction_house
+        self.npc = self.db.npc
+
+
+class MyBot(DB):
+    def __init__(self):
+        super().__init__("my_bot")
+        # 机器人配置
+        self.bot_conf = self.db.bot_conf
+        # 群冷却时间配置
+        self.group_cd_conf = self.db.group_cd_conf
+        # 插件信息
+        self.plugins_info = self.db.plugins_info
+        # 用户信息
+        self.user_info = self.db.user_info
+        # 冷却时间记录
+        self.search_record = self.db.search_record
+        # 河灯
+        self.river_lantern = self.db.river_lantern
+        # 表情包
+        self.memes = self.db.memes
+        # 违禁词
+        self.forbidden_word = self.db.forbidden_word
+
+logs = Logs()
+jianghu = JiangHu()
+jx3_data = Jx3Data()
+my_bot = MyBot()
+management = Management()
+
+
 
 if __name__ == "__main__":
     pass

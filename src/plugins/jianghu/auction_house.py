@@ -46,15 +46,15 @@ async def 上架商品(寄售人id, 商品名称, 价格, 备注=""):
         return "上架数量必须大大于1"
     # 删除背包
     if 类型 in ("材料", "图纸"):
-        con = db.knapsack.find_one({"_id": 寄售人id})
+        con = jianghu.knapsack.find_one({"_id": 寄售人id})
         if not con or con.get(类型, {}).get(商品名称, 0) < 数量:
             return f"{商品名称}数量不足{数量}"
         con[类型][商品名称] -= 数量
         if con[类型][商品名称] == 0:
             del con[类型][商品名称]
-        db.knapsack.update_one({"_id": 寄售人id}, {"$set": con}, True)
+        jianghu.knapsack.update_one({"_id": 寄售人id}, {"$set": con}, True)
     elif 类型 in ("武器", "外装", "饰品"):
-        con = db.equip.find_one({"_id": 商品名称})
+        con = jianghu.equip.find_one({"_id": 商品名称})
         if not con or 寄售人id != con.get("持有人", 0):
             return "你没有这件装备"
         交易时间 = con.get("交易时间")
@@ -62,16 +62,16 @@ async def 上架商品(寄售人id, 商品名称, 价格, 备注=""):
             交易保护时间 = 120 - (datetime.now() - 交易时间).seconds
             if 交易保护时间 > 0:
                 return f"{商品名称}正在交易保护期间，无法售卖。剩余时间：{交易保护时间}秒"
-        装备 = db.jianghu.find_one({"_id": 寄售人id})["装备"]
+        装备 = jianghu.user.find_one({"_id": 寄售人id})["装备"]
         if 商品名称 == 装备[con["类型"]]:
             return "该装备正在使用，无法上架"
         等级 = con.get("装备分数", 0)
-        db.equip.update_one({"_id": 商品名称}, {"$set": {"持有人": -1}}, True)
+        jianghu.equip.update_one({"_id": 商品名称}, {"$set": {"持有人": -1}}, True)
     elif 类型 == "物品":
-        con = db.knapsack.find_one({"_id": 寄售人id})
+        con = jianghu.knapsack.find_one({"_id": 寄售人id})
         if con.get(商品名称, 0) < 数量:
             return f"{商品名称}数量不足{数量}"
-        db.knapsack.update_one({"_id": 寄售人id}, {"$inc": {商品名称: -数量}})
+        jianghu.knapsack.update_one({"_id": 寄售人id}, {"$inc": {商品名称: -数量}})
 
     data = {
         "类型": 类型,
@@ -85,14 +85,14 @@ async def 上架商品(寄售人id, 商品名称, 价格, 备注=""):
         "备注": 备注
     }
     # 上架
-    编号 = db.insert_auto_increment("auction_house", data)
+    编号 = jianghu.insert_auto_increment("auction_house", data)
     logger.info(f"上架商品: {寄售人id} 上架{商品名称}({编号})成功！")
     return f"上架[{商品名称}]成功！商品编号：{编号}"
 
 
 async def 我的商品(操作人id, 命令):
     filter = {"寄售人": 操作人id}
-    总数 = db.auction_house.count_documents(filter)
+    总数 = jianghu.auction_house.count_documents(filter)
     当前页 = 1
     if 当前页re := re.findall("\d+", 命令):
         当前页 = int(当前页re[0])
@@ -101,7 +101,7 @@ async def 我的商品(操作人id, 命令):
     页数 = math.ceil(总数 / limit)
     if 当前页 > 页数:
         return f"只能查到{页数}页"
-    result = db.auction_house.find(filter=filter, limit=limit, skip=skip)
+    result = jianghu.auction_house.find(filter=filter, limit=limit, skip=skip)
     datas = []
     for i in result:
         寄售人 = UserInfo(i["寄售人"])
@@ -127,7 +127,7 @@ async def 我的商品(操作人id, 命令):
 
 async def 下架商品(操作人id, 商品id):
     # 寄售人id是否等于操作人id
-    商品 = db.auction_house.find_one({"_id": 商品id})
+    商品 = jianghu.auction_house.find_one({"_id": 商品id})
     if not 商品:
         return "商品不存在！"
     商品类型 = 商品["类型"]
@@ -139,7 +139,7 @@ async def 下架商品(操作人id, 商品id):
 
     # 获得商品
     if 商品类型 in ("材料", "图纸"):
-        con = db.knapsack.find_one({"_id": 操作人id})
+        con = jianghu.knapsack.find_one({"_id": 操作人id})
         if not con:
             con = {}
         if not con.get(商品类型):
@@ -147,13 +147,13 @@ async def 下架商品(操作人id, 商品id):
         if not con[商品类型].get(商品名称):
             con[商品类型][商品名称] = 0
         con[商品类型][商品名称] += 商品数量
-        db.knapsack.update_one({"_id": 操作人id}, {"$set": con}, True)
+        jianghu.knapsack.update_one({"_id": 操作人id}, {"$set": con}, True)
     elif 商品类型 in ("武器", "外装", "饰品"):
-        db.equip.update_one({"_id": 商品名称}, {"$set": {"持有人": 操作人id}}, True)
+        jianghu.equip.update_one({"_id": 商品名称}, {"$set": {"持有人": 操作人id}}, True)
     elif 商品类型 == "物品":
-        db.knapsack.update_one({"_id": 操作人id}, {"$inc": {商品名称: 商品数量}}, True)
+        jianghu.knapsack.update_one({"_id": 操作人id}, {"$inc": {商品名称: 商品数量}}, True)
     # 交易行删除商品
-    db.auction_house.delete_one({"_id": 商品id})
+    jianghu.auction_house.delete_one({"_id": 商品id})
     logger.info(f"下架商品: {操作人id}下架{商品名称}({商品id})*{商品数量}成功！")
     return f"下架{商品名称}成功！"
 
@@ -167,7 +167,7 @@ async def 购买商品(购买人id, 名称):
     商品id = 名称
     if "*" in 名称:
         商品id, 数量 = 名称.split("*")
-    商品 = db.auction_house.find_one({"_id": int(商品id)})
+    商品 = jianghu.auction_house.find_one({"_id": int(商品id)})
     if not 商品:
         return "商品不存在！"
     数量 = int(数量)
@@ -184,7 +184,7 @@ async def 购买商品(购买人id, 名称):
         return f"\n购买商品[{商品id}]({商品名称})*{数量}失败，需要银两{商品价格}"
     # 获得商品
     if 商品类型 in ("材料", "图纸"):
-        con = db.knapsack.find_one({"_id": 购买人id})
+        con = jianghu.knapsack.find_one({"_id": 购买人id})
         if not con:
             con = {}
         if not con.get(商品类型):
@@ -192,16 +192,16 @@ async def 购买商品(购买人id, 名称):
         if not con[商品类型].get(商品名称):
             con[商品类型][商品名称] = 0
         con[商品类型][商品名称] += 数量
-        db.knapsack.update_one({"_id": 购买人id}, {"$set": con}, True)
+        jianghu.knapsack.update_one({"_id": 购买人id}, {"$set": con}, True)
     elif 商品类型 in ("武器", "外装", "饰品"):
-        db.equip.update_one({"_id": 商品名称}, {"$set": {"持有人": 购买人id, "交易时间": datetime.now()}}, True)
+        jianghu.equip.update_one({"_id": 商品名称}, {"$set": {"持有人": 购买人id, "交易时间": datetime.now()}}, True)
     elif 商品类型 == "物品":
-        db.knapsack.update_one({"_id": 购买人id}, {"$inc": {商品名称: 数量}}, True)
+        jianghu.knapsack.update_one({"_id": 购买人id}, {"$inc": {商品名称: 数量}}, True)
     # 交易行删除商品
     if 商品数量 - 数量 <= 0:
-        db.auction_house.delete_one({"_id": 商品id})
+        jianghu.auction_house.delete_one({"_id": 商品id})
     else:
-        db.auction_house.update_one({"_id": 商品id}, {"$inc": {"数量": -数量}})
+        jianghu.auction_house.update_one({"_id": 商品id}, {"$inc": {"数量": -数量}})
     # 寄售人获得 银两 使用qq邮箱接收信息
     手续费 = 总价 // 100
     获得银两 = 总价 - 手续费
@@ -239,7 +239,7 @@ async def 查找商品(condition=""):
                 filter["名称"] = {"$regex": i}
     if not sort:
         sort = {"日期": -1}
-    总数 = db.auction_house.count_documents(filter)
+    总数 = jianghu.auction_house.count_documents(filter)
     当前页 = 1
     if 当前页re := re.findall("\d+", condition_list[0]):
         当前页 = int(当前页re[0])
@@ -248,7 +248,7 @@ async def 查找商品(condition=""):
     页数 = math.ceil(总数 / limit)
     if 当前页 > 页数:
         return f"只能查到{页数}页"
-    result = db.auction_house.find(filter=filter,
+    result = jianghu.auction_house.find(filter=filter,
                                    sort=list(sort.items()),
                                    limit=limit,
                                    skip=skip)

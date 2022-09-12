@@ -51,7 +51,7 @@ class PK(Skill):
         return 重伤状态
 
     async def 善恶值变化(self, user_id: int, 善恶值: int):
-        db.jianghu.update_one({"_id": user_id}, {"$inc": {"善恶值": 善恶值}}, True)
+        jianghu.user.update_one({"_id": user_id}, {"$inc": {"善恶值": 善恶值}}, True)
 
     async def 抢走银两(self, 抢劫方id: int, 被抢方id: int, 银两数量: int):
         if 抢劫方id:
@@ -75,13 +75,13 @@ class PK(Skill):
             抢走金额 = 抢走金额 if 抢走金额 < 抢夺上限 else 抢夺上限
             await self.抢走银两(胜方id, 败方id, 抢走金额)
             msg = f"【{胜方名称}】抢走了【{败方名称}】 {抢走金额} 两银子"
-        db.jianghu.update_one({"_id": 败方id}, {"$set": {
+        jianghu.user.update_one({"_id": 败方id}, {"$set": {
             "重伤状态": True,
         }}, True)
         return msg
 
     async def 秘境首领掉落(self, 击杀者: int, 秘境首领: UserInfo):
-        user_info = db.user_info.find_one({"_id": 击杀者})
+        user_info = jianghu.user.find_one({"_id": 击杀者})
         击败首领次数 = user_info.get("dungeon_num", 0)
         if 击败首领次数 >= 5:
             return "每天只有前 5 次击败秘境首领可以获得奖励"
@@ -97,7 +97,7 @@ class PK(Skill):
 
         材料 = {}
         图纸 = {}
-        if con := db.knapsack.find_one({"_id": 击杀者}):
+        if con := jianghu.knapsack.find_one({"_id": 击杀者}):
             材料 = con.get("材料", {})
             图纸 = con.get("图纸", {})
         if re.match("[赤橙黄绿青蓝紫彩][金木水火土]", 物品):
@@ -108,18 +108,18 @@ class PK(Skill):
             图纸数量 = 图纸.get(物品, 0) + 数量
             图纸.update({物品: 图纸数量})
             msg += f"获得图纸：{物品}*{数量}<br>"
-        db.knapsack.update_one({"_id": 击杀者}, {"$set": {
+        jianghu.knapsack.update_one({"_id": 击杀者}, {"$set": {
             "材料": 材料,
             "图纸": 图纸
         }}, True)
 
         # 更新秘境进度
-        秘境进度 = db.jianghu.find_one({"_id": 击杀者}).get("秘境进度", {})
+        秘境进度 = jianghu.user.find_one({"_id": 击杀者}).get("秘境进度", {})
         if 秘境首领.基础属性["秘境"] not in 秘境进度:
             秘境进度[秘境首领.基础属性["秘境"]] = {}
         秘境进度[秘境首领.基础属性["秘境"]][秘境首领.名称] = True
-        db.jianghu.update_one({"_id": 击杀者}, {"$set": {"秘境进度": 秘境进度}}, True)
-        db.user_info.update_one({"_id": 击杀者}, {"$inc": {"dungeon_num": 1, "energy": -4}}, True)
+        jianghu.user.update_one({"_id": 击杀者}, {"$set": {"秘境进度": 秘境进度}}, True)
+        jianghu.user.update_one({"_id": 击杀者}, {"$inc": {"dungeon_num": 1, "energy": -4}}, True)
         msg += 秘境首领.基础属性["提示"]
         return msg
 
@@ -129,14 +129,14 @@ class PK(Skill):
         if 银两 > 10:
             抢走金额 = random.randint(1, int(银两 * 0.1))
             await self.抢走银两(0, 重伤者, 抢走金额)
-        db.jianghu.update_one({"_id": 重伤者}, {"$set": {
+        jianghu.user.update_one({"_id": 重伤者}, {"$set": {
             "重伤状态": True,
         }}, True)
         return f"损失 {抢走金额} 两银子"
 
     async def 更新凶煞状态(self, 击杀者id: int):
         now_time = datetime.now() + timedelta(hours=1)
-        db.jianghu.update_one(
+        jianghu.user.update_one(
             {"_id": 击杀者id}, {"$set": {"凶煞": now_time}}, True)
 
     async def 战斗结算(self, action, 攻方: UserInfo, 守方: UserInfo, msg=""):
@@ -209,7 +209,7 @@ class PK(Skill):
                 data["守方"]["胜负"] = False
                 data["守方"]["当前气血"] = 1
                 守方.当前气血 = 1
-                db.jianghu.update_one({"_id": 守方_id}, {"$set": {
+                jianghu.user.update_one({"_id": 守方_id}, {"$set": {
                     "当前气血": 1,
                     "重伤状态": False
                 }}, True)
@@ -218,7 +218,7 @@ class PK(Skill):
                 data["守方"]["胜负"] = True
                 data["攻方"]["当前气血"] = 1
                 攻方.当前气血 = 1
-                db.jianghu.update_one({"_id": 攻方_id}, {"$set": {
+                jianghu.user.update_one({"_id": 攻方_id}, {"$set": {
                     "当前气血": 1,
                     "重伤状态": False
                 }}, True)
@@ -228,7 +228,7 @@ class PK(Skill):
             if 胜方 == 攻方_id:
                 data["攻方"]["胜负"] = True
                 data["守方"]["胜负"] = False
-                db.npc.update_one({"_id": 守方_id}, {"$set": {
+                jianghu.npc.update_one({"_id": 守方_id}, {"$set": {
                     "重伤状态": True,
                 }}, True)
             elif 胜方 == 守方_id:
@@ -240,21 +240,21 @@ class PK(Skill):
                 data["守方"]["平"] = True
             if 攻方.本次伤害 and 胜方 != 守方_id:
                 data["结算"] += f"{攻方.基础属性['名称']} 对 {守方.基础属性['名称']} 造成了 {-攻方.本次伤害} 伤害，贡献值 +{贡献值}, 精力-5"
-                db.user_info.update_one({"_id": 攻方.user_id},
+                jianghu.user.update_one({"_id": 攻方.user_id},
                                       {"$inc": {"contribution": 贡献值}}, True)
                 if data["守方"]["气血百分比"] < 70 < data["守方"]["气血百分比"]+data["守方"]["减血百分比"]:
-                    db.user_info.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.5}}, True)
+                    jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.5}}, True)
                     data["结算"] += f"<br>首领气血被攻下三成，当前贡献值提高 50%！"
                 elif data["守方"]["气血百分比"] < 40 < data["守方"]["气血百分比"]+data["守方"]["减血百分比"]:
-                    db.user_info.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.4}}, True)
+                    jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.4}}, True)
                     data["结算"] += f"<br>首领气血被攻下六成，当前贡献值提高 40%！"
                 elif data["守方"]["气血百分比"] < 10 < data["守方"]["气血百分比"]+data["守方"]["减血百分比"]:
-                    db.user_info.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.3}}, True)
+                    jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.3}}, True)
                     data["结算"] += f"<br>首领气血被攻下九成，当前贡献值提高 30%！"
                 elif data["守方"]["气血百分比"] <= 0 < data["守方"]["气血百分比"]+data["守方"]["减血百分比"]:
-                    db.user_info.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.2}}, True)
+                    jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.2}}, True)
                     data["结算"] += f"<br>首领气被击败！当前贡献值提高 20%！"
-                user = db.user_info.find_one({"_id": 攻方.user_id})
+                user = jianghu.user.find_one({"_id": 攻方.user_id})
                 精力 = user['energy']
                 data["结算"] += f"<br>当前贡献：{int(user['contribution'])}<br>当前精力: {精力}"
                 logger.info(f"{攻方.名称} | 世界首领 | 伤害：{攻方.本次伤害} | 首领气血：{守方.当前气血}/{守方.当前状态['气血上限']} | 精力：{精力}")
@@ -280,7 +280,7 @@ class PK(Skill):
             "方式": action,
             "胜方": 胜方
         }
-        self.编号 = db.insert_auto_increment("pk_log", data=log_data, id_name="编号")
+        self.编号 = logs.write_pk_log("pk_log", data=log_data, id_name="编号")
         return data
 
     async def 战前恢复(self, user_info: UserInfo):

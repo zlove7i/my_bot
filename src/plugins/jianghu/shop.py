@@ -7,7 +7,7 @@ from src.plugins.jianghu.gold import 增加银两
 async def 材料盒(自己: UserInfo, 数量: int):
     user_id = 自己.基础属性["_id"]
     已有数量 = 0
-    con = db.knapsack.find_one({"_id": user_id})
+    con = jianghu.knapsack.find_one({"_id": user_id})
     材料 = {}
     if con:
         材料 = con.get("材料", {})
@@ -25,13 +25,13 @@ async def 材料盒(自己: UserInfo, 数量: int):
             获取物品列表[材料名称] = 0
         获取物品列表[材料名称] += 材料数量
     msg += "、".join([f"{k} * {v}" for k, v in 获取物品列表.items()])
-    db.knapsack.update_one({"_id": user_id}, {"$set": {"材料": 材料}}, True)
+    jianghu.knapsack.update_one({"_id": user_id}, {"$set": {"材料": 材料}}, True)
     return True, msg
 
 
 async def 图纸盒(自己: UserInfo, 数量: int):
     user_id = 自己.基础属性["_id"]
-    con = db.knapsack.find_one({"_id": user_id})
+    con = jianghu.knapsack.find_one({"_id": user_id})
     图纸 = {}
     if con:
         图纸 = con.get("图纸", {})
@@ -49,7 +49,7 @@ async def 图纸盒(自己: UserInfo, 数量: int):
             获取物品列表[图纸名称] = 0
         获取物品列表[图纸名称] += 1
     msg += "、".join([f"{k} * {v}" for k, v in 获取物品列表.items()])
-    db.knapsack.update_one({"_id": user_id}, {"$set": {"图纸": 图纸}}, True)
+    jianghu.knapsack.update_one({"_id": user_id}, {"$set": {"图纸": 图纸}}, True)
     return True, msg
 
 
@@ -60,7 +60,7 @@ async def 活血丹(自己: UserInfo, 数量: int):
         自己.当前气血 += 1000
     if 自己.当前气血 > 自己.当前状态["气血上限"]:
         自己.当前气血 = 自己.当前状态["气血上限"]
-    db.jianghu.update_one({"_id": 自己.基础属性["_id"]},
+    jianghu.user.update_one({"_id": 自己.基础属性["_id"]},
                           {"$set": {
                               "当前气血": 自己.当前气血,
                           }}, True)
@@ -72,7 +72,7 @@ async def 大活血丹(自己: UserInfo, 数量: int):
         return "重伤状态下无法使用"
 
     自己.当前气血 = 自己.当前状态["气血上限"]
-    db.jianghu.update_one({"_id": 自己.基础属性["_id"]},
+    jianghu.user.update_one({"_id": 自己.基础属性["_id"]},
                           {"$set": {
                               "当前气血": 自己.当前气血,
                           }}, True)
@@ -86,7 +86,7 @@ async def 疏络丹(自己: UserInfo, 数量: int):
         自己.当前内力 += 500
     if 自己.当前内力 > 自己.当前状态["内力上限"]:
         自己.当前内力 = 自己.当前状态["内力上限"]
-    db.jianghu.update_one({"_id": 自己.基础属性["_id"]},
+    jianghu.user.update_one({"_id": 自己.基础属性["_id"]},
                           {"$set": {
                               "当前内力": 自己.当前内力,
                           }}, True)
@@ -98,7 +98,7 @@ async def 大疏络丹(自己: UserInfo, 数量: int):
         return "重伤状态下无法使用"
 
     自己.当前内力 = 自己.当前状态["内力上限"]
-    db.jianghu.update_one({"_id": 自己.基础属性["_id"]},
+    jianghu.user.update_one({"_id": 自己.基础属性["_id"]},
                           {"$set": {
                               "当前内力": 自己.当前内力,
                           }}, True)
@@ -132,14 +132,14 @@ async def _开宝箱(自己: UserInfo,
     获得图纸 = {}
     获得物品 = {}
     共消耗精力 = 数量 * 消耗精力
-    user_info = db.user_info.find_one({"_id": user_id})
+    user_info = jianghu.user.find_one({"_id": user_id})
     现有精力 = user_info.get("energy", 0)
     if 现有精力 < 共消耗精力:
         return False, f"使用 {数量} 个{宝箱名称}需要{共消耗精力}点精力, 你目前只有{现有精力}"
     db.user_info.update_one({"_id": user_id}, {"$inc": {"energy": -共消耗精力}})
     for _ in range(数量):
         装备池 = list(
-            db.equip.find({"持有人": -2}, projection={
+            jianghu.equip.find({"持有人": -2}, projection={
                 "装备分数": 1,
                 "镶嵌分数": 1
             }))
@@ -147,7 +147,7 @@ async def _开宝箱(自己: UserInfo,
             装备 = random.choice(装备池)
             装备名称 = 装备["_id"]
             装备分数 = 装备.get("装备分数", 0) + 装备.get("镶嵌分数", 0)
-            db.equip.update_one({"_id": 装备名称}, {"$set": {"持有人": user_id}})
+            jianghu.equip.update_one({"_id": 装备名称}, {"$set": {"持有人": user_id}})
             msg += f"\n装备【{装备名称}】({装备分数})"
         if random.randint(1, 100) < 银两概率:
             获得银两 += random.randint(银两下限, 银两上限)
@@ -176,7 +176,7 @@ async def _开宝箱(自己: UserInfo,
         msg += f"\n{获得银两}两银子"
         await 增加银两(user_id, 获得银两, f"使用{宝箱名称}")
     if 获得材料 or 获得图纸:
-        背包 = db.knapsack.find_one({"_id": user_id})
+        背包 = jianghu.knapsack.find_one({"_id": user_id})
         图纸 = 背包.get("图纸", {})
         材料 = 背包.get("材料", {})
         if 获得材料:
@@ -191,13 +191,13 @@ async def _开宝箱(自己: UserInfo,
                     图纸[k] = 0
                 图纸[k] += v
                 msg += f"\n{k}*{v}"
-        db.knapsack.update_one({"_id": user_id},
+        jianghu.knapsack.update_one({"_id": user_id},
                                {"$set": {
                                    "图纸": 图纸,
                                    "材料": 材料
                                }})
     if 获得物品:
-        db.knapsack.update_one({"_id": user_id}, {"$inc": 获得物品})
+        jianghu.knapsack.update_one({"_id": user_id}, {"$inc": 获得物品})
         msg += "\n"+"\n".join([f"{k}*{v}" for k, v in 获得物品.items()])
 
     if msg:
@@ -325,7 +325,7 @@ async def 福禄宝箱(自己: UserInfo, 数量: int):
 
 
 async def 精力丹(自己: UserInfo, 数量: int):
-    db.user_info.update_one({"_id": 自己.基础属性["_id"]},
+    jianghu.user.update_one({"_id": 自己.基础属性["_id"]},
                             {"$inc": {
                                 "energy": 数量 * 10,
                             }}, True)
@@ -338,7 +338,7 @@ async def 功德录(自己: UserInfo, 数量: int):
         return False, f"你的善恶值不需要用!"
     if 自己.基础属性["善恶值"] + 增加善恶 > 100:
         return False, f"你的善恶值没那么低，现在只能使用{(100 - 自己.基础属性['善恶值']) // 5}本"
-    db.jianghu.update_one({"_id": 自己.基础属性["_id"]},
+    jianghu.user.update_one({"_id": 自己.基础属性["_id"]},
                           {"$inc": {"善恶值": 增加善恶}}, True)
     return True, f"使用功德录成功，善恶值+{增加善恶}"
 

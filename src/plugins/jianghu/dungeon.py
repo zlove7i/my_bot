@@ -1,5 +1,5 @@
 from src.utils.db import db
-from src.plugins.jianghu.jianghu import PK
+from src.plugins.jianghu.user import PK
 import os
 import yaml
 
@@ -17,7 +17,7 @@ with open(dungeon_boss, "r", encoding="utf-8") as f:
 
 async def 检查进度(user_id, 秘境名称):
     用户秘境进度 = {}
-    if con := db.jianghu.find_one({"_id": user_id}):
+    if con := jianghu.user.find_one({"_id": user_id}):
         用户秘境进度 = con.get("秘境进度", {})
     前置秘境 = 秘境信息.get(秘境名称, {}).get("前置")
     if 前置秘境:
@@ -29,7 +29,7 @@ async def 检查进度(user_id, 秘境名称):
 
 async def 秘境进度(user_id):
     用户秘境进度 = {}
-    if con := db.jianghu.find_one({"_id": user_id}):
+    if con := jianghu.user.find_one({"_id": user_id}):
         用户秘境进度 = con.get("秘境进度", {})
     if not 用户秘境进度:
         return "你还没有挑战过任何秘境"
@@ -47,7 +47,7 @@ async def 查看秘境(user_id, 秘境名称):
     if not await 检查进度(user_id, 秘境名称):
         return "秘境不存在或未通关前置秘境"
     当前秘境进度 = {}
-    if con := db.jianghu.find_one({"_id": user_id}):
+    if con := jianghu.user.find_one({"_id": user_id}):
         当前秘境进度 = con.get("秘境进度", {}).get(秘境名称, {})
     msg = f"【{秘境名称}】"
     for 首领编号 in 秘境信息[秘境名称]["首领"]:

@@ -115,7 +115,7 @@ async def _(event: GroupMessageEvent):
         team_id = int(text_list[1])
     if team_id not in user_info["teams"][user_name]:
         await exit_team.finish("你没有加入过该团队")
-    team_info = db.j3_teams.find_one({"_id": team_id})
+    team_info = jx3_data.j3_teams.find_one({"_id": team_id})
     if team_info["user_id"] == user_id and team_info[
             "team_leader_name"] == user_name:
         await exit_team.finish("团长不能退团，如果要解散团队请发送“调整团队 !解散”")
@@ -129,7 +129,7 @@ async def _(event: GroupMessageEvent):
                 break
         if flag:
             break
-    db.j3_teams.update_one({"_id": team_id},
+    jx3_data.j3_teams.update_one({"_id": team_id},
                            {"$set": {
                                "team_members": team_members
                            }})
@@ -139,7 +139,7 @@ async def _(event: GroupMessageEvent):
 
 def disband(user_id, team_id):
     "解散"
-    team_info = db.j3_teams.find_one({"_id": team_id})
+    team_info = jx3_data.j3_teams.find_one({"_id": team_id})
     if not team_info:
         return False, "团队不存在，请发送“团队信息”进行查看"
     user_info = db.user_info.find_one({"_id": user_id})
@@ -148,13 +148,13 @@ def disband(user_id, team_id):
             "user_id"
     ) != user_id or team_leader_name not in user_info["teams"]:
         return False, "你不是团长，不能调整团队"
-    db.j3_teams.update_one({"_id": team_id}, {"$set": {"is_disband": True}})
+    jx3_data.j3_teams.update_one({"_id": team_id}, {"$set": {"is_disband": True}})
     return True, f"解散团队行为不可逆，确定解散请发送“确认解散 {team_id}”"
 
 
 def transfer(user_id, team_id, index_str):
     """转让"""
-    team_info = db.j3_teams.find_one({"_id": team_id})
+    team_info = jx3_data.j3_teams.find_one({"_id": team_id})
     team_members = team_info["team_members"]
     res, index_x, index_y = index_in_list(index_str, team_members)
     if not res:
@@ -166,7 +166,7 @@ def transfer(user_id, team_id, index_str):
     transfer_user_name = user["user_name"]
     if transfer_user_id == user_id:
         return False, "不可以转让给自己"
-    db.j3_teams.update_one({"_id": team_id},
+    jx3_data.j3_teams.update_one({"_id": team_id},
                            {"$set": {
                                "transfer_user_id": transfer_user_id
                            }})
@@ -193,7 +193,7 @@ async def _(event: GroupMessageEvent):
     text = event.get_plaintext()
     text_list = text.split()
     team_id = int(text_list[1])
-    team_info = db.j3_teams.find_one({"_id": team_id})
+    team_info = jx3_data.j3_teams.find_one({"_id": team_id})
     if not team_info:
         await disband_team.finish("找不到该团队")
     if team_info.get("user_id") != user_id:
@@ -204,7 +204,7 @@ async def _(event: GroupMessageEvent):
         for member in members:
             if member:
                 del_user_team(member["user_id"], member["user_name"], team_id)
-    db.j3_teams.delete_one({"_id": team_id})
+    jx3_data.j3_teams.delete_one({"_id": team_id})
     await disband_team.finish("成功解散团队")
 
 
@@ -226,7 +226,7 @@ async def _(event: GroupMessageEvent):
     text = event.get_plaintext()
     text_list = text.split()
     transfer_id = int(text_list[1])
-    team_info = db.j3_teams.find_one({"user_id": user_id})
+    team_info = jx3_data.j3_teams.find_one({"user_id": user_id})
     if not team_info:
         await transfer_team.finish("你没有创建过任何团队")
     if team_info["transfer_user_id"] != transfer_id:
@@ -239,7 +239,7 @@ async def _(event: GroupMessageEvent):
                 flag = True
     if not flag:
         await transfer_team.finish("待转让人不在团队里了，换个人吧")
-    db.j3_teams.update_one(
+    jx3_data.j3_teams.update_one(
         {"_id": team_info["_id"]},
         {"$set": {
             "user_id": transfer_id,
@@ -492,7 +492,7 @@ async def _(event: GroupMessageEvent):
     if not team_id:
         await set_team.finish("输入的格式不对，需要指定团队序号。")
     team_id = int(team_id[0])
-    team_info = db.j3_teams.find_one({"_id": team_id})
+    team_info = jx3_data.j3_teams.find_one({"_id": team_id})
     if not team_info:
         await set_team.finish("团队不存在，请发送“团队信息”进行查看")
     user_info = db.user_info.find_one({"_id": user_id})
@@ -607,7 +607,7 @@ async def _(event: GroupMessageEvent):
             msg += "集合时间只能预约10天以内"
         else:
             team_info["meeting_time"] = meeting_time
-    db.j3_teams.update_one({"_id": team_id}, {"$set": team_info})
+    jx3_data.j3_teams.update_one({"_id": team_id}, {"$set": team_info})
     msg = "修改完成!" + msg
     await set_team.finish(msg)
 
@@ -650,7 +650,7 @@ async def _(event: GroupMessageEvent):
     text_list = text.split()
     if len(text_list) == 2:
         team_id = int(text_list[-1])
-        team_info = db.j3_teams.find_one({"_id": team_id})
+        team_info = jx3_data.j3_teams.find_one({"_id": team_id})
         if not team_info:
             await view_team.finish("你没加入任何团队")
         team_info["team_configuration"] = get_time_conf(team_info)
@@ -673,7 +673,7 @@ async def _(event: GroupMessageEvent):
         tmp_user_teams = deepcopy(user_teams)
         for user_name, teams in user_teams.items():
             for team_id in teams:
-                team_info = db.j3_teams.find_one({"_id": team_id})
+                team_info = jx3_data.j3_teams.find_one({"_id": team_id})
                 if not team_info:
                     tmp_user_teams[user_name].remove(team_id)
                     db.user_info.update_one({"_id": user_id}, {"$set": {"teams": tmp_user_teams}})
@@ -737,13 +737,13 @@ async def _(event: GroupMessageEvent):
         }]
     }
     sort = list({'meeting_time': -1}.items())
-    total = db.j3_teams.count_documents(filter)
+    total = jx3_data.j3_teams.count_documents(filter)
     limit = 10
     skip = (current - 1) * limit
     page_num = math.ceil(total / limit)
     if current > page_num:
         await search_team.finish(f"只能查到{page_num}页")
-    j3_teams = db.j3_teams.find(filter=filter,
+    j3_teams = jx3_data.j3_teams.find(filter=filter,
                                 sort=sort,
                                 limit=limit,
                                 skip=skip)
@@ -846,7 +846,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
     if team_id in teams.get(user_name, []):
         await register.finish(f"你已经在该团队中了，可以发送“查看团队 {team_id}”进行查看")
 
-    j3_teams = db.j3_teams.find_one({"_id": team_id})
+    j3_teams = jx3_data.j3_teams.find_one({"_id": team_id})
 
     if not j3_teams:
         await register.finish("没有找到这个团队")
@@ -870,7 +870,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
 
     res, data = check_team_leader_name(user_data, j3_teams)
     if res:
-        db.j3_teams.update_one({"_id": j3_teams["_id"]},
+        jx3_data.j3_teams.update_one({"_id": j3_teams["_id"]},
                                {"$set": {
                                    "team_members": data
                                }})

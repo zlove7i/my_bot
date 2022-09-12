@@ -239,7 +239,7 @@ def 打造装备(材料, 图纸):
     材料颜色, 材料属性 = list(材料)
     图纸样式, 图纸等级 = 图纸[:2], 图纸[2:]
     名称 = "".join(random.choices(text, k=2)) + 装备类型[图纸样式 + 材料属性]
-    if db.equip.find_one({"_id": 名称}):
+    if jianghu.equip.find_one({"_id": 名称}):
         名称 = "".join(random.choices(text, k=4)) + 装备类型[图纸样式 + 材料属性]
     装备 = {"_id": 名称, "基础属性": {}}
     材料等级 = 材料等级表[材料颜色]
