@@ -57,7 +57,7 @@ class Logs(DB):
         self.pk_log = self.db.pk_log
 
     def write_pk_log(self, log_data):
-        return self.insert_auto_increment("pk_log", data=log_data, id_name="编号")
+        return self.insert_auto_increment("pk_log", log_data, id_name="编号")
 
     def write_log(self, collection, log_data):
         self.db[collection].insert_one(log_data)

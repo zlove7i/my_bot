@@ -12,7 +12,7 @@ class Log(object):
     def debug(self, msg: str):
         now = datetime.now()
         logs.write_log(
-            now.strftime("bot-%Y-%m"),    
+            now.strftime("bot-%Y-%m"),
             { "msg": msg, "level": DEBUG, "time": now}
         )
         print(f'{now.strftime("%m-%d %H:%M:%S")} [DEBUG] {msg}')
@@ -20,7 +20,7 @@ class Log(object):
     def info(self, msg: str):
         now = datetime.now()
         logs.write_log(
-            now.strftime("bot-%Y-%m"),    
+            now.strftime("bot-%Y-%m"),
             { "msg": msg, "level": INFO, "time": now}
         )
         print(f'{now.strftime("%m-%d %H:%M:%S")} [INFO] {msg}')
@@ -28,7 +28,7 @@ class Log(object):
     def warning(self, msg: str):
         now = datetime.now()
         logs.write_log(
-            now.strftime("bot-%Y-%m"),    
+            now.strftime("bot-%Y-%m"),
             { "msg": msg, "level": WARN, "time": now}
         )
         print(f'{now.strftime("%m-%d %H:%M:%S")} [WARNING] {msg}')
@@ -36,7 +36,7 @@ class Log(object):
     def error(self, msg: str):
         now = datetime.now()
         logs.write_log(
-            now.strftime("bot-%Y-%m"),    
+            now.strftime("bot-%Y-%m"),
             { "msg": msg, "level": ERROR, "time": now}
         )
         print(f'{now.strftime("%m-%d %H:%M:%S")} [ERROR] {msg}')

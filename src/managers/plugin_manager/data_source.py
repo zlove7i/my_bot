@@ -1,7 +1,7 @@
 from typing import Literal, Optional
 
 from nonebot.plugin import get_loaded_plugins
-from src.utils.db import management
+from src.utils.db import management, my_bot
 
 
 async def get_bot_enable(bot_id: int):
@@ -11,7 +11,7 @@ async def get_bot_enable(bot_id: int):
 
 async def get_plugin_status(group_id: int, module_name: str) -> Optional[bool]:
     '''获取插件状态'''
-    _con = management.plugins_info.find_one({'_id': group_id})
+    _con = my_bot.plugins_info.find_one({'_id': group_id})
     if not _con:
         return None
     return _con.get(module_name, {}).get("status")

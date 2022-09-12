@@ -4,7 +4,7 @@ from numpy import arctan
 from datetime import datetime, timedelta
 from src.plugins.jianghu.user_info import UserInfo
 from src.plugins.jianghu.skill import Skill
-from src.utils.db import jianghu
+from src.utils.db import jianghu, logs
 import re
 from src.utils.log import logger
 from src.plugins.jianghu.gold import 减少银两, 增加银两, 查询银两
@@ -280,7 +280,7 @@ class PK(Skill):
             "方式": action,
             "胜方": 胜方
         }
-        self.编号 = logs.write_pk_log("pk_log", data=log_data, id_name="编号")
+        self.编号 = logs.write_pk_log(log_data)
         return data
 
     async def 战前恢复(self, user_info: UserInfo):
