@@ -84,16 +84,24 @@ async def get_data_from_api(app: JX3APP, group_id: int, params: dict, ticket: bo
         # 获取ticket
 
         while True:
-            tickets = jx3_data.tickets.aggregate([{"$sample": {"size": 1}}])
-            for ticket_data in tickets:
-                ticket = ticket_data.get("ticket")
-            params["ticket"] = ticket
+            ticket = ""
+            for ticket_data in jx3_data.tickets.find():
+                tmp_ticket = ticket_data.get("ticket")
+                ticket_params = {"ticket": tmp_ticket}
+                msg, _ = await jx3_searcher.get_data_from_api(
+                    group_id, JX3APP.查有效值, ticket_params)
+                if msg == "success":
+                    ticket = tmp_ticket
+                    continue
+                jx3_data.tickets.delete_one({"ticket": tmp_ticket})
+                logger.debug("ticket 失效删除")
             if not ticket:
                 logger.debug(
                     f"群{group_id} | {app.name} | 查询失败，未找到ticket"
                 )
                 return "未找到合适的ticket，请联系管理员", {}
             try:
+                params["ticket"] = ticket
                 return await jx3_searcher.get_data_from_api(group_id, app, params)
 
             except Exception as e:

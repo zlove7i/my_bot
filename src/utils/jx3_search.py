@@ -258,7 +258,6 @@ class Jx3Searcher(object):
             req_json: dict = req.json()
             msg: str = req_json['msg']
             data = req_json['data']
-            logger.debug(f"群{group_id} | {app.name} | 返回：{data}")
             return msg, data
         except Exception as e:
             error = str(e)

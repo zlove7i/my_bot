@@ -18,7 +18,7 @@ from nonebot.rule import Rule
 from src.utils.black_list import check_black_list
 from src.utils.browser import browser
 from src.utils.config import config
-from src.utils.db import logs
+from src.utils.db import logs, management
 from src.utils.log import logger
 
 from . import data_source as source
@@ -133,7 +133,7 @@ async def _(bot: Bot, event: GroupMessageEvent) -> None:
         }
     )
     # 记录群最后发言时间
-    my_bot.group_conf.update_one(
+    management.group_conf.update_one(
     {
         "_id": group_id,
     }, {

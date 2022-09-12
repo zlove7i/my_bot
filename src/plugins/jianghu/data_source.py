@@ -10,7 +10,7 @@ from src.plugins.jianghu.skill import Skill
 
 from httpx import AsyncClient
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
-from src.utils.db import jianghu, logs
+from src.utils.db import jianghu, logs, management
 from src.utils.log import logger
 from src.utils.browser import browser
 from src.utils.email import mail_client
@@ -47,15 +47,10 @@ async def get_my_info(user_id: int, user_name: str) -> Message:
     suangua_data = {}
     if last_sign and today.date() == last_sign.date():
         suangua_data = _con.get("gua", {})
-    gold = _con.get("银两", 0)
-    energy = _con.get("精力", 0)
-    contribution = _con.get("contribution", 0)
     jianghu_data = UserInfo(user_id)
     user_stat = jianghu_data.当前状态
-    user_stat["当前气血"] = jianghu_data.当前气血
-    user_stat["当前内力"] = jianghu_data.当前内力
     base_attribute = jianghu_data.基础属性
-    pagename = "my_info.html"
+    pagename = "角色面板.html"
     if base_attribute.get("击杀人", 0) >= 10000:
         base_attribute["击杀人"] = jianghu.user.find_one({"_id": base_attribute["击杀人"]})["名称"]
     else:
@@ -63,9 +58,6 @@ async def get_my_info(user_id: int, user_name: str) -> Message:
     img = await browser.template_to_image(user_name=user_name,
                                           user_id=user_id,
                                           pagename=pagename,
-                                          gold=gold,
-                                          energy=energy,
-                                          contribution=contribution,
                                           user_stat=user_stat,
                                           base_attribute=base_attribute,
                                           suangua_data=suangua_data)
