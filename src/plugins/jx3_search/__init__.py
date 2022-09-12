@@ -12,7 +12,7 @@ from nonebot.matcher import Matcher
 from nonebot.params import Depends
 
 from src.utils.browser import browser
-from src.utils.db import db
+from src.utils.db import jx3_data
 from src.utils.jx3_search import DAILY_LIST, JX3APP, JX3PROFESSION
 from src.utils.log import logger
 from . import data_source as source
@@ -127,7 +127,7 @@ async def get_server_1(matcher: Matcher, event: GroupMessageEvent) -> str:
     if len(text_list) == 1:
         server = await source.get_server(event.group_id)
         if not server:
-            msg = f"还没绑定服务器，你让我怎么查？\n发送“绑定 服务器全称”就可以绑定服务器了。\n别发什么“绑定 双梦”、“绑定 电八”之类的黑话，我压根就看不懂！"
+            msg = "还没绑定服务器，你让我怎么查？\n发送“绑定 服务器全称”就可以绑定服务器了。\n别发什么“绑定 双梦”、“绑定 电八”之类的黑话，我压根就看不懂！"
             await matcher.finish(msg)
     else:
         get_server = text_list[1]
@@ -219,9 +219,9 @@ async def _(event: GroupMessageEvent, ticket: str = Depends(get_ticket)):
         msg = f"你骗老子!你给老子的ticket根本不能用!"
     else:
         msg = f"谢谢你!你是个好人!祝你好运剑三,奇遇常伴!"
-        exists = db.tickets.find_one({"ticket": ticket})
+        exists = jx3_data.tickets.find_one({"ticket": ticket})
         if not exists:
-            db.tickets.insert_one({
+            jx3_data.tickets.insert_one({
                 "ticket": ticket,
                 "提交人": event.user_id
             })

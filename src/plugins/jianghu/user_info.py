@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from random import randint
-from src.utils.db import db
+from src.utils.db import jianghu
 from src.utils.log import logger
 import os
 import yaml
@@ -16,6 +16,8 @@ def init_user_info(user_id):
         "力道": 5,
         "根骨": 5,
         "元气": 5,
+        "银两": 100000,
+        "精力": 100,
         "当前气血": 600,
         "当前内力": 50,
         "当前气海": 1000,
@@ -34,11 +36,6 @@ def init_user_info(user_id):
         },
     }
     jianghu.user.insert_one(init_data)
-    jianghu.user.update_one(
-        {"_id": user_id},
-        {"$inc": {"gold": 100000, "energy": 100}},
-        True
-    )
     logger.info(f"新用户: {user_id}")
     return init_data
 

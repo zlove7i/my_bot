@@ -1,8 +1,5 @@
-import os
-from datetime import datetime
-from random import choice, randint
+from random import randint
 from src.plugins.jianghu.user_info import UserInfo
-from src.utils.db import db
 """技能:
   - 主动技能
     - 主动攻击

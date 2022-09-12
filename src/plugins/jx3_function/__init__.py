@@ -11,7 +11,7 @@ from nonebot.adapters.onebot.v11.message import MessageSegment
 from nonebot.adapters.onebot.v11.permission import GROUP
 from src.utils.browser import browser
 from src.utils.content_check import content_check
-from src.utils.db import db
+from src.utils.db import jx3_data, management, my_bot
 from src.utils.jx3_search import (JX3PROFESSION, JX3PROFESSION_ROLE,
                                   jx3_searcher)
 
@@ -100,7 +100,7 @@ exit_team = on_regex(pattern=REGEX.退出团队.value,
 async def _(event: GroupMessageEvent):
     """退出团队"""
     user_id = int(event.user_id)
-    user_info = db.user_info.find_one({"_id": user_id})
+    user_info = jx3_data.j3_user.find_one({"_id": user_id})
     default_user = user_info["default_user"]
     if not default_user:
         await exit_team.finish(
@@ -142,7 +142,7 @@ def disband(user_id, team_id):
     team_info = jx3_data.j3_teams.find_one({"_id": team_id})
     if not team_info:
         return False, "团队不存在，请发送“团队信息”进行查看"
-    user_info = db.user_info.find_one({"_id": user_id})
+    user_info = jx3_data.j3_user.find_one({"_id": user_id})
     team_leader_name = team_info.get("team_leader_name")
     if team_info.get(
             "user_id"
@@ -253,7 +253,7 @@ async def _(event: GroupMessageEvent):
     # 角色名称 心法 服务器(选填)
     user_id = int(event.user_id)
     text = event.get_plaintext()
-    user_info = db.user_info.find_one({"_id": user_id})
+    user_info = jx3_data.j3_user.find_one({"_id": user_id})
     if text == "角色管理":
         # 返回当前所有角色
         if not user_info or not user_info.get("user_data"):
@@ -274,7 +274,7 @@ async def _(event: GroupMessageEvent):
                 continue
             del user_info.get("user_data")[user]
             del user_info.get("teams")[user]
-            db.user_info.update_one({"_id": user_id}, {"$set": user_info})
+            jx3_data.j3_user.update_one({"_id": user_id}, {"$set": user_info})
         await user_manage.finish("删除角色成功")
 
     default_user = re.findall(r" [！!]([\u4e00-\u9fa5]{2,8})", text)
@@ -282,7 +282,7 @@ async def _(event: GroupMessageEvent):
         default_user_name = default_user[-1]
         if default_user_name not in user_info.get("user_data", {}):
             await user_manage.finish(f"{default_user_name}不存在，无法设为默认角色")
-        db.user_info.update_one({"_id": user_id},
+        jx3_data.j3_user.update_one({"_id": user_id},
                                 {"$set": {
                                     "default_user": default_user_name
                                 }})
@@ -312,7 +312,7 @@ async def _(event: GroupMessageEvent):
             await user_manage.finish("你的服务器写错了吧，我只认全称！黑话我听不懂！")
     else:
         group_id = int(event.group_id)
-        server = db.group_conf.find_one({"_id": group_id}).get("server")
+        server = my_bot.group_conf.find_one({"_id": group_id}).get("server")
         if not server:
             await user_manage.finish("本群未绑定服务器, 请自己写上服务器全称")
 
@@ -320,7 +320,7 @@ async def _(event: GroupMessageEvent):
         "profession": profession,
         "server": server
     }
-    db.user_info.update_one({"_id": user_id}, {"$set": user_info}, True)
+    jx3_data.j3_user.update_one({"_id": user_id}, {"$set": user_info}, True)
     msg = "设置成功!"
     await user_manage.finish(msg)
 
@@ -333,7 +333,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
     bot_id = int(bot.self_id)
     text = event.get_plaintext()
 
-    user_info = db.user_info.find_one({"_id": user_id})
+    user_info = jx3_data.j3_user.find_one({"_id": user_id})
     team_leader_name = user_info.get("default_user")
     if not team_leader_name:
         await create_team.finish(
@@ -366,7 +366,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
     else:
         server = user_data.get("server")
     if not server:
-        server = db.group_conf.find_one({"_id": group_id}).get("server")
+        server = my_bot.group_conf.find_one({"_id": group_id}).get("server")
     if not server:
         await create_team.finish("获取不到团队所在服务器, 请手动指定服务器, 或绑定群服务器, 或个人绑定角色")
     server = await jx3_searcher.get_server(server)
@@ -430,12 +430,12 @@ async def _(bot: Bot, event: GroupMessageEvent):
         "public_switch": True,
         "need_notice": True
     }
-    team_id = db.insert_auto_increment("j3_teams", insert_data)
+    team_id = jx3_data.insert_auto_increment("j3_teams", insert_data)
     user_teams = user_info.get("teams", {})
     if team_leader_name not in user_teams:
         user_teams[team_leader_name] = []
     user_teams[team_leader_name].append(team_id)
-    db.user_info.update_one({"_id": user_id}, {"$set": {"teams": user_teams}})
+    jx3_data.j3_user.update_one({"_id": user_id}, {"$set": {"teams": user_teams}})
 
     msg = f"开团成功\n团队编号：{team_id}\n团长：{team_leader_name}\n" \
           f"开团时间：{create_time.strftime('%Y-%m-%d %H:%M:%S')}\n服务器：{server}\n"\
@@ -456,11 +456,11 @@ def index_in_list(index, team_announcements):
 
 def del_user_team(user_id, user_name, team_id):
     """删除用户信息表中的对应的团队"""
-    user_info = db.user_info.find_one({"_id": user_id})
+    user_info = jx3_data.j3_user.find_one({"_id": user_id})
     user_teams = user_info["teams"]
     if team_id in user_teams[user_name]:
         user_teams[user_name].remove(team_id)
-        db.user_info.update_one({"_id": user_id},
+        jx3_data.j3_user.update_one({"_id": user_id},
                                 {"$set": {
                                     "teams": user_teams
                                 }})
@@ -495,7 +495,7 @@ async def _(event: GroupMessageEvent):
     team_info = jx3_data.j3_teams.find_one({"_id": team_id})
     if not team_info:
         await set_team.finish("团队不存在，请发送“团队信息”进行查看")
-    user_info = db.user_info.find_one({"_id": user_id})
+    user_info = jx3_data.j3_user.find_one({"_id": user_id})
     team_leader_name = team_info.get("team_leader_name")
     if team_info.get(
             "user_id"
@@ -547,7 +547,7 @@ async def _(event: GroupMessageEvent):
                 continue
             del_user_team(user_id, member_name, team_id)
             team_members[index_x][index_y] = {}
-            db.user_info.update_one({"_id": member_id}, {"$set": {"team": 0}})
+            jx3_data.j3_user.update_one({"_id": member_id}, {"$set": {"team": 0}})
 
         team_info["team_members"] = team_members
     swap_locations = re.findall(r" ([1-5]{2})[>》]([1-5]{2})", text)
@@ -665,7 +665,7 @@ async def _(event: GroupMessageEvent):
                                               team_info=team_info)
         await view_team.finish(MessageSegment.image(img))
     else:
-        user_info = db.user_info.find_one({"_id": user_id})
+        user_info = jx3_data.j3_user.find_one({"_id": user_id})
         if not user_info:
             user_info = {}
         user_teams = user_info.get("teams", {})
@@ -676,7 +676,7 @@ async def _(event: GroupMessageEvent):
                 team_info = jx3_data.j3_teams.find_one({"_id": team_id})
                 if not team_info:
                     tmp_user_teams[user_name].remove(team_id)
-                    db.user_info.update_one({"_id": user_id}, {"$set": {"teams": tmp_user_teams}})
+                    jx3_data.j3_user.update_one({"_id": user_id}, {"$set": {"teams": tmp_user_teams}})
                     continue
                 datas.append({
                     "user_name": user_name,
@@ -699,7 +699,7 @@ async def _(event: GroupMessageEvent):
     user_id = int(event.user_id)
     group_id = int(event.group_id)
     text = event.get_plaintext()
-    user_info = db.user_info.find_one({"_id": user_id})
+    user_info = jx3_data.j3_user.find_one({"_id": user_id})
     if not user_info:
         user_info = {}
     text.replace("（", "(").replace("）", ")")
@@ -709,7 +709,7 @@ async def _(event: GroupMessageEvent):
     else:
         server = user_info.get("server")
     if not server:
-        server = db.group_conf.find_one({"_id": group_id}).get("server")
+        server = management.group_conf.find_one({"_id": group_id}).get("server")
     if not server:
         await search_team.finish("获取不到团队所在服务器, 请手动指定服务器, 或绑定群服务器, 或个人绑定角色")
     server = await jx3_searcher.get_server(server)
@@ -810,7 +810,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
     user_id = int(event.user_id)
     group_id = int(event.group_id)
     bot_id = int(bot.self_id)
-    user_info = db.user_info.find_one({"_id": user_id})
+    user_info = jx3_data.j3_user.find_one({"_id": user_id})
     if not user_info:
         user_info = {
             "user_data": {}
@@ -828,7 +828,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
         profession = JX3PROFESSION.get_profession(text_list[2])
         if not profession:
             await register.finish("找不到你写的心法，换个写法再来一次吧")
-        server = db.group_conf.find_one({"_id": group_id}).get("server")
+        server = management.group_conf.find_one({"_id": group_id}).get("server")
         if user_name not in user_info["user_data"]:
             user_info["user_data"][user_name] = {}
             user_info["teams"][user_name] = []
@@ -838,7 +838,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
             "profession": profession,
             "server": server
         }
-        db.user_info.update_one({"_id": user_id}, {"$set": user_info}, True)
+        jx3_data.j3_user.update_one({"_id": user_id}, {"$set": user_info}, True)
         msg = f"为你更新了角色[{user_name}]，可以发送“角色管理”进行查看，下次用该角色报名就不用写心法了。"
     else:
         user_name = default_user
@@ -875,7 +875,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
                                    "team_members": data
                                }})
         teams[user_name].append(j3_teams["_id"])
-        db.user_info.update_one({"_id": user_id}, {"$set": {"teams": teams}})
+        jx3_data.j3_user.update_one({"_id": user_id}, {"$set": {"teams": teams}})
         msg = "报名成功！" + msg
         await register.finish(msg)
     else:

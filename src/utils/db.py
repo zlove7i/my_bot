@@ -41,6 +41,7 @@ class DB(object):
         if self.client:
             self.client.close()
 
+
 class Management(DB):
     def __init__(self):
         super().__init__("management")
@@ -48,6 +49,7 @@ class Management(DB):
         self.user_black_list = self.db.user_black_list
         self.bot_info = self.db.bot_info
         self.group_conf = self.db.group_conf
+
 
 class Logs(DB):
     def __init__(self):
@@ -60,24 +62,35 @@ class Logs(DB):
     def write_log(self, collection, log_data):
         self.db[collection].insert_one(log_data)
 
+
 class Jx3Data(DB):
     def __init__(self):
         super().__init__("jx3_data")
         # 剑三团队
-        self.j3_teams = self.jx3_data.j3_teams
+        self.j3_teams = self.db.j3_teams
         # tickets
         self.tickets = self.db.tickets
         # user_info
         self.j3_user = self.db.j3_user
 
+
 class JiangHu(DB):
     def __init__(self):
         super().__init__("jianghu")
-        self.knapsack = self.jianghu.knapsack
-        self.user = self.jianghu.user
-        self.equip = self.jianghu.equip
+        self.knapsack = self.db.knapsack
+        self.user = self.db.user
+        self.equip = self.db.equip
         self.auction_house = self.db.auction_house
         self.npc = self.db.npc
+
+
+class Source(DB):
+    def __init__(self):
+        super().__init__("source")
+        # 表情包
+        self.memes = self.db.memes
+        self.kfc = self.db.kfc
+        self.food = self.db.food
 
 
 class MyBot(DB):
@@ -95,16 +108,16 @@ class MyBot(DB):
         self.search_record = self.db.search_record
         # 河灯
         self.river_lantern = self.db.river_lantern
-        # 表情包
-        self.memes = self.db.memes
         # 违禁词
         self.forbidden_word = self.db.forbidden_word
+
 
 logs = Logs()
 jianghu = JiangHu()
 jx3_data = Jx3Data()
 my_bot = MyBot()
 management = Management()
+source = Source()
 
 
 

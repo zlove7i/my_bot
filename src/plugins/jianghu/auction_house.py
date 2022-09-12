@@ -3,7 +3,7 @@ from datetime import datetime
 import math
 
 from src.utils.log import logger
-from src.utils.db import db
+from src.utils.db import jianghu
 from src.utils.email import mail_client
 from src.plugins.jianghu.equipment import 材料等级表, 装备类型表
 from src.plugins.jianghu.user_info import UserInfo

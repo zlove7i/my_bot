@@ -1,10 +1,10 @@
-from src.utils.db import db
+from src.utils.db import my_bot
 import time
 
 
 async def search_record(search_id: int, app_name: str, cd_time: int):
     '''是否能够查询'''
-    _con = db.search_record.find_one({'_id': search_id})
+    _con = my_bot.search_record.find_one({'_id': search_id})
     if not _con:
         time_last = 0
     else:
@@ -25,7 +25,7 @@ async def search_record(search_id: int, app_name: str, cd_time: int):
 
 async def search_once(search_id: int, app_name: str):
     '''查询app一次'''
-    db.search_record.update_one({'_id': search_id},
+    my_bot.search_record.update_one({'_id': search_id},
                                 {'$set': {
                                     app_name: int(time.time())
                                 }}, True)

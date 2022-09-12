@@ -1,5 +1,4 @@
 import random
-import re
 
 import requests
 from nonebot import export, on_message, on_regex
@@ -9,7 +8,7 @@ from nonebot.adapters.onebot.v11.permission import GROUP
 from nonebot.rule import Rule
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from src.utils.chat import chat
-from src.utils.db import db
+from src.utils.db import management
 from tortoise import os
 from src.utils.utils import bot_info
 
@@ -71,7 +70,7 @@ async def _():
 async def _(bot: Bot, event: GroupMessageEvent):
     content = ""
 
-    nickname = db.bot_info.find_one({
+    nickname = management.bot_info.find_one({
         "_id": int(bot.self_id)
     }).get("bot_name", "二猫子")
     for i in event.message:

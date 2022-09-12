@@ -1,5 +1,5 @@
 import random
-from src.utils.db import db
+from src.utils.db import jianghu
 from src.plugins.jianghu.user_info import UserInfo
 from src.plugins.jianghu.gold import 增加银两
 
@@ -133,10 +133,10 @@ async def _开宝箱(自己: UserInfo,
     获得物品 = {}
     共消耗精力 = 数量 * 消耗精力
     user_info = jianghu.user.find_one({"_id": user_id})
-    现有精力 = user_info.get("energy", 0)
+    现有精力 = user_info.get("精力", 0)
     if 现有精力 < 共消耗精力:
         return False, f"使用 {数量} 个{宝箱名称}需要{共消耗精力}点精力, 你目前只有{现有精力}"
-    db.user_info.update_one({"_id": user_id}, {"$inc": {"energy": -共消耗精力}})
+    jianghu.user.update_one({"_id": user_id}, {"$inc": {"精力": -共消耗精力}})
     for _ in range(数量):
         装备池 = list(
             jianghu.equip.find({"持有人": -2}, projection={
@@ -327,7 +327,7 @@ async def 福禄宝箱(自己: UserInfo, 数量: int):
 async def 精力丹(自己: UserInfo, 数量: int):
     jianghu.user.update_one({"_id": 自己.基础属性["_id"]},
                             {"$inc": {
-                                "energy": 数量 * 10,
+                                "精力": 数量 * 10,
                             }}, True)
     return True, f"使用精力丹成功，恢复精力{数量 * 10}点"
 

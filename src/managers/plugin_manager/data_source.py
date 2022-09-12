@@ -1,17 +1,17 @@
 from typing import Literal, Optional
 
 from nonebot.plugin import get_loaded_plugins
-from src.utils.db import db
+from src.utils.db import management
 
 
 async def get_bot_enable(bot_id: int):
-    bot_info = db.bot_info.find_one({"_id": bot_id})
+    bot_info = management.bot_info.find_one({"_id": bot_id})
     return bool(bot_info and bot_info.get("enable"))
 
 
 async def get_plugin_status(group_id: int, module_name: str) -> Optional[bool]:
     '''获取插件状态'''
-    _con = db.plugins_info.find_one({'_id': group_id})
+    _con = management.plugins_info.find_one({'_id': group_id})
     if not _con:
         return None
     return _con.get(module_name, {}).get("status")
@@ -19,7 +19,7 @@ async def get_plugin_status(group_id: int, module_name: str) -> Optional[bool]:
 
 async def get_bot_status(group_id: int) -> Optional[bool]:
     '''获取机器人开启情况'''
-    _con = db.group_conf.find_one({'_id': group_id})
+    _con = management.group_conf.find_one({'_id': group_id})
     if not _con:
         return None
     return _con.get("group_switch")

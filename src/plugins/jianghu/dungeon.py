@@ -1,5 +1,5 @@
-from src.utils.db import db
-from src.plugins.jianghu.user import PK
+from src.utils.db import jianghu
+from src.plugins.jianghu.jianghu import PK
 import os
 import yaml
 

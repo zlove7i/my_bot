@@ -1,19 +1,17 @@
 import time
-from nonebot.adapters.onebot.v11 import Bot
 from datetime import datetime
 
-from src.utils.db import db
+from src.utils.db import management
 
 
 async def add_black_list(_id, black_type, black_time, remark=""):
     """
     加黑
     """
-    management_db = db.client["management"]
     if black_type == "QQ":
-        black = management_db.user_black_list
+        black = management.user_black_list
     else:
-        black = management_db.group_black_list
+        black = management.group_black_list
     today_time_int = int(time.mktime(datetime.now().timetuple())) * 1000
     black.update_one({"_id": _id}, {
         "$set": {
@@ -30,11 +28,10 @@ async def check_black_list(_id, black_type):
     """
     检查是否在黑名单中
     """
-    management_db = db.client["management"]
     if black_type == "QQ":
-        black = management_db.user_black_list
+        black = management.user_black_list
     else:
-        black = management_db.group_black_list
+        black = management.group_black_list
     today_time_int = int(time.mktime(datetime.now().timetuple())) * 1000
     black_info = black.find_one({
         '_id': _id,
