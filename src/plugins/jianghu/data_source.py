@@ -119,19 +119,19 @@ async def set_name(user_id, res):
     if not res:
         return "输入错误"
     name = res[0]
-    zhPattern = re.compile(u'[\u4e00-\u9fa5]+')
+    zhPattern = re.compile(r'[\u4e00-\u9fa5]+')
     match = zhPattern.search(name)
     if not match:
         return "名字需要八字以内的汉字"
     if jianghu.user.find_one({"名称": name}) or name == "无名":
         return "名称重复"
     usr = UserInfo(user_id)
-    if usr.基础属性["善恶值"] < -1000:
+    if usr.基础属性["善恶值"] < -1500:
         return "狡诈恶徒不得改名!"
     if usr.名称 != "无名":
-        msg = "，花费一百两银子。"
-        if not await 减少银两(user_id, 100, "改名"):
-            return "改名需要花费一百两银子，你的银两不够！"
+        msg = "，花费十万两银子。"
+        if not await 减少银两(user_id, 100000, "改名"):
+            return "改名需要花费十万两银子，你的银两不够！"
     else:
         msg = "，首次改名不需要花费银两。"
     jianghu.user.update_one({"_id": user_id}, {"$set": {"名称": name}}, True)
@@ -1031,7 +1031,7 @@ async def forgotten_skill(user_id, res):
 
 async def comprehension_skill(user_id):
     """领悟武学"""
-    银两 = 300
+    银两 = 1000
 
     if not await 减少银两(user_id, 银两, "领悟武学"):
         return f"你的银两不足，需要{银两}两银子"
@@ -1044,7 +1044,7 @@ async def comprehension_skill(user_id):
     if 已领悟武学数量 > 14:
         return "每人只能领悟十四个武学，请先遗忘其他武学后再继续领悟吧。"
     # 检查领悟武学cd
-    n_cd_time = 60
+    n_cd_time = 10
     app_name = "领悟武学"
     flag, cd_time = await search_record(user_id, app_name, n_cd_time)
     if not flag:
@@ -1070,7 +1070,7 @@ async def impart_skill(user_id, at_qq, 武学):
     被传授方武学 = at_info.基础属性.get("已领悟武学", [])
     if 武学 in 被传授方武学:
         return "对方已经学会了该武学，不用花冤枉钱了。"
-    需要花费银两 = 3000
+    需要花费银两 = 10000
     if not await 减少银两(user_id, 需要花费银两, "传授武学"):
         return f"传授武学需要{需要花费银两}两银子，你的银两不足"
     被传授方武学.append(武学)
@@ -1180,6 +1180,7 @@ async def pk(动作, user_id, 目标):
             精力 = 0
             return f"精力不足, 你只有{精力}精力, {动作}需要{消耗精力}精力"
         msg = f"{动作}成功, 精力-{消耗精力}"
+
     jianghu.user.update_one({"_id": user_id}, {"$inc": {"energy": -消耗精力}})
     战斗 = PK()
     data = await 战斗.main(动作, user_id, 目标_id, msg)

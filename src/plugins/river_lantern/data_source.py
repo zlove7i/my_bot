@@ -93,17 +93,13 @@ async def get_river_lantern(group_id, user_id) -> Message:
         status = plugins_info.get("river_lantern", {}).get("status", True)
     if not status:
         return "本群已关闭河灯功能，如果要恢复，请发送“打开 河灯”"
-    _con = db.river_lantern.find({
-        'last_sent': {
-            "$gte": datetime.datetime.today() + datetime.timedelta(days=-3)
-        }
-    })
-    con_list = list(_con)
+
+    con_list = list(db.river_lantern.aggregate([{"$sample": {"size": 1}}]))
     if not con_list:
         logger.debug("无河灯")
         return "现在找不到河灯。"
 
-    con = random.choice(con_list)
+    con = con_list[0]
     lantern_id = con.get("_id")
     content = con.get("content")
     user_name = con.get("user_name")
@@ -143,7 +139,6 @@ async def my_river_lantern(user_id: int, user_name: str):
             index_num,
             "content":
             content,
-            "is_expired": (datetime.datetime.now() - i["last_sent"]).days > 3,
             "datetime":
             i["last_sent"].strftime("%Y-%m-%d %H:%M:%S"),
             "views_num":

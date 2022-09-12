@@ -16,7 +16,6 @@ class DB(object):
                                   username=mg_usr,
                                   password=mg_pwd)
         self.db = self.client[db_name]
-    
         # 计数器
         self.counters = self.client["my_bot"].counters
 
