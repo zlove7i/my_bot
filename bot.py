@@ -6,6 +6,7 @@ from nonebot.adapters.onebot.v11 import Adapter
 
 from src.utils.moinkeypath import monkeypatch
 from src.utils.scheduler import start_scheduler
+from router import api
 
 
 # 猴子补丁，针对windows平台，更换事件循环
@@ -24,6 +25,7 @@ nonebot.load_plugins("src/managers")
 # 加载其他插件
 nonebot.load_plugins("src/plugins")
 
+app.include_router(api.router)
 
 if __name__ == "__main__":
     nonebot.run()
