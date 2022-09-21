@@ -7,13 +7,12 @@ from nonebot.adapters.onebot.v11 import Adapter
 from src.utils.moinkeypath import monkeypatch
 from src.utils.scheduler import start_scheduler
 from fastapi.middleware.cors import CORSMiddleware
-from src.router import api, auth
+from src.router import api
 
 
 import time
 # import uvicorn
-from fastapi import Request, Response
-import json
+from fastapi import Request
 # app = FastAPI()
 
 
@@ -33,12 +32,6 @@ app.add_middleware(
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
-    # result, msg = await auth.auth(request)
-    # if not result:
-    #     response = Response(content=json.dumps({"code": 400, "msg": msg}),
-    #                         media_type="application/json",
-    #                         status_code=404)
-    #     return response
     response = await call_next(request)
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)

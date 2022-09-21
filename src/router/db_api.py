@@ -10,6 +10,7 @@ from passlib.context import CryptContext
 from src.utils.db import jx3_data, my_bot, management, source
 
 
+
 class DB():
 
     def __new__(cls, *args, **kwargs):
@@ -29,9 +30,9 @@ class DB():
             page_count = math.ceil(count / limit)
             sort = [("login_data", -1), ("online_status", -1), ("enable", -1)]
             result = management.bot_info.find(filter=filter,
-                                        sort=sort,
-                                        limit=limit,
-                                        skip=skip)
+                                              sort=sort,
+                                              limit=limit,
+                                              skip=skip)
             for i in result:
                 group_num = management.group_conf.count_documents(
                     {"bot_id": i["_id"]})
@@ -47,7 +48,8 @@ class DB():
 
     def set_bot(self, bot_id, set_data):
         try:
-            management.bot_info.update_one({"_id": bot_id}, {"$set": set_data}, True)
+            management.bot_info.update_one({"_id": bot_id}, {"$set": set_data},
+                                           True)
             return True
         except Exception:
             return False
@@ -88,11 +90,16 @@ class DB():
         if not vcode:
             return {'code': 400, 'msg': "验证码错误或已过期"}
         management.user.insert_one({
-            "_id": register_item.username,
-            "password": self.get_password_hash(register_item.password),
-            "login_time": now_time,
-            "num_of_fail": 0,
-            "user_permission": 1
+            "_id":
+            register_item.username,
+            "password":
+            self.get_password_hash(register_item.password),
+            "login_time":
+            now_time,
+            "num_of_fail":
+            0,
+            "user_permission":
+            1
         })
         return {'code': 200, 'msg': "注册成功"}
 
@@ -156,13 +163,16 @@ class DB():
         today = int(time.mktime(datetime.now().timetuple())) * 1000
         data = {
             "user_black_list":
-            list(management.user_black_list.find({"block_time": {
-                "$gt": today
-            }})),
+            list(
+                management.user_black_list.find({"block_time": {
+                    "$gt": today
+                }})),
             "group_black_list":
-            list(management.group_black_list.find({"block_time": {
-                "$gt": today
-            }}))
+            list(
+                management.group_black_list.find(
+                    {"block_time": {
+                        "$gt": today
+                    }}))
         }
         return True, data
 
@@ -197,9 +207,9 @@ class DB():
     def add_meme(self, meme_id, meme_url):
         if source.memes.find_one({"_id": meme_id}):
             source.memes.update_one({"_id": meme_id},
-                                  {"$set": {
-                                      "update_time": datetime.now()
-                                  }})
+                                    {"$set": {
+                                        "update_time": datetime.now()
+                                    }})
             return 500, "表情重复"
         source.memes.insert_one({
             "_id": meme_id,
@@ -239,9 +249,9 @@ class DB():
         _kfc = source.kfc.find_one({"content": content})
         if _kfc:
             source.kfc.update_one({"_id": _kfc["_id"]},
-                                {"$set": {
-                                    "update_time": datetime.now()
-                                }})
+                                  {"$set": {
+                                      "update_time": datetime.now()
+                                  }})
             return 500, "文案重复"
         source.kfc.insert_one({
             "content": content,
@@ -337,7 +347,7 @@ class DB():
             if user_email != username:
                 return 403, "团队不属于你"
             jx3_data.j3_teams.update_one({"_id": team_data["_id"]},
-                                     {"$set": team_data})
+                                         {"$set": team_data})
             return 200, "修改成功"
         except Exception:
             return 500, "遇到麻烦了"

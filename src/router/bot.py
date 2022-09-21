@@ -2,7 +2,6 @@ from src.router.db_api import db_api, management
 from fastapi import Depends
 from src.router.auth import get_current_user, User
 from pydantic import BaseModel
-import os
 import json
 from typing import Union
 
