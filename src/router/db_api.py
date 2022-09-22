@@ -19,8 +19,26 @@ class DB():
         return cls._instance
 
     # Bot
-    def get_bot_list(self, page=1, filter={}):
+    def get_sub_qq(self, username):
+        user_find = [{"email": username}]
+        data = username.split("@")
+        if len(data) == 2:
+            qq, domain = data
+            if qq.isdigit() and domain == "qq.com":
+                user_find.append({"_id": int(qq)})
+        maser_qq_set = {i["_id"] for i in my_bot.user_info.find({"$or": user_find})}
+        return maser_qq_set
+
+    def check_master(self, username, bot_id):
+        master = management.bot_info.find_one({"_id": bot_id}).get("master")
+        return master in self.get_sub_qq(username)
+
+    def get_bot_list(self, user, page=1, filter={}):
         try:
+            if not user.check_permission(3):
+                maser_qq_set = self.get_sub_qq(user.username)
+                if maser_qq_set:
+                    filter.update({"$or": [{"master": i} for i in maser_qq_set]})
             data = []
             limit = 20
             skip = limit * (page - 1)
@@ -274,6 +292,10 @@ class DB():
             user_email = user_info.get("email") or f"{user_id}@qq.com"
             if user_email != username:
                 return 403, "团队不属于你"
+            team_data["create_time"] = datetime.strptime(
+                team_data["create_time"], "%Y-%m-%dT%H:%M:%S.%f")
+            team_data["meeting_time"] = datetime.strptime(
+                team_data["meeting_time"], "%Y-%m-%dT%H:%M:%S.%f")
             jx3_data.j3_teams.update_one({"_id": team_data["_id"]},
                                          {"$set": team_data})
             return 200, "修改成功"

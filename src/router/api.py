@@ -1,10 +1,12 @@
 from fastapi import Depends, APIRouter
 
 from src.router.auth import authenticate_user, register, send_verification_code
-from src.router.bot import get_bot_list, manipulate_bot
-from src.router.chat_log import get_chat_log
-from src.router.black_list import get_black_list, set_black_list
-from src.router.source import get_sources, set_sources
+from src.router.manage.bot import get_bot_list, manipulate_bot
+from src.router.manage.chat_log import get_chat_log
+from src.router.manage.black_list import get_black_list, set_black_list
+from src.router.manage.source import get_sources, set_sources
+
+from src.router.common.jx3_team import jx3_team
 
 
 router = APIRouter()
@@ -60,3 +62,6 @@ async def api_set_source(data: dict = Depends(set_sources)):
     return data
 
 
+@router.post("/api/j3_team")
+async def api_jx3_team(data: dict = Depends(jx3_team)):
+    return data

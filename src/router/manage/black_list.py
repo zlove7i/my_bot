@@ -1,11 +1,11 @@
-from typing import Union
 import datetime
 import time
+from typing import Union
 
-from src.router.db_api import db_api
 from fastapi import Depends
-from src.router.auth import get_current_user, User
 from pydantic import BaseModel
+from src.router.auth import User, get_current_user
+from src.router.db_api import db_api
 
 
 class BlackList(BaseModel):

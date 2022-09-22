@@ -1,15 +1,13 @@
 from datetime import datetime, timedelta
-from src.utils.regex import re_mail, re_password
 from typing import Union
-
-from src.router.db_api import db_api
 
 from fastapi import Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-
 from pydantic import BaseModel
+from src.router.db_api import db_api
 from src.utils.email import mail_client
+from src.utils.regex import re_mail, re_password
 
 # to get a string like this run:
 # openssl rand -hex 32
@@ -30,7 +28,7 @@ class Register(BaseModel):
 
 
 class User(BaseModel):
-    _id: str
+    username: str
     password: str
     user_permission: int
 
@@ -50,6 +48,7 @@ class LoginItem(BaseModel):
     username: str
     password: str
 
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
@@ -61,7 +60,8 @@ async def authenticate_user(login_item: LoginItem):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     data = {
         "username": login_item.username,
-        "exp": datetime.utcnow() + access_token_expires}
+        "exp": datetime.utcnow() + access_token_expires
+    }
     encoded_jwt = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
     return {
         'code': 200,
@@ -93,6 +93,7 @@ async def get_current_user(requst: Request):
     except JWTError:
         return {}
     user = db_api.get_user_info(username)
+    user["username"] = user["_id"]
     if not user:
         return {}
     return User(**dict(user))
