@@ -4,6 +4,7 @@ from src.router.auth import authenticate_user, register, send_verification_code
 from src.router.bot import get_bot_list, manipulate_bot
 from src.router.chat_log import get_chat_log
 from src.router.black_list import get_black_list, set_black_list
+from src.router.source import get_sources, set_sources
 
 
 router = APIRouter()
@@ -47,3 +48,15 @@ async def api_get_black_list(data: dict = Depends(get_black_list)):
 @router.post("/api/black_list")
 async def api_set_black_list(data: dict = Depends(set_black_list)):
     return data
+
+
+@router.get("/api/source/{source_type}/{count}")
+async def api_get_source(data: dict = Depends(get_sources)):
+    return data
+
+
+@router.post("/api/source")
+async def api_set_source(data: dict = Depends(set_sources)):
+    return data
+
+

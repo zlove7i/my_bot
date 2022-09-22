@@ -4,7 +4,7 @@ from typing import Union
 
 from src.router.db_api import db_api
 
-from fastapi import HTTPException, status, Request
+from fastapi import Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 

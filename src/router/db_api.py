@@ -3,12 +3,10 @@ import time
 import random
 from datetime import datetime, timedelta
 
-from bson import ObjectId
 from pymongo import UpdateOne
 from passlib.context import CryptContext
 
-from src.utils.db import jx3_data, my_bot, management, source
-
+from src.utils.db import jx3_data, my_bot, management, sources
 
 
 class DB():
@@ -203,130 +201,60 @@ class DB():
             data.append(i)
         return list(data)
 
-    # meme
-    def add_meme(self, meme_id, meme_url):
-        if source.memes.find_one({"_id": meme_id}):
-            source.memes.update_one({"_id": meme_id},
-                                    {"$set": {
-                                        "update_time": datetime.now()
-                                    }})
-            return 500, "表情重复"
-        source.memes.insert_one({
-            "_id": meme_id,
-            "url": meme_url,
-            "update_time": datetime.now()
-        })
+    def add_source(self, source_type, _id, content):
+        if source_type in ["food"]:
+            update_list = []
+            for con in content.split():
+                update_list.append(
+                    UpdateOne({"_id": con}, {
+                        "$set": {
+                            "update_time": datetime.now(),
+                            "content": con
+                        }
+                    }, True))
+            sources.db[source_type].bulk_write(update_list)
+        else:
+            if sources.db[source_type].find_one({"_id": _id}):
+                sources.db[source_type].update_one(
+                    {"_id": _id}, {"$set": {
+                        "update_time": datetime.now()
+                    }})
+                return 500, "表情重复"
+            sources.db[source_type].insert_one({
+                "_id": _id,
+                "content": content,
+                "update_time": datetime.now()
+            })
         return 200, "添加成功"
 
-    def del_meme(self, meme_id):
-        source.memes.delete_one({"_id": meme_id})
+    def del_source(self, source_type, _id):
+        sources.db[source_type].delete_one({"_id": _id})
         return 200, "删除成功"
 
-    def get_meme(self, page=1):
+    def get_all_source(self, source_type, page):
         limit = 50
         skip = limit * (page - 1)
-        count = source.memes.count_documents({})
+        count = sources.db[source_type].count_documents({})
         sort = list({'update_time': -1}.items())
         page_count = math.ceil(count / limit)
-        res_data = list(source.memes.find(limit=limit, skip=skip, sort=sort))
+        res_data = list(sources.db[source_type].find(limit=limit,
+                                                     skip=skip,
+                                                     sort=sort))
         return 200, res_data, page_count
 
-    def get_random_meme(self, count=1):
-        max_count = 10
-        if count > max_count:
-            return 500, f"最多一次取{max_count}张"
-        meme_list = [
-            meme["url"] for meme in source.memes.aggregate([{
-                "$sample": {
-                    "size": count
-                }
-            }])
-        ]
-        return 200, meme_list
-
-    # 疯狂星期四
-    def add_kfc(self, content):
-        _kfc = source.kfc.find_one({"content": content})
-        if _kfc:
-            source.kfc.update_one({"_id": _kfc["_id"]},
-                                  {"$set": {
-                                      "update_time": datetime.now()
-                                  }})
-            return 500, "文案重复"
-        source.kfc.insert_one({
-            "content": content,
-            "update_time": datetime.now()
-        })
-        return 200, "添加成功"
-
-    def del_kfc(self, kfc_id):
-        source.kfc.delete_one({"_id": ObjectId(kfc_id)})
-        return 200, "删除成功"
-
-    def get_kfc(self, page=1):
-        limit = 50
-        skip = limit * (page - 1)
-        count = source.kfc.count_documents({})
-        sort = list({'update_time': -1}.items())
-        page_count = math.ceil(count / limit)
-        res_data = list(source.kfc.find(limit=limit, skip=skip, sort=sort))
-        res_data = [{
-            "_id": str(i["_id"]),
-            "content": i["content"]
-        } for i in res_data]
-        return 200, res_data, page_count
-
-    def get_random_kfc(self, count=1):
-        max_count = 10
-        if count > max_count:
-            return 500, f"最多一次取{max_count}张"
-        kfc_list = [
-            kfc["content"] for kfc in source.kfc.aggregate([{
-                "$sample": {
-                    "size": count
-                }
-            }])
-        ]
-        return 200, kfc_list
-
-    # 吃什么
-    def add_food(self, contents: str):
-        update_list = []
-        for content in contents.split():
-            update_list.append(
-                UpdateOne({"_id": content},
-                          {"$set": {
-                              "update_time": datetime.now()
-                          }}, True))
-        source.food.bulk_write(update_list)
-        return 200, f"添加成功"
-
-    def del_food(self, food_id):
-        source.food.delete_one({"_id": food_id})
-        return 200, "删除成功"
-
-    def get_food(self, page=1):
-        limit = 500
-        skip = limit * (page - 1)
-        count = source.food.count_documents({})
-        sort = list({'update_time': -1}.items())
-        page_count = math.ceil(count / limit)
-        res_data = list(source.food.find(limit=limit, skip=skip, sort=sort))
-        res_data = [{"_id": i["_id"]} for i in res_data]
-        return 200, res_data, page_count
-
-    def get_random_food(self, count=1):
-        max_count = 10
+    def get_random_source(self, source_type, count):
+        max_count = 100
         if count > max_count:
             return 500, f"最多一次取{max_count}个"
-        food_list = [
-            food["_id"] for food in source.food.aggregate([{
+        source_list = [
+            source["content"]
+            for source in sources.db[source_type].aggregate([{
                 "$sample": {
                     "size": count
                 }
             }])
         ]
-        return 200, food_list
+        return 200, source_list
 
     # Team
     def get_team(self, team_id):

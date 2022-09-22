@@ -83,9 +83,9 @@ class JiangHu(DB):
         self.npc = self.db.npc
 
 
-class Source(DB):
+class Sources(DB):
     def __init__(self):
-        super().__init__("source")
+        super().__init__("sources")
         # 表情包
         self.memes = self.db.memes
         self.kfc = self.db.kfc
@@ -116,7 +116,7 @@ jianghu = JiangHu()
 jx3_data = Jx3Data()
 my_bot = MyBot()
 management = Management()
-source = Source()
+sources = Sources()
 
 
 
