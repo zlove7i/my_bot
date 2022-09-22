@@ -5,6 +5,10 @@ mg_list = config.mongodb.get("mongdb_list")
 mg_usr = config.mongodb.get("mongodb_username")
 mg_pwd = config.mongodb.get("mongodb_password")
 
+client = MongoClient(f'mongodb://{",".join(mg_list)}/',
+                     username=mg_usr,
+                     password=mg_pwd)
+
 
 class DB(object):
 
@@ -12,12 +16,9 @@ class DB(object):
         """
         创建mongodb客户端
         """
-        self.client = MongoClient(f'mongodb://{",".join(mg_list)}/',
-                                  username=mg_usr,
-                                  password=mg_pwd)
-        self.db = self.client[db_name]
+        self.db = client[db_name]
         # 计数器
-        self.counters = self.client["my_bot"].counters
+        self.counters = client["my_bot"].counters
 
     def __enter__(self):
         return self
@@ -37,10 +38,6 @@ class DB(object):
         self.db[collection].insert_one(data)
         return _id
 
-    def close(self):
-        if self.client:
-            self.client.close()
-
 
 class Management(DB):
     def __init__(self):
@@ -49,6 +46,8 @@ class Management(DB):
         self.user_black_list = self.db.user_black_list
         self.bot_info = self.db.bot_info
         self.group_conf = self.db.group_conf
+        self.user = self.db.user
+        self.verification_code = self.db.verification_code
 
 
 class Logs(DB):
@@ -84,9 +83,9 @@ class JiangHu(DB):
         self.npc = self.db.npc
 
 
-class Source(DB):
+class Sources(DB):
     def __init__(self):
-        super().__init__("source")
+        super().__init__("sources")
         # 表情包
         self.memes = self.db.memes
         self.kfc = self.db.kfc
@@ -117,7 +116,7 @@ jianghu = JiangHu()
 jx3_data = Jx3Data()
 my_bot = MyBot()
 management = Management()
-source = Source()
+sources = Sources()
 
 
 

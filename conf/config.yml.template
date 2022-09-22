@@ -23,18 +23,22 @@ jx3sand:
 # 邮件通知配置
 mail:
   sender: 二猫子的猛男助理
+  # 默认 smtp 服务器地址
+  default_host: smtp.mxhichina.com
+  # 默认端口号
+  default_pord: 465
+  # 默认密码
+  default_passwd: ~
+  # mail 必填, 其他选填, 如果其他项不填, 则使用默认配置
   mail_list:
+      # 邮箱地址
+    - mail: ~
       # smtp服务器地址
-    - host: smtp.qiye.aliyun.com
+      host: smtp.mxhichina.com
       # 端口号
       pord: 465
-      # 邮箱地址
-      mail: ~
-      # 用户名
-      user: ~
       # 密码，可能是授权码
       passwd: ~
-
 
 # 百度违规词检测
 baidusdkcore:
