@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 
 from httpx import AsyncClient
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
@@ -25,7 +26,7 @@ async def get_sign_in(user_id: int, user_name: str, group_id: int) -> Message:
     '''
     gold = 0
     if _con := jianghu.user.find_one({'_id': user_id}):
-        if _con.get("is_sign"):
+        if _con.get("是否签到"):
             logger.debug(f"群({group_id}) | {user_id} | 重复签到")
             msg = MessageSegment.text('每天只能签到一次，签到次数会在 8:00 重置')
             return msg
@@ -35,27 +36,28 @@ async def get_sign_in(user_id: int, user_name: str, group_id: int) -> Message:
     if not prize_pools:
         prize_pools = {}
     prize_pool = prize_pools.get("prize_pool", 0)
-    if prize_pool < 100000:
-        prize_pool = 100000
+    if prize_pool < 1000000:
+        prize_pool = 1000000
     get_gold_num = random.randint(10, prize_pool // 1000)
     gold += get_gold_num
     my_bot.bot_conf.update_one({'_id': 1},
-                           {'$inc': {
-                               "prize_pool": -get_gold_num,
-                           }}, True)
+                               {'$inc': {
+                                   "prize_pool": -get_gold_num,
+                               }}, True)
     energy = random.randint(10, 30)
-    jianghu.user.update_one(
-        {'_id': user_id},
-        {"$inc": {
+    jianghu.user.update_one({'_id': user_id}, {
+        "$inc": {
             "银两": get_gold_num,
             "精力": energy,
-        }, '$set': {
-            "is_sign": True,
-            "gua": suangua_data
-        }}, True)
+        },
+        '$set': {
+            "签到时间": datetime.now(),
+            "是否签到": True,
+            "卦": suangua_data
+        }
+    }, True)
 
     # 签到名次
-    add_lucky = random.randint(1, 3)
     my_bot.bot_conf.update_one({'_id': 1}, {'$inc': {"sign_num": 1}}, True)
     sign_num = my_bot.bot_conf.find_one({'_id': 1}).get("sign_num", 0)
     logger.debug(f"群({group_id}) | {user_id} | 签到成功")
@@ -65,7 +67,6 @@ async def get_sign_in(user_id: int, user_name: str, group_id: int) -> Message:
                                           pagename=pagename,
                                           sign_num=sign_num,
                                           get_gold_num=get_gold_num,
-                                          add_lucky=add_lucky,
                                           gold=gold,
                                           energy=energy,
                                           **suangua_data)
