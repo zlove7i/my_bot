@@ -818,7 +818,7 @@ async def pk_world_boss(user_id, res):
         return
     if isinstance(data, Message) or isinstance(data, str):
         return data
-    pagename = "/江湖/战斗.html"
+    pagename = "./江湖/战斗.html"
     img = await browser.template_to_image(pagename=pagename, **data)
     return MessageSegment.image(img)
 
@@ -888,7 +888,7 @@ async def start_dungeon(user_id, res):
     data = await 挑战秘境(user_id, 秘境首领)
     if isinstance(data, str):
         return data
-    pagename = "/江湖/战斗.html"
+    pagename = "./江湖/战斗.html"
     img = await browser.template_to_image(pagename=pagename, **data)
     return MessageSegment.image(img)
 
