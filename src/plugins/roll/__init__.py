@@ -54,12 +54,12 @@ async def _(event: GroupMessageEvent):
     group_id = event.group_id
     logger.debug(f"群{group_id} | {user_id} | 吃什么")
     client = AsyncClient()
-    url = "https://www.ermaozi.cn/api/food?method=random&count=3"
+    url = "https://www.ermaozi.cn/api/source/food/3"
     req = await client.get(url=url)
     req_data = req.json()
     if req_data.get("code") == 200:
         msg = "给你挑了这三个吃的："
-        for i in random.sample(req_data.get("content"), k=3):
+        for i in random.sample(req_data.get("data"), k=3):
             msg += f"\n  - {i}"
         await what_to_eat.finish(msg)
 
