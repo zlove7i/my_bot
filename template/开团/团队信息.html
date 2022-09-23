@@ -4,11 +4,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
     <style type="text/css">
         @font-face{
             font-family:youai;
-            src:url('font/youai.ttf');
+            src:url('../font/youai.ttf');
         }
         #main{
             font-family: youai;
@@ -18,7 +18,7 @@
 
 <body>
     <div class="container">
-        <div class="card" style="width:850px;padding:10px; background-image: url('img/bg.png');" id="main">
+        <div class="card" style="width:850px;padding:10px; background-image: url('../img/bg.png');" id="main">
             <h2 align="center"></h2>
             <div class="card-body">
                 <div class="row align-items-center">
@@ -45,7 +45,7 @@
                     <strong>
                         {% for k, v in team_info.team_configuration.items() -%}
                         <span>
-                            <img height="25" width="25" src="sect/{{k}}.png"/>({{v.current}}/{{v.total}})
+                            <img height="25" width="25" src="../sect/{{k}}.png"/>({{v.current}}/{{v.total}})
                         </span>
                         {%- endfor %}
                     </strong>
@@ -70,9 +70,9 @@
                         <td align="center">
                             {% if y %}
                                 <strong>{{y.user_name}}</strong>
-                                <img height="25" width="25" src="sect/{{y.profession}}.png"/>
+                                <img height="25" width="25" src="../sect/{{y.profession}}.png"/>
                                 {% if y.role == "老板" %}
-                                <img height="25" width="25" src="sect/{{y.role}}.png"/>
+                                <img height="25" width="25" src="../sect/{{y.role}}.png"/>
                                 {% endif %}
                             {% endif %}
                         </td>
