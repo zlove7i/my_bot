@@ -8,10 +8,10 @@ from pydantic import BaseModel
 from src.router.db_api import db_api
 from src.utils.email import mail_client
 from src.utils.regex import re_mail, re_password
+from src.utils.config import config
 
-# to get a string like this run:
-# openssl rand -hex 32
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
+
+SECRET_KEY = config.node_info['secret_key']
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 24 * 60
 
