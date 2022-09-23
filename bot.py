@@ -7,13 +7,11 @@ from nonebot.adapters.onebot.v11 import Adapter
 from src.utils.moinkeypath import monkeypatch
 from src.utils.scheduler import start_scheduler
 from fastapi.middleware.cors import CORSMiddleware
-from src.router import api
+from src.router.api import router
 
 
 import time
-# import uvicorn
 from fastapi import Request
-# app = FastAPI()
 
 
 # 猴子补丁，针对windows平台，更换事件循环
@@ -29,6 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
@@ -37,7 +36,7 @@ async def add_process_time_header(request: Request, call_next):
     response.headers["X-Process-Time"] = str(process_time)
     return response
 
-app.include_router(api.router)
+app.include_router(router)
 
 driver = nonebot.get_driver()
 driver.register_adapter(Adapter)
@@ -50,11 +49,6 @@ nonebot.load_plugins("src/managers")
 # 加载其他插件
 nonebot.load_plugins("src/plugins")
 
-app.include_router(api.router)
 
 if __name__ == "__main__":
     nonebot.run()
-
-
-# if __name__ == "__main__":
-#     uvicorn.run(app, host="0.0.0.0", port=8899)
