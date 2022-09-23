@@ -214,7 +214,7 @@ async def team_notice():
                 msg = f"团队【{team_id}】将于 30 分钟后集合，请提前做好准备。\n"\
                       f"团长：{team_data['team_leader_name']}({team_data['team_leader_id']})\n"\
                       f"可以发送“查看团队 {team_id}”查看团队信息\n"
-                for user_id in user_data["user"]:
+                for user_id in set(user_data["user"]):
                     msg += MessageSegment.at(user_id)
                 try:
                     await bot.send_group_msg(group_id=group_id, message=msg)
