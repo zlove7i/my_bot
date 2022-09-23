@@ -61,7 +61,7 @@ async def get_sign_in(user_id: int, user_name: str, group_id: int) -> Message:
     my_bot.bot_conf.update_one({'_id': 1}, {'$inc': {"sign_num": 1}}, True)
     sign_num = my_bot.bot_conf.find_one({'_id': 1}).get("sign_num", 0)
     logger.debug(f"群({group_id}) | {user_id} | 签到成功")
-    pagename = "sign.html"
+    pagename = "签到.html"
     img = await browser.template_to_image(user_name=user_name,
                                           user_id=user_id,
                                           pagename=pagename,

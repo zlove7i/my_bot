@@ -3,7 +3,7 @@ function getMyDate(str) {
         oYear = oDate.getFullYear(),
         oMonth = oDate.getMonth() + 1,
         oDay = oDate.getDate(),
-        oTime = oYear + '-' + getzf(oMonth) + '-' + getzf(oDay);//最后拼接时间
+        oTime = getzf(oMonth) + '-' + getzf(oDay);//最后拼接时间
     return oTime;
 };
 //补0操作
@@ -21,10 +21,11 @@ title_text = data[0]["server"] + " • 金价"
 xAxis_data = [],
 gold_all = {
     "5173": "5173",
-    "dd373": "嘟嘟",
+    "dd373": "DD373",
     "tieba": "贴吧",
-    "uu898": "悠悠",
+    "uu898": "UU898",
     "wanbaolou": "万宝楼",
+    "7881": "7881",
 }
 data_dict = {}
 table_body = ""
@@ -45,9 +46,10 @@ for (i = 0; i < data_length; i++) {
     }
     table_body += "<td>" + data_dict["万宝楼"][i] + "</td>"
     table_body += "<td>" + data_dict["贴吧"][i] + "</td>"
-    table_body += "<td>" + data_dict["悠悠"][i] + "</td>"
+    table_body += "<td>" + data_dict["UU898"][i] + "</td>"
     table_body += "<td>" + data_dict["5173"][i] + "</td>"
-    table_body += "<td>" + data_dict["嘟嘟"][i] + "</td>"
+    table_body += "<td>" + data_dict["DD373"][i] + "</td>"
+    table_body += "<td>" + data_dict["7881"][i] + "</td>"
 }
 table_body += "</tr>"
 

@@ -203,7 +203,7 @@ async def _(event: GroupMessageEvent, status: bool = Depends(get_status)):
 @meau.handle()
 async def _(bot: Bot, event: GroupMessageEvent):
     '''菜单'''
-    pagename = "meau.html"
+    pagename = "菜单.html"
     meau_data = await source.get_meau_data(event.group_id)
     nickname = management.bot_info.find_one({
         "_id": int(bot.self_id)

@@ -727,7 +727,7 @@ async def _(event: GroupMessageEvent):
         team_info["team_members"] = datas
         team_info["meeting_time"] = team_info["meeting_time"].strftime(
             "%Y-%m-%d %H:%M")
-        pagename = "view_team.html"
+        pagename = "./开团/团队信息.html"
         img = await browser.template_to_image(pagename=pagename,
                                               team_info=team_info)
         await view_team.finish(MessageSegment.image(img))
@@ -758,7 +758,9 @@ async def _(event: GroupMessageEvent):
                     "team_announcements":
                     team_info["team_announcements"][:8]
                 })
-        pagename = "view_team_list.html"
+        if not datas:
+            await view_team.finish("你没有加入过任何团队")
+        pagename = "./开团/团队列表.html"
         img = await browser.template_to_image(pagename=pagename, datas=datas)
         await view_team.finish(MessageSegment.image(img))
 
@@ -825,7 +827,7 @@ async def _(event: GroupMessageEvent):
             "%m-%d %H:%M")
         j3_team["team_configuration"] = get_time_conf(j3_team)
         datas.append(j3_team)
-    pagename = "search_team.html"
+    pagename = "./开团/搜索团队.html"
     img = await browser.template_to_image(pagename=pagename,
                                           datas=list(datas),
                                           current=current,

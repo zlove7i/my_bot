@@ -310,7 +310,7 @@ async def _(event: GroupMessageEvent, server: str = Depends(get_server_1)):
     with open(data_js_path, "w") as f:
         f.write("var data = " + json.dumps(data[::-1]))
 
-    pagename = "gold.html"
+    pagename = "金价查询.html"
     img = await browser.template_to_image(pagename=pagename,
                                           server_name=server_name)
     await gold_query.finish(MessageSegment.image(img))
@@ -485,7 +485,7 @@ async def _(event: GroupMessageEvent, name: str = Depends(get_name)):
         msg = f"查询失败，{msg}"
         await price_query.finish(msg)
 
-    pagename = "price.html"
+    pagename = "物价查询.html"
     item_name = data.get("name")
     item_info = data.get("info")
     item_img = data.get("upload")
@@ -516,7 +516,7 @@ async def _(event: GroupMessageEvent,
         msg = f"查询失败，{msg}"
         await serendipity_query.finish(msg)
 
-    pagename = "serendipity.html"
+    pagename = "角色奇遇.html"
     get_data = source.handle_data_serendipity(data)
     img = await browser.template_to_image(pagename=pagename,
                                           server=server,
@@ -541,7 +541,7 @@ async def _(event: GroupMessageEvent,
         msg = f"查询失败，{msg}"
         await serendipity_list_query.finish(msg)
 
-    pagename = "serendipity_list.html"
+    pagename = "奇遇统计.html"
     get_data = source.handle_data_serendipity_list(data)
     img = await browser.template_to_image(pagename=pagename,
                                           server=server,
@@ -564,7 +564,7 @@ async def _(event: GroupMessageEvent, server: str = Depends(get_server_1)):
         msg = f"查询失败，{msg}"
         await serendipity_summary_query.finish(msg)
 
-    pagename = "serendipity_summary.html"
+    pagename = "奇遇汇总.html"
     get_data = source.handle_data_serendipity_summary(data)
     img = await browser.template_to_image(pagename=pagename,
                                           server=server,
