@@ -14,6 +14,10 @@ from src.utils.content_check import content_check
 from src.utils.db import jx3_data, management
 from src.utils.jx3_search import (JX3PROFESSION, JX3PROFESSION_ROLE,
                                   jx3_searcher)
+from src.utils.config import config
+
+manage_url = config.node_info.get('manage_url')
+
 
 Export = export()
 Export.plugin_name = "剑三开团"
@@ -484,6 +488,8 @@ async def _(bot: Bot, event: GroupMessageEvent):
           f"开团时间：{create_time.strftime('%Y-%m-%d %H:%M:%S')}\n服务器：{server}\n"\
           f"集合时间：{meeting_time.strftime('%Y-%m-%d %H:%M:%S')}\n团队公告：{team_announcements}\n"\
           f"团队限制：{' '.join([f'{k}{v}' for k, v in team_configuration.items()])}"
+    if manage_url:
+        msg += f"\n团队地址：{manage_url}#/common/j3team/{team_id}"
     await create_team.finish(msg)
 
 
@@ -730,7 +736,10 @@ async def _(event: GroupMessageEvent):
         pagename = "./开团/团队信息.html"
         img = await browser.template_to_image(pagename=pagename,
                                               team_info=team_info)
-        await view_team.finish(MessageSegment.image(img))
+        msg = MessageSegment.image(img)
+        if manage_url:
+            msg += f"\n{manage_url}#/common/j3team/{team_id}"
+        await view_team.finish(msg)
     else:
         datas = []
         tmp_user_teams = deepcopy(user_teams)

@@ -20,6 +20,8 @@ sudo vi /etc/my_bot/config.yml
 
 # 项目配置文件
 node_info:
+  # 例如 https://ermaozi.cn/
+  manage_url: ~
   # openssl rand -hex 32
   secret_key: ~
   # 主节点hostname, 如果只有一个节点该字段千万不要填写, 多个节点必须填写, 后续考虑自动生成
