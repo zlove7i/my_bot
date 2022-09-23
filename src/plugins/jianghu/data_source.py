@@ -48,7 +48,7 @@ async def get_my_info(user_id: int, user_name: str) -> Message:
     jianghu_data = UserInfo(user_id)
     user_stat = jianghu_data.当前状态
     base_attribute = jianghu_data.基础属性
-    pagename = "角色面板.html"
+    pagename = "./江湖/角色面板.html"
     if base_attribute.get("击杀人", 0) >= 10000:
         base_attribute["击杀人"] = jianghu.user.find_one({"_id": base_attribute["击杀人"]})["名称"]
     else:
