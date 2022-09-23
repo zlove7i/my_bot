@@ -140,15 +140,16 @@ class Skill():
 
     def 触发被动(self, 被动类型: str, 事件: str, 数值: int, 自己: UserInfo, 目标: UserInfo):
         武学 = 自己.基础属性["武学"]
+        重伤状态 = False
         if not any(武学):
-            return 数值, ""
+            return 数值, 重伤状态
         for i in set(武学):
             招式 = self.skill.get(i, {})
             if 招式.get("type") == 被动类型 and 事件 in 招式.get("触发", []):
                 数值, 重伤状态 = 招式["招式"](自己, 目标, 数值)
                 if 重伤状态:
                     break
-        return 数值, False
+        return 数值, 重伤状态
 
     def 计算内力(self,
              技能名称: str,
