@@ -4,13 +4,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
 
     <title>战斗</title>
     <style type="text/css">
         @font-face{
             font-family:youai;
-            src:url('font/youai.ttf');
+            src:url('../font/youai.ttf');
         }
         div{
             font-size: 12px;
@@ -77,14 +77,14 @@
                 <p class="status">{{ 攻方.当前内力 }} / {{ 攻方.内力上限 }}</p>
             </div>
             <div class="col-4 text-center">
-                <img src="./img/攻击.svg" height="30" width="30">
+                <img src="../img/攻击.svg" height="30" width="30">
                 <p>战斗记录 {{战斗编号}}</p>
             </div>
             <div class="col-4 text-center">
                 <p>{{守方.名称}}</p>
                 <div class="user_qlogo">
                     {% if 守方.类型=="首领" %}
-                    <img src="./img/首领头像/{{ 守方.名称 }}.png" class="img-thumbnail" style="border-radius:1rem">
+                    <img src="../img/首领头像/{{ 守方.名称 }}.png" class="img-thumbnail" style="border-radius:1rem">
                     {% else %}
                     <img src="http://q1.qlogo.cn/g?b=qq&nk={{ 守方.id }}&s=100" class="img-thumbnail" style="border-radius:1rem">
                     {% endif %}

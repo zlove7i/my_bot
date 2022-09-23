@@ -4,12 +4,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
     <title>签到</title>
     <style type="text/css">
         @font-face{
             font-family:youai;
-            src:url('font/youai.ttf');
+            src:url('../font/youai.ttf');
         }
         div{
             font-family: youai;
@@ -34,7 +34,7 @@
                     </div>
                     {% if base_attribute.重伤状态 %}
                     <div class="col-4">
-                        <img src="./img/死.svg" height="80">
+                        <img src="../img/死.svg" height="80">
                         <div style="color:rgb(136, 57, 43);">死于{{ base_attribute.击杀人 }}</div>
                     </div>
                     {% endif %}
