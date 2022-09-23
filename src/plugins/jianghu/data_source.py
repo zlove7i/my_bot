@@ -1,27 +1,25 @@
+import copy
 import math
 import random
-import copy
 import re
 from datetime import datetime, timedelta
 
-from nonebot.adapters.onebot.v11 import Bot
-from src.plugins.jianghu.user_info import UserInfo
-from src.plugins.jianghu.skill import Skill
-
 from httpx import AsyncClient
-from nonebot.adapters.onebot.v11 import Message, MessageSegment
-from src.utils.db import jianghu, logs, management
-from src.utils.log import logger
-from src.utils.browser import browser
-from src.utils.email import mail_client
-from src.plugins.jianghu.shop import shop
-from src.plugins.jianghu.equipment import 打造装备, 合成图纸, 合成材料, 装备价格, 镶嵌装备, 材料等级表, 重铸装备
-from src.plugins.jianghu.jianghu import PK
-from src.plugins.jianghu.world_boss import world_boss
-from src.utils.cooldown_time import search_record, search_once
+from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment
 from src.plugins.jianghu.dungeon import 挑战秘境, 查看秘境, 秘境进度
+from src.plugins.jianghu.equipment import (合成图纸, 合成材料, 打造装备, 材料等级表, 装备价格, 重铸装备,
+                                           镶嵌装备)
 from src.plugins.jianghu.gold import 减少银两, 增加银两, 赠送银两
-
+from src.plugins.jianghu.jianghu import PK
+from src.plugins.jianghu.shop import shop
+from src.plugins.jianghu.skill import Skill
+from src.plugins.jianghu.user_info import UserInfo
+from src.plugins.jianghu.world_boss import world_boss
+from src.utils.browser import browser
+from src.utils.cooldown_time import search_once, search_record
+from src.utils.db import jianghu, logs, management, my_bot
+from src.utils.email import mail_client
+from src.utils.log import logger
 
 client = AsyncClient()
 '''异步请求客户端'''
@@ -494,9 +492,9 @@ async def discard_equipment(user_id, res):
         return f"丢弃装备【{装备名称}】({装备分数})成功, 丢弃非自己打造的装备无法获得善恶值"
     discard_equipment_num = jianghu.user.find_one_and_update(
             filter={"_id": user_id},
-            update={"$inc": {"discard_equipment_num": 1}},
+            update={"$inc": {"丢弃装备次数": 1}},
             upsert=True
-        ).get("discard_equipment_num", 0)
+        ).get("丢弃装备次数", 0)
     剩余次数 = 5 - discard_equipment_num
     if 剩余次数 <= 0:
         return f"丢弃装备【{装备名称}】({装备分数})成功, 每天只可以获得5次善恶值"
@@ -827,21 +825,21 @@ async def pk_world_boss(user_id, res):
 
 async def claim_rewards(user_id):
     """领取首领奖励"""
-    user = jianghu.user.find_one_and_update({"_id": user_id}, {"$set": {"contribution": 0}})
+    user = jianghu.user.find_one_and_update({"_id": user_id}, {"$set": {"贡献": 0}})
     contribution = 0
     if user:
-        contribution = int(user.get("contribution", 0))
+        contribution = int(user.get("贡献", 0))
     if not contribution:
         return "你没有贡献值"
-    获得银两 = random.randint(0, contribution//7)
+    获得银两 = random.randint(0, contribution//10)
     剩余贡献 = contribution - 获得银两
     图纸分 = 剩余贡献 // 3
     材料分 = 剩余贡献 - 图纸分
-    获得彩材料 = 材料分 // 720000
-    获得紫材料 = (材料分 - 获得彩材料*720000) // 150000
+    获得彩材料 = 材料分 // 800000
+    获得紫材料 = (材料分 - 获得彩材料*800000) // 150000
     if 获得紫材料 < 0:
         获得紫材料 = 0
-    获得图纸 = 图纸分 // 550000
+    获得图纸 = 图纸分 // 600000
     背包 = jianghu.knapsack.find_one({"_id": user_id})
     图纸 = 背包.get("图纸", {})
     材料 = 背包.get("材料", {})

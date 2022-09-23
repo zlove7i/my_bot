@@ -82,7 +82,7 @@ class PK(Skill):
 
     async def 秘境首领掉落(self, 击杀者: int, 秘境首领: UserInfo):
         user_info = jianghu.user.find_one({"_id": 击杀者})
-        击败首领次数 = user_info.get("dungeon_num", 0)
+        击败首领次数 = user_info.get("秘境次数", 0)
         if 击败首领次数 >= 5:
             return "每天只有前 5 次击败秘境首领可以获得奖励"
         精力 = user_info.get("精力", 0)
@@ -119,7 +119,7 @@ class PK(Skill):
             秘境进度[秘境首领.基础属性["秘境"]] = {}
         秘境进度[秘境首领.基础属性["秘境"]][秘境首领.名称] = True
         jianghu.user.update_one({"_id": 击杀者}, {"$set": {"秘境进度": 秘境进度}}, True)
-        jianghu.user.update_one({"_id": 击杀者}, {"$inc": {"dungeon_num": 1, "精力": -4}}, True)
+        jianghu.user.update_one({"_id": 击杀者}, {"$inc": {"秘境次数": 1, "精力": -4}}, True)
         msg += 秘境首领.基础属性["提示"]
         return msg
 
@@ -241,22 +241,22 @@ class PK(Skill):
             if 攻方.本次伤害 and 胜方 != 守方_id:
                 data["结算"] += f"{攻方.基础属性['名称']} 对 {守方.基础属性['名称']} 造成了 {-攻方.本次伤害} 伤害，贡献值 +{贡献值}, 精力-5"
                 jianghu.user.update_one({"_id": 攻方.user_id},
-                                      {"$inc": {"contribution": 贡献值}}, True)
+                                      {"$inc": {"贡献": 贡献值}}, True)
                 if data["守方"]["气血百分比"] < 70 < data["守方"]["气血百分比"]+data["守方"]["减血百分比"]:
-                    jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.5}}, True)
+                    jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"贡献": 1.5}}, True)
                     data["结算"] += f"<br>首领气血被攻下三成，当前贡献值提高 50%！"
                 elif data["守方"]["气血百分比"] < 40 < data["守方"]["气血百分比"]+data["守方"]["减血百分比"]:
-                    jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.4}}, True)
+                    jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"贡献": 1.4}}, True)
                     data["结算"] += f"<br>首领气血被攻下六成，当前贡献值提高 40%！"
                 elif data["守方"]["气血百分比"] < 10 < data["守方"]["气血百分比"]+data["守方"]["减血百分比"]:
-                    jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.3}}, True)
+                    jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"贡献": 1.3}}, True)
                     data["结算"] += f"<br>首领气血被攻下九成，当前贡献值提高 30%！"
                 elif data["守方"]["气血百分比"] <= 0 < data["守方"]["气血百分比"]+data["守方"]["减血百分比"]:
-                    jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"contribution": 1.2}}, True)
+                    jianghu.user.update_one({"_id": 攻方.user_id}, {"$mul": {"贡献": 1.2}}, True)
                     data["结算"] += f"<br>首领气被击败！当前贡献值提高 20%！"
                 user = jianghu.user.find_one({"_id": 攻方.user_id})
                 精力 = user['精力']
-                data["结算"] += f"<br>当前贡献：{int(user['contribution'])}<br>当前精力: {精力}"
+                data["结算"] += f"<br>当前贡献：{int(user['贡献'])}<br>当前精力: {精力}"
                 logger.info(f"{攻方.名称} | 世界首领 | 伤害：{攻方.本次伤害} | 首领气血：{守方.当前气血}/{守方.当前状态['气血上限']} | 精力：{精力}")
 
         if action == "秘境首领":
