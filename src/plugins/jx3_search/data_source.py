@@ -22,11 +22,11 @@ async def get_main_server(server: str) -> Optional[str]:
 
 async def get_kfc():
     client = AsyncClient()
-    url = "https://www.ermaozi.cn/api/kfc?method=random&count=1"
+    url = "https://www.ermaozi.cn/api/source/kfc/1"
     req = await client.get(url=url)
     req_data = req.json()
     if req_data.get("code") == 200:
-        return req_data.get("content")[0]
+        return req_data.get("data")[0]
     return
 
 

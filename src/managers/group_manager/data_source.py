@@ -274,10 +274,10 @@ async def play_picture(bot: Bot, event: GroupMessageEvent, group_id):
             logger.debug(f"群({group_id}) | 搭话 | {msg}")
         else:
             async with AsyncClient() as client:
-                req = await client.get(url="https://www.ermaozi.cn/api/meme?method=random&count=1")
+                req = await client.get(url="https://www.ermaozi.cn/api/source/memes/1")
                 req_data = req.json()
                 if req_data.get("code") == 200:
-                    url = req_data.get("memes")[0]
+                    url = req_data.get("data")[0]
                     req = await client.get(url=url)
                     msg = MessageSegment.image(req.content)
         await bot.send_group_msg(group_id=group_id, message=msg)
