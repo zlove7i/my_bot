@@ -9,16 +9,18 @@ from httpx import AsyncClient
 from src.utils.content_check import content_check
 from src.utils.log import logger
 from tortoise import os
+from src.plugins.roll.data import drinks_list
 
 img_dir = os.path.realpath(__file__ + "/../img/")
 
 Export = export()
 Export.plugin_name = "掷筹"
-Export.plugin_command = "掷筹 吃什么"
+Export.plugin_command = "掷筹 吃什么 喝什么"
 Export.plugin_usage = "选择困难症的救星"
 Export.default_status = True
 
 what_to_eat = on_regex(r"^吃什么$", permission=GROUP, priority=5, block=True)
+what_to_drinks = on_regex(r"^喝什么$", permission=GROUP, priority=5, block=True)
 roll = on_regex(r"^(掷筹.+?)$", permission=GROUP, priority=5, block=True)
 
 
@@ -59,9 +61,27 @@ async def _(event: GroupMessageEvent):
     req_data = req.json()
     if req_data.get("code") == 200:
         msg = "给你挑了这三个吃的："
+        num = 0
         for i in random.sample(req_data.get("data"), k=3):
-            msg += f"\n  - {i}"
+            num += 1
+            msg += f"\n{num}.{i}"
         await what_to_eat.finish(msg)
+
+
+@what_to_drinks.handle()
+async def _(event: GroupMessageEvent):
+    '''喝什么'''
+    user_id = event.user_id
+    group_id = event.group_id
+    logger.info(
+        f"<y>群{group_id}</y> | <g>{user_id}</g> | 喝什么"
+    )
+    msg = "给你挑了这三个喝的："
+    num = 0
+    for i in random.choices(drinks_list, k=3):
+        num += 1
+        msg += f"\n{num}.{i}"
+    await what_to_drinks.finish(msg)
 
 
 @roll.handle()
