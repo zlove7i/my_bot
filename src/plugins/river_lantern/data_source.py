@@ -145,7 +145,7 @@ async def my_river_lantern(user_id: int, user_name: str):
         })
 
     logger.debug(f"{user_id} | 查看河灯")
-    pagename = "river_lantern.html"
+    pagename = "./河灯/查看河灯.html"
     img = await browser.template_to_image(user_name=user_name,
                                           user_id=user_id,
                                           pagename=pagename,

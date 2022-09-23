@@ -117,7 +117,7 @@ async def 我的商品(操作人id, 命令):
             "数量": i.get("数量", 1),
             "备注": i["备注"],
         })
-    pagename = "auction_house.html"
+    pagename = "./江湖/交易行.html"
     img = await browser.template_to_image(pagename=pagename,
                                           datas=datas,
                                           当前页=当前页,
@@ -267,7 +267,7 @@ async def 查找商品(condition=""):
             "关注": i["关注"],
             "备注": i["备注"],
         })
-    pagename = "auction_house.html"
+    pagename = "./江湖/交易行.html"
     img = await browser.template_to_image(pagename=pagename,
                                           datas=datas,
                                           当前页=当前页,

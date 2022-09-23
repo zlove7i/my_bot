@@ -705,7 +705,7 @@ async def ranking(user_id):
             data['图纸'] = 图纸列表
         else:
             data['物品'].append({"名称": i, "数量": con[i]})
-    pagename = "knapsack.html"
+    pagename = "./江湖/查看背包.html"
     img = await browser.template_to_image(pagename=pagename, **data)
     return MessageSegment.image(img)
 
@@ -744,7 +744,7 @@ async def my_gear(user_id, 内容):
         装备data_list.append(装备data)
     user_info.基础属性['名称']
     data = {"持有人": user_info.基础属性['名称'], "页数": 页数, "当前页": n, "装备": 装备data_list}
-    pagename = "equip.html"
+    pagename = "./江湖/我的装备.html"
     img = await browser.template_to_image(pagename=pagename, **data)
     return MessageSegment.image(img)
 
@@ -779,7 +779,7 @@ async def check_gear(user_id, res):
     ret_data = {
         "datas": ret_data_list
     }
-    pagename = "check_equip.html"
+    pagename = "./江湖/查看装备.html"
     img = await browser.template_to_image(pagename=pagename, **ret_data)
     return MessageSegment.image(img)
 
@@ -818,7 +818,7 @@ async def pk_world_boss(user_id, res):
         return
     if isinstance(data, Message) or isinstance(data, str):
         return data
-    pagename = "pk.html"
+    pagename = "/江湖/战斗.html"
     img = await browser.template_to_image(pagename=pagename, **data)
     return MessageSegment.image(img)
 
@@ -888,7 +888,7 @@ async def start_dungeon(user_id, res):
     data = await 挑战秘境(user_id, 秘境首领)
     if isinstance(data, str):
         return data
-    pagename = "pk.html"
+    pagename = "/江湖/战斗.html"
     img = await browser.template_to_image(pagename=pagename, **data)
     return MessageSegment.image(img)
 
@@ -1132,7 +1132,7 @@ async def pk_log(日期, 编号):
     data = {
         "战斗记录": content
     }
-    pagename = "pk_log.html"
+    pagename = "./江湖/战斗记录.html"
     img = await browser.template_to_image(pagename=pagename, **data)
     return MessageSegment.image(img)
 
@@ -1176,7 +1176,7 @@ async def pk(动作, user_id, 目标):
     data = await 战斗.main(动作, user_id, 目标_id, msg)
     if isinstance(data, str):
         return data
-    pagename = "pk.html"
+    pagename = "./江湖/战斗.html"
     img = await browser.template_to_image(pagename=pagename, **data)
     return MessageSegment.image(img)
 
