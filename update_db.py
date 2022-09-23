@@ -55,8 +55,8 @@ def v_0_0_0():
                 {"_id": i["_id"]},
                 {"$set": {
                     "default_user": i.get("default_user"),
-                    "teams": i.get("teams", []),
-                    "user_data": i.get("user_data", []),
+                    "teams": i.get("teams", {}),
+                    "user_data": i.get("user_data", {}),
                     "partner": i.get("partner"),
                     "partner_request": i.get("partner_request", []),
                 }},
