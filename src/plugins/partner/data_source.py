@@ -64,18 +64,15 @@ async def get_find_partner_to_group(user_id: int, group_id: int, end_str: str,
             return msg
 
     app_name = "分配情缘"
-    group_cd = my_bot.group_cd_conf.find_one({'_id': group_id})
     # 查看冷却时间
-    n_cd_time = 300
-    if group_cd:
-        n_cd_time = group_cd.get("分配情缘", 300)
+    n_cd_time = 30
     flag, cd_time = await search_record(user_id, app_name, n_cd_time)
     if not flag:
         msg = f"[分配{end_str}] 冷却 > [{cd_time}]"
         return msg
     # 记录一次查询
     await search_once(user_id, app_name)
-    group_cf = my_bot.group_conf.find_one({'_id': group_id})
+    group_cf = management.group_conf.find_one({'_id': group_id})
     msg = MessageSegment.at(user_id)
     msg += f"组织给你分配的{end_str}是"
     if group_cf and group_cf.get("partner_disturb_switch"):

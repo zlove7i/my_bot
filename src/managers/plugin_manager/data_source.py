@@ -54,7 +54,7 @@ async def change_group_config(group_id: int, config_type: str, status: Literal["
     }
     if config_type not in type_dic:
         return False
-    db.group_conf.update_one({'_id': group_id}, {'$set': {
+    management.group_conf.update_one({'_id': group_id}, {'$set': {
         type_dic[config_type]: _chinese_to_bool(status)
     }}, True)
     return True
@@ -84,11 +84,11 @@ async def change_plugin_status(group_id: int, plugin_name: str, status: Literal[
             module_name = one_plugin.name
     if flag:
         module_info = {}
-        _con = db.plugins_info.find_one({"_id": group_id})
+        _con = my_bot.plugins_info.find_one({"_id": group_id})
         if _con:
             module_info = _con.get(module_name, {})
         module_info.update({"status": _chinese_to_bool(status)})
-        db.plugins_info.update_one({'_id': group_id}, {'$set': {
+        my_bot.plugins_info.update_one({'_id': group_id}, {'$set': {
             module_name: module_info
         }}, True)
     return True
