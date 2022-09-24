@@ -284,8 +284,20 @@ class DB():
         except Exception:
             return 500, "遇到麻烦了"
 
+    def exit_itme(self, user_id, user_name, team_id, **kwargs):
+        user_info = jx3_data.j3_user.find_one({"_id": user_id})
+        teams = user_info["teams"]
+        teams[user_name].remove(team_id)
+        jx3_data.j3_user.update_one({"_id": user_id},
+                                    {"$set": {
+                                        "teams": teams
+                                    }})
+        return 200, "修改成功"
+
     def set_team(self, team_data, username):
         try:
+            if "del_user" in team_data:
+                del team_data["del_user"]
             user_id = team_data["user_id"]
             user_info = my_bot.user_info.find_one({"_id": user_id})
             user_email = user_info.get("email") or f"{user_id}@qq.com"
@@ -297,6 +309,10 @@ class DB():
                 team_data["meeting_time"], "%Y-%m-%dT%H:%M:%S.%f")
             jx3_data.j3_teams.update_one({"_id": team_data["_id"]},
                                          {"$set": team_data})
+            del_user = team_data.get("del_user")
+            if del_user:
+                del_user.update({"team_id": team_data["_id"]})
+                db_api.exit_itme(**del_user)
             return 200, "修改成功"
         except Exception:
             return 500, "遇到麻烦了"

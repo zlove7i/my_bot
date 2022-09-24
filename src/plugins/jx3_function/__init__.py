@@ -50,7 +50,7 @@ class REGEX(Enum):
     确认解散 = r"^确认解散 \d+$"
     转让团队 = r"^转让团队( \d+){0,1} [1-5]{2}$"
     确认转让 = r"^确认转让 \d+$"
-    退出团队 = r"^退出团队( [\u4e00-\u9fa5]{2,8}){0,1}( \d+){0,1}$"
+    退出团队 = r"^退出团队( \d+){0,1}( [\u4e00-\u9fa5]{2,8}){0,1}$"
 
 
 user_manage = on_regex(pattern=REGEX.角色管理.value,
@@ -116,15 +116,15 @@ async def _(event: GroupMessageEvent):
     user_all_teams_num = len(user_all_teams)
     if user_all_teams_num < 1:
         await set_team.finish("你都没加入过团队，退个球。")
-    team_id = re.findall(r" (\d+) ", text)
+    team_id = re.findall(r" (\d+)", text)
     if team_id:
         team_id = int(team_id[0])
     else:
         if user_all_teams_num > 1:
-            await disband_team.finish("你加入了不只一个团队，想要解散请发送：“解散团队 团队序号”")
+            await disband_team.finish("你加入了不只一个团队，想要退出请发送：“退出团队 团队序号”")
         team_id = user_all_teams[0]
 
-    user_name = re.findall(r"^退出团队 ([\u4e00-\u9fa5]{2,8})", text)
+    user_name = re.findall(r"^退出团队.* ([\u4e00-\u9fa5]{2,8})", text)
     if user_name:
         user_name = user_name[0]
     else:
@@ -135,20 +135,20 @@ async def _(event: GroupMessageEvent):
     if team_info["user_id"] == user_id and team_info[
             "team_leader_name"] == user_name:
         await exit_team.finish(f"团长不能退团，如果要解散团队请发送“解散团队 {team_id}”")
+    team_info["team_members_num"] -= 1
     flag = False
-    team_members = team_info["team_members"]
-    for x, members in enumerate(team_members):
+    for x, members in enumerate(team_info["team_members"]):
         for y, member in enumerate(members):
             if member.get("user_id") == user_id and member.get(
                     "user_name") == user_name:
-                team_members[x][y] = {}
+                team_info["profession_num"][team_info["team_members"][x][y]["profession"]] -= 1
+                team_info["role_num"][team_info["team_members"][x][y]["role"]] -= 1
+                team_info["team_members"][x][y] = {}
                 break
         if flag:
             break
     jx3_data.j3_teams.update_one({"_id": team_id},
-                                 {"$set": {
-                                     "team_members": team_members
-                                 }})
+                                 {"$set": team_info})
     del_user_team(user_id, user_name, team_id)
     await exit_team.finish("退团成功")
 
@@ -391,8 +391,8 @@ async def _(bot: Bot, event: GroupMessageEvent):
     if meeting_time_str:
         now_year = create_time.year
         meeting_time = datetime.strptime(
-            f"{now_year}-" + meeting_time_str[0].replace("：", ":"),
-            "%Y-%m-%d %H:%M")
+            f"{now_year}-" + meeting_time_str[0].replace("：", ":") + ":00.0",
+            "%Y-%m-%d %H:%M:%S.%f")
         time_difference = meeting_time - create_time
         if time_difference.days < 0:
             await create_team.finish("不可以用过去的时间")
@@ -437,13 +437,20 @@ async def _(bot: Bot, event: GroupMessageEvent):
                 profession = JX3PROFESSION.get_profession(k)
                 if profession:
                     team_configuration[profession] = int(v)
-
+    role_num = {
+        "坦克": 0,
+        "治疗": 0,
+        "输出": 0,
+        "老板": 0
+    }
+    profession_num = {user_data['profession']: 1}
     if user_data['profession'] in JX3PROFESSION_ROLE.坦克.value:
         user_data['role'] = "坦克"
     elif user_data['profession'] in JX3PROFESSION_ROLE.治疗.value:
         user_data['role'] = "治疗"
     else:
         user_data['role'] = "输出"
+    role_num[user_data['role']] += 1
     team_leader_info = {
         "user_name": team_leader_name,
         "user_id": user_info['_id'],
@@ -466,6 +473,9 @@ async def _(bot: Bot, event: GroupMessageEvent):
         "server": server,
         "team_leader_name": team_leader_name,
         "team_members": team_members,
+        "team_members_num": 1,
+        "profession_num": profession_num,
+        "role_num": role_num,
         "create_time": create_time,
         "meeting_time": meeting_time,
         "team_announcements": team_announcements,
@@ -589,9 +599,12 @@ async def _(event: GroupMessageEvent):
     if set_user_role:
         for role, user_index in set_user_role:
             res, index_x, index_y = index_in_list(user_index, team_members)
+            member = team_members[index_x][index_y]
             if not res:
                 continue
-            team_members[index_x][index_y]["role"] = conf_list[role]
+            team_info["role_num"][member["role"]] -= 1
+            member["role"] = conf_list[role]
+            team_info["role_num"][member["role"]] += 1
         team_info["team_members"] = team_members
     remove_user = re.findall(r" -([1-5]{2})", text)
     if remove_user:
@@ -605,6 +618,9 @@ async def _(event: GroupMessageEvent):
                 msg += "\n不可以踢自己的团长角色，如果想要解散团队请发送“调整团队 !解散”"
                 continue
             del_user_team(user_id, member_name, team_id)
+            team_info["team_members_num"] -= 1
+            team_info["profession_num"][team_members[index_x][index_y]["profession"]] -= 1
+            team_info["role_num"][team_members[index_x][index_y]["role"]] -= 1
             team_members[index_x][index_y] = {}
             jx3_data.j3_user.update_one({"_id": member_id},
                                         {"$set": {
@@ -658,8 +674,8 @@ async def _(event: GroupMessageEvent):
         create_time = datetime.utcnow()
         now_year = create_time.year
         meeting_time = datetime.strptime(
-            f"{now_year}-" + meeting_time_str[-1].replace("：", ":"),
-            "%Y-%m-%d %H:%M")
+            f"{now_year}-" + meeting_time_str[0].replace("：", ":") + ":00.1",
+            "%Y-%m-%d %H:%M:%S.%f")
         time_difference = meeting_time - create_time
         if time_difference.days < 0:
             msg += "不可以用过去的时间"
@@ -674,31 +690,27 @@ async def _(event: GroupMessageEvent):
     await set_team.finish(msg)
 
 
-def get_time_conf(team_info):
+def get_team_conf(team_info):
     data = {}
     team_configuration = team_info["team_configuration"]
-    team_members_sum = 0
-    for i in team_info["team_members"]:
-        for j in i:
-            if not j:
-                continue
-            profession = j["profession"]
-            role = j["role"]
-            team_members_sum += 1
-            if profession in team_configuration:
-                if profession not in data:
-                    data[profession] = {
-                        "total": team_configuration[profession]
-                    }
-                    data[profession]["current"] = 0
-                data[profession]["current"] += 1
-            if role in team_configuration:
-                if role not in data:
-                    data[role] = {"total": team_configuration[role]}
-                    data[role]["current"] = 0
-                data[role]["current"] += 1
+    data["role"] = {}
+    data["profession"] = {}
+    for k, v in team_info["role_num"].items():
+        if not v and k not in team_configuration:
+            continue
+        data["role"][k] = {
+            "current": v,
+            "total": team_configuration.get(k, "-")
+        }
+    for k, v in team_info["profession_num"].items():
+        if not v and k not in team_configuration:
+            continue
+        data["profession"][k] = {
+            "current": v,
+            "total": team_configuration.get(k, "-")
+        }
     data["人数"] = {
-        "current": team_members_sum,
+        "current": team_info["team_members_num"],
         "total": team_configuration["人数"]
     }
     return data
@@ -726,7 +738,7 @@ async def _(event: GroupMessageEvent):
         else:
             team_id = int(text_list[-1])
         team_info = jx3_data.j3_teams.find_one({"_id": team_id})
-        team_info["team_configuration"] = get_time_conf(team_info)
+        team_info["team_configuration"] = get_team_conf(team_info)
         datas = []
         for i, data in enumerate(zip(*team_info["team_members"])):
             datas.append({"index": i + 1, "data": data})
@@ -834,11 +846,11 @@ async def _(event: GroupMessageEvent):
     for j3_team in j3_teams:
         j3_team["meeting_time"] = j3_team["meeting_time"].strftime(
             "%m-%d %H:%M")
-        j3_team["team_configuration"] = get_time_conf(j3_team)
+        j3_team["team_configuration"] = get_team_conf(j3_team)
         datas.append(j3_team)
     pagename = "./开团/搜索团队.html"
     img = await browser.template_to_image(pagename=pagename,
-                                          datas=list(datas),
+                                          datas=datas,
                                           current=current,
                                           total=total)
     await search_team.finish(MessageSegment.image(img))
@@ -847,6 +859,15 @@ async def _(event: GroupMessageEvent):
 def check_team_leader_name(user_info, j3_teams):
     team_members = j3_teams["team_members"]
     team_configuration = j3_teams["team_configuration"]
+    if j3_teams["team_members_num"] + 1 > j3_teams["team_configuration"]["人数"]:
+        return False, "人数已到上限"
+    profession = user_info["profession"]
+    if (profession in team_configuration and
+        j3_teams["profession_num"].get(profession, 0) + 1 > team_configuration[profession]):
+        return False, f"{profession}已到上限"
+    role = user_info['role']
+    if role in team_configuration and j3_teams["role_num"].get(role, 0) + 1 > team_configuration[role]:
+        return False, f"{role}已到上限"
     flag = False
     for team_i, team in enumerate(team_members):
         for mem_i, mem in enumerate(team):
@@ -863,27 +884,6 @@ def check_team_leader_name(user_info, j3_teams):
                 break
         if flag:
             break
-    sum_team_members = sum(team_members, [])
-    if not flag:
-        return False, "人数已到上限"
-
-    profession_number = 0
-    role_number = 0
-    for i in sum_team_members:
-        if not i:
-            continue
-        if i["profession"] == user_info['profession']:
-            profession_number += 1
-        if i["role"] == user_info['role']:
-            role_number += 1
-    if user_info['profession'] in team_configuration:
-        if profession_number > team_configuration[user_info['profession']]:
-            return False, f"{user_info['profession']}已到上限"
-
-    if user_info["role"] in team_configuration:
-        if role_number > team_configuration[user_info['role']]:
-            return False, f"{user_info['role']}已到上限"
-
     return True, team_members
 
 
@@ -952,16 +952,24 @@ async def _(bot: Bot, event: GroupMessageEvent):
     else:
         user_data['role'] = "输出"
 
+    if user_data['profession'] not in j3_teams["profession_num"]:
+        j3_teams["profession_num"][user_data['profession']] = 0
+    j3_teams["profession_num"][user_data['profession']] += 1
+    if user_data['role'] not in j3_teams["role_num"]:
+        j3_teams["role_num"][user_data['role']] = 0
+    j3_teams["role_num"][user_data['role']] += 1
+
+    j3_teams["team_members_num"] += 1
+
     res, data = check_team_leader_name(user_data, j3_teams)
     if res:
+        j3_teams["team_members"] = data
         jx3_data.j3_teams.update_one({"_id": j3_teams["_id"]},
-                                     {"$set": {
-                                         "team_members": data
-                                     }})
+                                     {"$set": j3_teams})
         teams[user_name].append(j3_teams["_id"])
         jx3_data.j3_user.update_one({"_id": user_id},
                                     {"$set": {
-                                        "teams": teams
+                                        "teams": teams,
                                     }})
         msg = "报名成功！" + msg
         await register.finish(msg)

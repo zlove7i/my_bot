@@ -43,11 +43,25 @@
                 </div>
                 <div class="row align-items-center">
                     <strong>
-                        {% for k, v in team_info.team_configuration.items() -%}
-                        <span>
-                            <img height="25" width="25" src="../sect/{{k}}.png"/>({{v.current}}/{{v.total}})
-                        </span>
-                        {%- endfor %}
+                        <p>
+                            <img height="25" width="25" src="../sect/人数.png"/>({{team_info.team_configuration.人数.current}}/{{team_info.team_configuration.人数.total}})
+                        </p>
+                        <p>
+                            {% for k, v in team_info.team_configuration.role.items() -%}
+                            <span>
+                                <img height="25" width="25" src="../sect/{{k}}.png"/>({{v.current}}/{{v.total}})
+                            </span>
+                            {%- endfor %}
+                        </p>
+                        <p>
+                            {% for k, v in team_info.team_configuration.profession.items() -%}
+                            {% if v.total != "-" %}
+                            <span>
+                                <img height="25" width="25" src="../sect/{{k}}.png"/>({{v.current}}/{{v.total}})
+                            </span>
+                            {% endif %}
+                            {%- endfor %}
+                        </p>
                     </strong>
                 </div>
             </div>
@@ -70,10 +84,8 @@
                         <td align="center">
                             {% if y %}
                                 <strong>{{y.user_name}}</strong>
-                                <img height="25" width="25" src="../sect/{{y.profession}}.png"/>
-                                {% if y.role == "老板" %}
-                                <img height="25" width="25" src="../sect/{{y.role}}.png"/>
-                                {% endif %}
+                                <img height="15" width="15" src="../sect/{{y.profession}}.png"/>
+                                <img height="15" width="15" src="../sect/{{y.role}}.png"/>
                             {% endif %}
                         </td>
                         {% endfor %}

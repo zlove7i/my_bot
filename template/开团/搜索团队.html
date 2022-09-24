@@ -40,10 +40,24 @@
                     <td scope="col">{{data.team_announcements}}</th>
                     <td align="center" scope="col">
                         <span>
-                            {% for k, v in data.team_configuration.items() -%}
+                            <img height="25" width="25" src="../sect/人数.png"/>({{data.team_configuration.人数.current}}/{{data.team_configuration.人数.total}})
+                        </span>
+                        <span>
+                            {% for k, v in data.team_configuration.role.items() -%}
+                            {% if v.total != "-" %}
                             <span>
                                 <img height="25" width="25" src="../sect/{{k}}.png"/>({{v.current}}/{{v.total}})
                             </span>
+                            {% endif %}
+                            {%- endfor %}
+                        </span>
+                        <span>
+                            {% for k, v in data.team_configuration.profession.items() -%}
+                            {% if v.total != "-" %}
+                            <span>
+                                <img height="25" width="25" src="../sect/{{k}}.png"/>({{v.current}}/{{v.total}})
+                            </span>
+                            {% endif %}
                             {%- endfor %}
                         </span>
                     </th>
