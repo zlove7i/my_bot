@@ -120,8 +120,8 @@ async def set_name(user_id, res):
         return "狡诈恶徒不得改名!"
     if usr.名称 != "无名":
         msg = "，花费十万两银子。"
-        if not await 减少银两(user_id, 100000, "改名"):
-            return "改名需要花费十万两银子，你的银两不够！"
+        if not await 减少银两(user_id, 200000, "改名"):
+            return "改名需要花费二十万两银子，你的银两不够！"
     else:
         msg = "，首次改名不需要花费银两。"
     jianghu.user.update_one({"_id": user_id}, {"$set": {"名称": name}}, True)
@@ -185,7 +185,8 @@ async def recovery_qihai(user_id, res):
 
 
 async def dig_for_treasure(user_id, number):
-    精力 = jianghu.user.find_one({"_id": user_id}).get("精力", 0)
+    user_info = UserInfo(user_id)
+    精力 = user_info.基础属性.get("精力", 0)
     消耗精力 = number * 7
     if 精力 < 消耗精力:
         return f"精力不足, 你只有{精力}精力, 挖宝{number}次需要{消耗精力}精力"

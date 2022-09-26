@@ -1,14 +1,14 @@
+import os
 from datetime import datetime, timedelta
 from random import randint
+
+import yaml
 from src.utils.db import jianghu
 from src.utils.log import logger
-import os
-import yaml
 
 
 def init_user_info(user_id):
-    init_data = {
-        "_id": user_id,
+    set_data = {
         "名称": "无名",
         "凶煞": datetime.now() + timedelta(days=-1),
         "体质": 20,
@@ -16,8 +16,6 @@ def init_user_info(user_id):
         "力道": 5,
         "根骨": 5,
         "元气": 5,
-        "银两": 100000,
-        "精力": 100,
         "当前气血": 600,
         "当前内力": 50,
         "当前气海": 1000,
@@ -35,9 +33,18 @@ def init_user_info(user_id):
             "饰品": "",
         },
     }
-    jianghu.user.insert_one(init_data)
+    inc_data = {
+        "银两": 100000,
+        "精力": 100,
+    }
+
+    jianghu.user.update_one(
+        {"_id": user_id},
+        {"$set": set_data, "$inc": inc_data},
+        True)
     logger.info(f"新用户: {user_id}")
-    return init_data
+    user_data = jianghu.user.find_one({"_id": user_id})
+    return user_data
 
 
 dungeon_boss = os.path.realpath(__file__ + "/../jianghu_data/dungeon_boss.yml")
@@ -57,7 +64,7 @@ class UserInfo():
                 user_info = boss_data[user_id]
         else:
             user_info = jianghu.user.find_one({"_id": user_id})
-            if not user_info:
+            if not user_info or not user_info.get("名称"):
                 user_info = init_user_info(user_id)
         self.基础属性 = user_info
         self.装备列表 = []
@@ -143,15 +150,15 @@ class UserInfo():
         if self.当前气血 > self.当前状态["气血上限"]:
             self.当前气血 = self.当前状态["气血上限"]
             jianghu.user.update_one({"_id": self.user_id},
-                                  {"$set": {
-                                      "当前气血": self.当前气血
-                                  }}, True)
+                                    {"$set": {
+                                        "当前气血": self.当前气血
+                                    }}, True)
         if self.当前内力 > self.当前状态["内力上限"]:
             self.当前内力 = self.当前状态["内力上限"]
             jianghu.user.update_one({"_id": self.user_id},
-                                  {"$set": {
-                                      "当前内力": self.当前内力
-                                  }}, True)
+                                    {"$set": {
+                                        "当前内力": self.当前内力
+                                    }}, True)
 
     def 普通攻击(self):
         浮动 = self.基础属性["身法"] // 2
@@ -202,15 +209,15 @@ class UserInfo():
             self.当前内力 = 0
 
         if self.基础属性.get("类型") != "秘境首领":
-            db_con.update_one(
-                {"_id": user_info["_id"]},
-                {"$set": {
+            db_con.update_one({"_id": user_info["_id"]}, {
+                "$set": {
                     "当前气血": self.当前气血,
                     "当前内力": self.当前内力,
                     "当前气海": self.当前气海,
                     "重伤状态": self.重伤状态,
                     "击杀人": 敌方id,
-                }}, True)
+                }
+            }, True)
 
     def 气血变化(self, 气血变化量):
         气血变化量 = int(气血变化量)
