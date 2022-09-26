@@ -5,7 +5,7 @@ from nonebot import get_driver
 from nonebot.adapters.onebot.v11 import Bot
 from nonebot.adapters.onebot.v11.event import PrivateMessageEvent
 from nonebot.plugin import on, on_regex
-from srce.utils.permission import SUPER_MANAGER, BOT_MASTER
+from src.utils.permission import SUPER_MANAGER, BOT_MASTER
 from src.utils.browser import browser
 from src.utils.log import logger
 from src.utils.email import mail_client
