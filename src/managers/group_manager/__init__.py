@@ -13,8 +13,8 @@ from nonebot.adapters.onebot.v11.permission import (GROUP, GROUP_ADMIN,
                                                     GROUP_OWNER)
 from nonebot.message import event_postprocessor
 from nonebot.params import Depends
-from nonebot.permission import SUPERUSER
 from nonebot.rule import Rule
+from src.utils.permission import BOT_MASTER, SUPER_MANAGER
 from src.utils.black_list import check_black_list
 from src.utils.browser import browser
 from src.utils.config import config
@@ -35,22 +35,22 @@ from . import data_source as source
 '''
 
 bind_server = on_regex(pattern=r"^绑定 [\u4e00-\u9fa5]+$",
-                       permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER,
+                       permission=SUPER_MANAGER | GROUP_ADMIN | GROUP_OWNER | BOT_MASTER,
                        priority=2,
                        block=True)  # 绑定服务器
 
 set_activity = on_regex(pattern=r"^活跃值 (\d){1,2}$",
-                        permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER,
+                        permission=SUPER_MANAGER | GROUP_ADMIN | GROUP_OWNER | BOT_MASTER,
                         priority=2,
                         block=True)  # 设置活跃值[0-99]
 
 robot_status = on_regex(pattern=r"^(说话|闭嘴)$",
-                        permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER,
+                        permission=SUPER_MANAGER | GROUP_ADMIN | GROUP_OWNER | BOT_MASTER,
                         priority=7,
                         block=True)  # 设置机器人开关
 
 notice = on_regex(pattern=r"^((离群)|(进群))通知 ",
-                  permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER,
+                  permission=SUPER_MANAGER | GROUP_ADMIN | GROUP_OWNER | BOT_MASTER,
                   priority=2,
                   block=True)  # 离群通知，进群通知
 
@@ -60,7 +60,7 @@ meau = on_regex(pattern=r"^((菜单)|(状态))$",
                 block=True)  # 菜单
 
 exit_group = on_regex(pattern=r"^(退群 \d+)$",
-                      permission=SUPERUSER,
+                      permission=SUPER_MANAGER | BOT_MASTER,
                       priority=1,
                       block=True)
 

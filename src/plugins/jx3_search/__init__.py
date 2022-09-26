@@ -8,6 +8,7 @@ from nonebot import export, on_regex
 from nonebot.adapters.onebot.v11.event import GroupMessageEvent
 from nonebot.adapters.onebot.v11.message import MessageSegment
 from nonebot.adapters.onebot.v11.permission import GROUP
+from src.utils.permission import BOT_MASTER, SUPER_MANAGER
 from nonebot.matcher import Matcher
 from nonebot.params import Depends
 
@@ -31,7 +32,7 @@ Export.default_status = True
 
 class REGEX(Enum):
     """正则枚举"""
-    提交ticket = r"^提交ticket .+$"
+    推栏鉴权 = r"^推栏鉴权 .+$"
     日常任务 = r"(^日常$)|(^日常 [\u4e00-\u9fa5]+$)"
     开服检查 = r"(^开服$)|(^开服 [\u4e00-\u9fa5]+$)"
     金价比例 = r"(^金价$)|(^金价 [\u4e00-\u9fa5]+$)"
@@ -57,7 +58,7 @@ class REGEX(Enum):
 #   matcher列表，定义查询的mathcer
 # ----------------------------------------------------------------
 submit_ticket = on_regex(
-    pattern=REGEX.提交ticket.value, permission=GROUP, priority=5, block=True
+    pattern=REGEX.推栏鉴权.value, permission=BOT_MASTER | SUPER_MANAGER, priority=5, block=True
 )
 daily_query = on_regex(
     pattern=REGEX.日常任务.value, permission=GROUP, priority=5, block=True
@@ -192,7 +193,7 @@ async def get_profession(matcher: Matcher, name: str = Depends(get_ex_name)) -> 
     await matcher.finish(msg)
 
 
-async def get_ticket(event: GroupMessageEvent) -> str:
+async def get_ticket(event: PrivateMessageEvent) -> str:
     """获取消息中的name字段，取最后分页"""
     l = event.get_plaintext().split(" ")
     if len(l) == 1:
@@ -206,14 +207,14 @@ async def get_ticket(event: GroupMessageEvent) -> str:
 
 
 @submit_ticket.handle()
-async def _(event: GroupMessageEvent, ticket: str = Depends(get_ticket)):
+async def _(event: PrivateMessageEvent, ticket: str = Depends(get_ticket)):
     """提交ticket"""
     logger.info(
-        f"群{event.group_id} | {event.user_id} | 提交ticket | 请求:ticket"
+        f"用户 {event.user_id} | 提交ticket | 请求:ticket"
     )
     params = {"ticket": ticket}
     msg, data = await source.get_data_from_api(
-        app=JX3APP.查有效值, group_id=event.group_id, params=params
+        app=JX3APP.查有效值, group_id=event.user_id, params=params
     )
     if msg != "success":
         msg = f"你骗老子!你给老子的ticket根本不能用!"

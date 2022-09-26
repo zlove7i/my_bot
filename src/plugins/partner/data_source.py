@@ -12,17 +12,6 @@ client = AsyncClient()
 '''异步请求客户端'''
 
 
-async def set_find_partner_cooldown_time(group_id: int, cooldown_time: int):
-    if cooldown_time < 60:
-        return "分配情缘冷却时间必须高于 60 秒"
-    my_bot.group_cd_conf.update_one({"_id": group_id},
-                                {"$set": {
-                                    "分配情缘": cooldown_time
-                                }}, True)
-    msg = "修改成功！"
-    return msg
-
-
 async def set_find_partner_do_not_disturb(group_id: int,
                                           do_not_disturb_switch: bool):
     management.group_conf.update_one(

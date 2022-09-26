@@ -3,7 +3,7 @@ import re
 from nonebot.adapters.onebot.v11 import Bot
 from nonebot.adapters.onebot.v11.event import GroupMessageEvent
 from nonebot.adapters.onebot.v11.permission import GROUP, GROUP_ADMIN, GROUP_OWNER
-from nonebot.permission import SUPERUSER
+from src.utils.permission import BOT_MASTER, SUPER_MANAGER
 from src.utils.log import logger
 
 from . import data_source as source
@@ -19,14 +19,9 @@ partner_menu = on_regex(r"^(情缘|情缘功能)$",
                           priority=5,
                           block=True)
 
-find_partner_cooldown_time = on_regex(r"^(分配情缘冷却 \d+)$",
-                                      permission=SUPERUSER | GROUP_ADMIN
-                                      | GROUP_OWNER,
-                                      priority=4,
-                                      block=True)
+
 find_partner_do_not_disturb = on_regex(r"^(分配情缘免打扰 (开|关))$",
-                                       permission=SUPERUSER | GROUP_ADMIN
-                                       | GROUP_OWNER,
+                                       permission=SUPER_MANAGER | BOT_MASTER | GROUP_ADMIN | GROUP_OWNER,
                                        priority=4,
                                        block=True)
 
@@ -57,25 +52,8 @@ parted = on_regex(r"^(死情缘)$", permission=GROUP, priority=5, block=True)
 @partner_menu.handle()
 async def _():
     '''情缘菜单'''
-    msg = "如何搞情缘？\n\n- 分配情缘\n- 求情缘@QQ\n- 接受情缘@QQ\n- 我的情缘\n- 死情缘\n- 情缘申请列表\n- 清空情缘申请列表\n\n管理设置\n- 分配情缘冷却 100\n- 分配情缘免打扰 开/关"
+    msg = "如何搞情缘？\n\n- 分配情缘\n- 求情缘@QQ\n- 接受情缘@QQ\n- 我的情缘\n- 死情缘\n- 情缘申请列表\n- 清空情缘申请列表\n\n管理设置\n- 分配情缘免打扰 开/关"
     await find_partner.finish(msg)
-
-
-@find_partner_cooldown_time.handle()
-async def _(event: GroupMessageEvent):
-    '''分配情缘冷却时间设置'''
-    try:
-        group_id = event.group_id
-        get_msg = event.get_plaintext().split()
-        if len(get_msg) != 2:
-            await find_partner_cooldown_time.finish("输入错误！")
-        cooldown_time = int(get_msg[1])
-        msg = await source.set_find_partner_cooldown_time(
-            group_id, cooldown_time)
-        await find_partner_cooldown_time.finish(msg)
-    except TypeError as e:
-        logger.warning(f"群{group_id} | 分配情缘冷却 | {str(e)}")
-        await find_partner_cooldown_time.finish("输入错误！")
 
 
 @find_partner_do_not_disturb.handle()

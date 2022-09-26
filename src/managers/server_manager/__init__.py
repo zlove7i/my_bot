@@ -4,8 +4,8 @@ import random
 from nonebot import get_driver
 from nonebot.adapters.onebot.v11 import Bot
 from nonebot.adapters.onebot.v11.event import PrivateMessageEvent
-from nonebot.permission import SUPERUSER
 from nonebot.plugin import on, on_regex
+from srce.utils.permission import SUPER_MANAGER, BOT_MASTER
 from src.utils.browser import browser
 from src.utils.log import logger
 from src.utils.email import mail_client
@@ -76,15 +76,15 @@ async def _():
 #  server操作的几个mathcer
 # ----------------------------------------------------------------
 check_ws = on_regex(pattern=r"^查看连接$",
-                    permission=SUPERUSER,
+                    permission=SUPER_MANAGER | BOT_MASTER,
                     priority=5,
                     block=True)
 connect_ws = on_regex(pattern=r"^连接服务$",
-                      permission=SUPERUSER,
+                      permission=SUPER_MANAGER | BOT_MASTER,
                       priority=5,
                       block=True)
 close_ws = on_regex(pattern=r"^关闭连接$",
-                    permission=SUPERUSER,
+                    permission=SUPER_MANAGER | BOT_MASTER,
                     priority=5,
                     block=True)
 
