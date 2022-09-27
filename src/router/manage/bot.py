@@ -15,11 +15,14 @@ async def get_bot_list(page: int = 1, filter: str = "{}", user: User = Depends(g
     if not user.check_permission(1):
         return {"code": 402, "msg": "无法访问"}
     data, page_count = db_api.get_bot_list(user, page, json.loads(filter))
-    return {
+    response_data = {
         "code": 200,
         "data": data,
         "page": page,
         "page_count": page_count}
+    if user.token:
+        response_data["token"] = user.token
+    return response_data
 
 
 async def manipulate_bot(req_data: ManipulateBot, user: User = Depends(get_current_user)):

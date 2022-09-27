@@ -13,7 +13,7 @@ from src.utils.config import config
 
 SECRET_KEY = config.node_info['secret_key']
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 24 * 60
+ACCESS_TOKEN_EXPIRE_MINUTES = 7 * 24 * 60
 
 
 class Token(BaseModel):
@@ -31,6 +31,7 @@ class User(BaseModel):
     username: str
     password: str
     user_permission: int
+    token: Union[str, None] = None
 
     def check_permission(self, permission=5):
         if self.user_permission < permission:
@@ -96,6 +97,13 @@ async def get_current_user(requst: Request):
     user["username"] = user["_id"]
     if not user:
         return {}
+    if datetime.utcfromtimestamp(payload.get("exp")) < datetime.now() + timedelta(days=1):
+        data = {
+            "username": username,
+            "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        }
+        encoded_jwt = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+        user["token"] = encoded_jwt
     return User(**dict(user))
 
 
