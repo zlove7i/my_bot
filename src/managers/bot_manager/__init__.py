@@ -103,7 +103,7 @@ async def pull_off_shelves():
 
 async def reset_sign_nums():
     '''重置签到人数与福缘'''
-
+    logger.info("正在重置签到人数")
     sign_num = my_bot.bot_conf.find_one({'_id': 1}).get("sign_num", 0)
     prize_pool = sign_num * 50000
     my_bot.bot_conf.update_one(
@@ -124,9 +124,11 @@ async def reset_sign_nums():
             "精力": 100,
             "丢弃装备次数": 0
         }}, True)
+    logger.info("签到人数已重置")
 
 
 async def 复活玩家():
+    logger.info("正在复活玩家")
     project = {"_id": 1}
     users = []
     for i in jianghu.user.find({"重伤状态": True}, projection=project):
@@ -140,6 +142,7 @@ async def 复活玩家():
                 }
             }, True))
     jianghu.user.bulk_write(users)
+    logger.info("玩家已复活")
 
 
 def del_user_team(user_id, user_name, team_id):
@@ -240,6 +243,7 @@ async def recovery_qihai():
 
 
 async def start_resurrection_world_boss():
+    logger.info("正在复活世界首领")
     project = {"_id": 1, "体质": 1, "根骨": 1}
     if 已重伤首领 := jianghu.npc.find({
             "类型": "首领",
@@ -256,6 +260,7 @@ async def start_resurrection_world_boss():
                     "当前内力": 复活首领["根骨"] * 5
                 }
             }, True)
+    logger.info("世界首领已复活")
 
 
 @scheduler.scheduled_job("cron", hour=4, minute=0)
@@ -288,27 +293,20 @@ async def _():
 async def _():
     '''10,15,20, 23刷新世界boss'''
     if config.is_main_host:
-        logger.info("正在复活世界首领")
         await start_resurrection_world_boss()
-        logger.info("世界首领已复活")
 
 
-@scheduler.scheduled_job("cron", hour="8,20", minute=0)
+@scheduler.scheduled_job("cron", hour="8,21", minute=0)
 async def _():
     '''8,20 复活玩家'''
     if config.is_main_host:
-        logger.info("正在复活玩家")
         await 复活玩家()
-        logger.info("玩家已复活")
 
-
-@scheduler.scheduled_job("cron", hour=8, minute=0)
+@scheduler.scheduled_job("cron", hour=7, minute=59)
 async def _():
     '''每天八点重置签到人数'''
     if config.is_main_host:
-        logger.info("正在重置签到人数")
         await reset_sign_nums()
-        logger.info("签到人数已重置")
 
 
 @scheduler.scheduled_job("cron", hour="*")
