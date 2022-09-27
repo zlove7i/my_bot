@@ -333,10 +333,10 @@ async def _(event: GroupMessageEvent, name: str = Depends(get_profession)):
 
     name = data.get('name')
     msg = f'[{name}]小药：\n'
-    msg += f'增强食品：{data.get("heighten_food")}\n'
-    msg += f'辅助食品：{data.get("auxiliary_food")}\n'
-    msg += f'增强药品：{data.get("heighten_drug")}\n'
-    msg += f'辅助药品：{data.get("auxiliary_drug")}'
+    msg += f'增强食品：{data.get("heightenFood")}\n'
+    msg += f'辅助食品：{data.get("auxiliaryFood")}\n'
+    msg += f'增强药品：{data.get("heightenDrug")}\n'
+    msg += f'辅助药品：{data.get("auxiliaryDrug")}'
 
     await medicine_query.finish(msg)
 
@@ -415,7 +415,7 @@ async def _(event: GroupMessageEvent, name: str = Depends(get_name)):
         msg = f"查询失败，{msg}"
         await condition_query.finish(msg)
 
-    url = data.get("upload")
+    url = data.get("url")
     msg = MessageSegment.image(url)
     await condition_query.finish(msg)
 
@@ -489,7 +489,7 @@ async def _(event: GroupMessageEvent, name: str = Depends(get_name)):
     pagename = "物价查询.html"
     item_name = data.get("name")
     item_info = data.get("info")
-    item_img = data.get("upload")
+    item_img = data.get("url")
     item_data = source.handle_data_price(data.get("data"))
     img = await browser.template_to_image(pagename=pagename,
                                           name=item_name,
@@ -532,9 +532,9 @@ async def _(event: GroupMessageEvent,
             name: str = Depends(get_name)):
     """奇遇统计查询"""
     logger.info(
-        f"群{event.group_id} | {event.user_id} | 奇遇统计查询 | 请求：server:{server},serendipity:{name}"
+        f"群{event.group_id} | {event.user_id} | 奇遇统计查询 | 请求：server:{server},name:{name}"
     )
-    params = {"server": server, "serendipity": name}
+    params = {"server": server, "name": name}
     msg, data = await source.get_data_from_api(app=JX3APP.奇遇统计,
                                                group_id=event.group_id,
                                                params=params)
@@ -634,8 +634,8 @@ async def _(event: GroupMessageEvent, server: str = Depends(get_server_2), keywo
 
     data: list[dict] = data.get("data")
     num = len(data)
-    if num > 50:
-        data = data[:50]
+    if num > 20:
+        data = data[:20]
     else:
         num = None
     pagename = "团队招募.html"

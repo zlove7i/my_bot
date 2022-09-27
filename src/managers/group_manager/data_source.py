@@ -16,45 +16,29 @@ from src.utils.content_check import content_check
 from src.utils.db import management, my_bot
 from src.utils.log import logger
 
-data_dir = os.path.realpath(__file__ + "/../../../../data/")
-
-
-async def get_main_server(server: str) -> Optional[str]:
-    '''获取主服务器'''
-    params = {"name": server}
-    url = "https://www.jx3api.com/app/server"
-    async with AsyncClient() as client:
-        try:
-            req = await client.get(url=url, params=params)
-            req_json = req.json()
-            if req_json['code'] == 200:
-                return req_json['data']['server']
-            return None
-        except Exception:
-            return None
-
 
 async def bind_server(group_id: int, server: str):
     '''绑定服务器'''
-    management.group_conf.update_one({'_id': group_id}, {'$set': {
-        "server": server
-    }}, True)
+    management.group_conf.update_one({'_id': group_id},
+                                     {'$set': {
+                                         "server": server
+                                     }}, True)
 
 
 async def set_activity(group_id: int, activity: int):
     '''设置活跃值'''
     management.group_conf.update_one({'_id': group_id},
-                             {'$set': {
-                                 "robot_active": activity
-                             }}, True)
+                                     {'$set': {
+                                         "robot_active": activity
+                                     }}, True)
 
 
 async def set_status(group_id: int, status: bool):
     '''设置机器人开关'''
     management.group_conf.update_one({'_id': group_id},
-                             {'$set': {
-                                 "group_switch": status
-                             }}, True)
+                                     {'$set': {
+                                         "group_switch": status
+                                     }}, True)
 
 
 async def get_meau_data(group_id: int) -> dict:
@@ -160,9 +144,9 @@ async def handle_data_notice(group_id: int, notice_type: Literal["离群通知",
     if not result:
         return False
     management.group_conf.update_one({"_id": group_id},
-                             {"$set": {
-                                 notice_type: content
-                             }}, True)
+                                     {"$set": {
+                                         notice_type: content
+                                     }}, True)
     return True
 
 
@@ -274,7 +258,8 @@ async def play_picture(bot: Bot, event: GroupMessageEvent, group_id):
             logger.debug(f"群({group_id}) | 搭话 | {msg}")
         else:
             async with AsyncClient() as client:
-                req = await client.get(url="https://www.ermaozi.cn/api/source/memes/1")
+                req = await client.get(
+                    url="https://www.ermaozi.cn/api/source/memes/1")
                 req_data = req.json()
                 if req_data.get("code") == 200:
                     url = req_data.get("data")[0]

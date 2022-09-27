@@ -254,30 +254,25 @@ def handle_data_match(data: dict) -> dict:
             timeArray = time.localtime(end_time)
             one_req_data["ago"] = time.strftime("%Y年%m月%d日", timeArray)
         req_data["history"].append(one_req_data)
-        req_data["camp"] = data.get("camp", "")
+        req_data["camp"] = data.get("campName", "")
     return req_data
 
 
-
-    """处理装备属性"""
 def handle_data_equip(data: dict) -> dict:
+    """处理装备属性"""
     req_data = {}
-    req_data["kungfu"] = data["kungfu"]
-    req_data["dateTime"] = data["dateTime"]
-    info = data["info"]
-    if info:
-        req_data["score"] = info.get("score")
-
-        # 处理info数据
-        info_panel: list[dict] = info["panel"]
-        data_info = []
-        for one in info_panel:
-            value = str(one["value"])
-            if one["percent"]:
-                value += "%"
-            one_data = {"name": one["name"], "value": value}
-            data_info.append(one_data)
-        req_data["info"] = data_info
+    req_data["kungfu"] = data["kungfuName"]
+    # 处理info数据
+    info_panel = data["panelList"]
+    req_data["score"] = info_panel.get("score")
+    data_info = []
+    for one in info_panel.get("panel"):
+        value = str(one["value"])
+        if one["percent"]:
+            value += "%"
+        one_data = {"name": one["name"], "value": value}
+        data_info.append(one_data)
+    req_data["info"] = data_info
 
     color_level_map = {
         "0": "darkgray",
@@ -288,7 +283,7 @@ def handle_data_equip(data: dict) -> dict:
         "5": "chocolate",
     }
     # 处理equip数据
-    equip: list[dict] = data["equip"]
+    equip: list[dict] = data["equipList"]
     data_equip = []
     for one in equip:
         _source = one.get("source")
@@ -325,7 +320,7 @@ def handle_data_equip(data: dict) -> dict:
     req_data["equip"] = data_equip
 
     # 处理qixue数据
-    qixue: list = data["qixue"]
+    qixue: list = data["qixueList"]
     data_qixue = []
     for one in qixue:
         if one["name"] == "未知":

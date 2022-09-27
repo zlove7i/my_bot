@@ -20,6 +20,7 @@ from src.utils.browser import browser
 from src.utils.config import config
 from src.utils.db import logs, management
 from src.utils.log import logger
+from src.plugins.jx3_search.data_source import get_main_server
 
 from . import data_source as source
 
@@ -176,7 +177,7 @@ def get_notice_type(event: GroupMessageEvent) -> Literal["离群通知", "进群
 @bind_server.handle()
 async def _(event: GroupMessageEvent, name: str = Depends(get_name)):
     '''绑定服务器'''
-    server = await source.get_main_server(name)
+    server = await get_main_server(name)
     if server is None:
         await bind_server.finish(f"绑定失败，未找到服务器：{name}")
 
