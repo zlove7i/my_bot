@@ -19,20 +19,18 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     # 检测插件是否注册
     group_id = event.group_id
     user_id = event.user_id
-    module_name = matcher.plugin_name
     is_user_black, _ = await check_black_list(user_id, "QQ")
     is_group_black, _ = await check_black_list(group_id, "群号")
     if is_group_black:
-        raise IgnoredException(res)
+        raise IgnoredException()
+    module_name = matcher.plugin_name
     status = await source.get_plugin_status(group_id, module_name)
-    if status is None:
-        # 跳过未注册的插件
-        return
-
     if not status:
         # 停止未开启的插件
         raise IgnoredException("插件未开启")
 
+    if event.get_plaintext() in ["闭嘴", "说话"]:
+        return
     # 检测机器人总开关
     bot_status = await source.get_bot_status(group_id)
     if (not bot_status or is_user_black):
