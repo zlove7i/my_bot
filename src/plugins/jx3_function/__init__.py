@@ -298,6 +298,8 @@ async def _(event: GroupMessageEvent):
     user_id = int(event.user_id)
     text = event.get_plaintext()
     user_info = jx3_data.j3_user.find_one({"_id": user_id})
+    if not user_info:
+        user_info = {}
     if text == "角色管理":
         # 返回当前所有角色
         if not user_info or not user_info.get("user_data"):
@@ -378,6 +380,8 @@ async def _(bot: Bot, event: GroupMessageEvent):
     text = event.get_plaintext()
 
     user_info = jx3_data.j3_user.find_one({"_id": user_id})
+    if not user_info:
+        user_info = {}
     team_leader_name = user_info.get("default_user")
     if not team_leader_name:
         await create_team.finish(
@@ -895,7 +899,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
     bot_id = int(bot.self_id)
     user_info = jx3_data.j3_user.find_one({"_id": user_id})
     if not user_info:
-        user_info = {"user_data": {}}
+        user_info = {"teams": {}, "user_data": {}}
     text = event.get_plaintext()
     text_list = text.split()
     team_id = int(text_list[-1])
@@ -925,7 +929,9 @@ async def _(bot: Bot, event: GroupMessageEvent):
                                     True)
         msg = f"为你更新了角色[{user_name}]，可以发送“角色管理”进行查看，下次用该角色报名就不用写心法了。"
     else:
-        user_name = user_info["default_user"]
+        user_name = user_info.get("default_user")
+        if not user_name:
+            await register.finish(f"你现在没有角色，可以发送“报名 角色名称 心法 {team_id}”进行报名\n我会非常贴心地为你自动创建角色")
     teams = user_info["teams"]
     if team_id in teams.get(user_name, []):
         await register.finish(f"你已经在该团队中了，可以发送“查看团队 {team_id}”进行查看")
@@ -943,7 +949,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
     user_data["group_id"] = group_id
     user_data["bot_id"] = bot_id
     user_data["user_name"] = user_name
-    user_data["_id"] = user_info["_id"]
+    user_data["_id"] = user_id
 
     if user_data['profession'] in JX3PROFESSION_ROLE.坦克.value:
         user_data['role'] = "坦克"
