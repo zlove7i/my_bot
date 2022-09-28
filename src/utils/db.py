@@ -39,6 +39,11 @@ class DB(object):
         return _id
 
 
+class Archive(DB):
+    def __init__(self):
+        super().__init__("archive")
+
+
 class Management(DB):
     def __init__(self):
         super().__init__("management")
@@ -111,6 +116,7 @@ class MyBot(DB):
         self.forbidden_word = self.db.forbidden_word
 
 
+archive = Archive()
 logs = Logs()
 jianghu = JiangHu()
 jx3_data = Jx3Data()

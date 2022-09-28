@@ -11,7 +11,7 @@ from pymongo import UpdateOne
 from src.plugins.jianghu.auction_house import 下架商品
 from src.plugins.jianghu.user_info import UserInfo
 from src.utils.config import config
-from src.utils.db import jianghu, jx3_data, logs, management, my_bot
+from src.utils.db import jianghu, jx3_data, logs, management, my_bot, archive
 from src.utils.log import logger
 from src.utils.scheduler import scheduler
 
@@ -77,11 +77,10 @@ async def archive_river_lantern():
         {'last_sent': {
             "$lte": datetime.today() + timedelta(days=-5)
         }})
-    archive = my_bot.client["archive"]["river_lantern"]
     for lantern in river_lantern_info:
         my_bot.river_lantern.delete_one(lantern)
         del lantern["_id"]
-        archive.insert_one(lantern)
+        archive.db["river_lantern"].insert_one(lantern)
     logger.info("河灯归档完成")
 
 

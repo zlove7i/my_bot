@@ -34,11 +34,14 @@ class DB():
 
     def get_bot_list(self, user, page=1, filter={}):
         try:
+            data = []
+            page_count = 0
             if not user.check_permission(3):
                 maser_qq_set = self.get_sub_qq(user.username)
                 if maser_qq_set:
                     filter.update({"$or": [{"master": i} for i in maser_qq_set]})
-            data = []
+                else:
+                    return data, 0
             limit = 20
             skip = limit * (page - 1)
             count = management.bot_info.count_documents(filter)
