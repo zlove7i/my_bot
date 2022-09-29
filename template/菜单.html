@@ -23,7 +23,7 @@
                         </div>
                         {% else %}
                         <div class="alert alert-danger">
-                            <strong>未绑定服务器</strong> <small>管理员发送“绑定 服务器”即可绑定</small>
+                            <strong>未绑定服务器</strong> <small><strong>管理员</strong>发送“绑定 服务器”即可绑定</small>
                         </div>
                         {% endif %}
 
@@ -37,14 +37,14 @@
                         {% else %}
                         <div class="alert alert-danger">
                             <strong>机器人：关</strong>
-                            <small>(发送“说话”即可开启)</small>
+                            <small>(<strong>管理员</strong>发送“说话”即可开启)</small>
                         </div>
                         {% endif %}
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-4 text-center">
-                        <div class="badge bg-info fs-4" style="margin-top:10px"><img src="./img/活跃.svg" height="23" width="23"> {{ data.group.robot_active}}</div>
+                        <div class="badge bg-info fs-4" style="margin-top:10px">活跃值：{{ data.group.robot_active}}</div>
                     </div>
                     <div class="col-2 text-center">
                         {% if data.group.welcome_status %}
@@ -94,6 +94,7 @@
 
                 <div class="row">
                     <span class="badge fs-4 text-secondary text-center" style="margin-top:10px">插件列表</span>
+                    <small class="text-secondary text-center">管理员发送“打开/关闭 插件名称”即可操作插件状态</small>
                 </div>
                 <div class="row">
                     <table class="table table-striped table-hover">
@@ -127,7 +128,7 @@
                 </div>
             </div>
             <div class="card-footer">
-                <p class="text-center text-secondary">发送“使用说明”可以查看详细说明</p>
+                <p class="text-center text-secondary">发送“<strong>使用说明</strong>”可以查看详细说明</p>
             </div>
         </div>
     </div>

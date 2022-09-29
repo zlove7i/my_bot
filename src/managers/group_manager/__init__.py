@@ -55,7 +55,7 @@ notice = on_regex(pattern=r"^((离群)|(进群))通知 ",
                   priority=2,
                   block=True)  # 离群通知，进群通知
 
-meau = on_regex(pattern=r"^((菜单)|(状态))$",
+meau = on_regex(pattern=r"^菜单$",
                 permission=GROUP,
                 priority=3,
                 block=True)  # 菜单

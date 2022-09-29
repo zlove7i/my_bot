@@ -29,7 +29,7 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
         # 停止未开启的插件
         raise IgnoredException("插件未开启")
 
-    if event.get_plaintext() in ["闭嘴", "说话"]:
+    if event.get_plaintext() in ["闭嘴", "说话", "菜单"]:
         return
     # 检测机器人总开关
     bot_status = await source.get_bot_status(group_id)

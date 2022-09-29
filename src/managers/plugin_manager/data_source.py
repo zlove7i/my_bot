@@ -11,6 +11,8 @@ async def get_bot_enable(bot_id: int):
 
 async def get_plugin_status(group_id: int, module_name: str) -> Optional[bool]:
     '''获取插件状态'''
+    if module_name == "plugin_manager":
+        return True
     _con = my_bot.plugins_info.find_one({'_id': group_id})
     if not _con:
         return None
